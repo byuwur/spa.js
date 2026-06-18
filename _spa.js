@@ -22,12 +22,14 @@
 	bySPA._POST = parse_json(localStorage.getItem("_POST")) ?? {};
 	bySPA.HISTORY_INDEX = -1;
 	bySPA.APP_ENV = localStorage.getItem("APP_ENV") ?? "PROD";
-	bySPA.ROUTER_MODE = localStorage.getItem("ROUTER_MODE") ?? "hash";
 	bySPA.APP_VERSION = localStorage.getItem("APP_VERSION") ?? "0.1by";
 	bySPA.ROUTES = parse_json(localStorage.getItem("ROUTES")) ?? {};
 	bySPA.TO_HOME = localStorage.getItem("TO_HOME");
 	bySPA.HOME_PATH = localStorage.getItem("HOME_PATH");
 	bySPA.HISTORY_PATH = [];
+	// === SPA.js ===
+	bySPA.ROUTER_MODE = localStorage.getItem("ROUTER_MODE") ?? "hash";
+	bySPA.APP_LANG = localStorage.getItem("APP_LANG") ?? "es";
 
 	/**
 	 * Updates local route variables in memory.
@@ -41,6 +43,7 @@
 		return state;
 	};
 
+	// === SPA.js ===
 	bySPA.usesHashRouting = function () {
 		return bySPA.ROUTER_MODE !== "path";
 	};
@@ -71,6 +74,12 @@
 		return target.href;
 	};
 
+	bySPA.queryFromURL = function (url) {
+		if (typeof url !== "string" || !url.includes("?")) return {};
+		return Object.fromEntries(new URLSearchParams(url.split("?", 2)[1]));
+	};
+	// === SPA.js ===
+
 	// Backward-compatible alias for code that used the old method name.
 	bySPA.getLocalStorageItems = function () {
 		return bySPA.setRouteState();
@@ -84,6 +93,7 @@
 		bySPA.HISTORY_PATH = bySPA.HISTORY_PATH.slice(0, bySPA.HISTORY_INDEX + 1);
 		bySPA.HISTORY_INDEX++;
 		bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
+		// === SPA.js ===
 		history.pushState({ index: bySPA.HISTORY_INDEX, url }, "", bySPA.browserURL(url));
 	};
 
@@ -94,6 +104,7 @@
 	bySPA.historyReplace = function (url) {
 		if (bySPA.HISTORY_INDEX < 0) bySPA.HISTORY_INDEX = 0;
 		bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
+		// === SPA.js ===
 		history.replaceState({ index: bySPA.HISTORY_INDEX, url }, "", bySPA.browserURL(url));
 	};
 
@@ -103,7 +114,7 @@
 	 * @param {string} custom_error_message A custom error message to display.
 	 */
 	bySPA.errorPage = function (status, custom_error_message = "") {
-		const paths = [`${bySPA.HOME_PATH}/_error.php`, `${bySPA.HOME_PATH}/spa.php/_error.php`];
+		const paths = [`${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`];
 		const render = function (data) {
 			document.documentElement.innerHTML = data;
 			window.addEventListener(
@@ -209,7 +220,9 @@
 		// If no file is provided, clear the component's content
 		if (!file || file == "null") return $(componentId).html("");
 		return $.ajax({
+			// === SPA.js ===
 			url: bySPA.buildRequestURL(file, { ...get, uri: false }),
+			// === SPA.js ===
 			type: "POST",
 			data: { ...post },
 			dataType: "text"
@@ -235,12 +248,16 @@
 		if (uri.includes("://")) {
 			try {
 				const parsed = new URL(uri);
+				// === SPA.js ===
 				uri = bySPA.hashToURL(parsed.hash) ?? parsed.pathname + parsed.search;
+				// === SPA.js ===
 			} catch (e) {
 				uri = "/";
 			}
 		} else {
+			// === SPA.js ===
 			uri = bySPA.hashToURL(uri) ?? (uri.split("#", 1)[0] || "/");
+			// === SPA.js ===
 		}
 		const [pathInput, queryInput = ""] = uri.split("?", 2);
 		// Ensure the URI starts with a "/" and doesn't end with one
@@ -277,13 +294,19 @@
 		// Check if the path exists in the defined routes
 		if (!Object.keys(bySPA.ROUTES).includes(path)) return null;
 		const route = bySPA.ROUTES[path] ?? {};
-		const get = { ...(route?.GET ?? {}), ...params, ...query };
+		// === SPA.js ===
+		const get = { ...bySPA.queryFromURL(route?.URI), ...(route?.GET ?? {}), ...params, ...query };
+		if (get.lang && typeof bySPA.setLanguage === "function") get.lang = bySPA.setLanguage(get.lang);
+		// === SPA.js ===
 		const post = { ...(route?.POST ?? {}) };
 		// Determine the final URI based on the route
 		uri = route?.URI;
 		// Determine the correct URI if it's not explicitly set
 		if (uri == "") {
-			get.uri = bySPA.URI || "/";
+			// === SPA.js ===
+			const currentURI = bySPA._GET?.uri || bySPA.URI || "/";
+			get.uri = bySPA.ROUTES[currentURI]?.URI ? currentURI : "/";
+			// === SPA.js ===
 			uri = bySPA.ROUTES[get.uri]?.URI ? bySPA.ROUTES[get.uri]?.URI : bySPA.ROUTES["/"]?.URI;
 		} else get.uri = path;
 		bySPA.setRouteState({ path, url, get, post });
@@ -314,7 +337,9 @@
 			console.log("routeURL(): PATH=", path, "; URI=", uri, "; FILE=", file, "; _GET=", get, "; _POST=", post, "; COMPONENT=", component);
 		}
 		// If a file is specified in the route, navigate to it directly
+		// === SPA.js ===
 		if (file) return (window.location = bySPA.buildRequestURL(file));
+		// === SPA.js ===
 		// If the SPA container is missing, create the element
 		if (!$("#spa-content").length) {
 			// Checks for reloadComponent to continue, if not: reload completely
@@ -331,7 +356,9 @@
 		for (let key in component || {}) componentLoads.push(bySPA.reloadComponent(key, component[key], get, post));
 		// Retrieve the page data
 		return $.ajax({
+			// === SPA.js ===
 			url: bySPA.buildRequestURL(uri ?? "/null", get),
+			// === SPA.js ===
 			type: "POST",
 			data: { ...post },
 			dataType: "text"
@@ -366,7 +393,10 @@
 	 */
 	bySPA.afterLoad = function (routing) {
 		if (typeof byCommon !== "undefined" && byCommon) {
-			["initMisc", "initBootstrap", "initCaptcha", "initSidebar"].forEach(function (fn) {
+			// === SPA.js ===
+			if (typeof byCommon.initLanguage === "function") byCommon.initLanguage(routing);
+			// === SPA.js ===
+			["initMisc", "initBootstrap", "initCaptcha", "initSidebar", "initParticles"].forEach(function (fn) {
 				if (typeof byCommon[fn] === "function") byCommon[fn]();
 			});
 		}
@@ -378,7 +408,6 @@
 		// Log debug information if in development mode
 		if (bySPA.APP_ENV === "DEV") {
 			console.log("APP_VERSION=", bySPA.APP_VERSION);
-			console.log("ROUTER_MODE=", bySPA.ROUTER_MODE);
 			console.log("TO_HOME=", bySPA.TO_HOME);
 			console.log("HOME_PATH=", bySPA.HOME_PATH);
 			console.log("URI=", bySPA.URI);
@@ -388,6 +417,9 @@
 			console.log("_POST=", bySPA._POST);
 			console.log("HISTORY_INDEX=", bySPA.HISTORY_INDEX);
 			console.log("HISTORY_PATH=", bySPA.HISTORY_PATH);
+			// === SPA.js ===
+			console.log("ROUTER_MODE=", bySPA.ROUTER_MODE);
+			console.log("APP_LANG=", bySPA.APP_LANG);
 		}
 		// Handles the popstate event for navigating through browser history.
 		window.addEventListener("popstate", function (e) {
@@ -395,12 +427,6 @@
 			bySPA.HISTORY_INDEX = e.state.index;
 			bySPA.load(e.state.url ?? bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX], { push: false });
 			if (bySPA.APP_ENV === "DEV") console.log("HISTORY_INDEX=", bySPA.HISTORY_INDEX, "; HISTORY_PATH=", bySPA.HISTORY_PATH);
-		});
-		window.addEventListener("hashchange", function () {
-			if (!bySPA.usesHashRouting()) return;
-			const nextURL = bySPA.hashToURL(window.location.hash);
-			if (!nextURL || nextURL === bySPA.URL) return;
-			bySPA.load(nextURL, { push: false, replace: true });
 		});
 		// Attaches click event handlers to links for SPA navigation.
 		$(document).on("click", "a[href]", function (e) {
@@ -413,6 +439,7 @@
 			try {
 				const absolute = new URL(href, window.location.href);
 				if (absolute.origin != window.location.origin) return;
+				// === SPA.js ===
 				nextURL = bySPA.hashToURL(absolute.hash) ?? (bySPA.HOME_PATH && absolute.href.startsWith(bySPA.HOME_PATH) ? absolute.href.slice(bySPA.HOME_PATH.length) || "/" : `${absolute.pathname}${absolute.search}`);
 			} catch (error) {
 				return;
@@ -422,6 +449,14 @@
 		});
 		// Initial load of SPA content based on the stored URL.
 		bySPA.load(`${bySPA.URL}`, { replace: true });
+		// === SPA.js ===
+		window.addEventListener("hashchange", function () {
+			if (!bySPA.usesHashRouting()) return;
+			const nextURL = bySPA.hashToURL(window.location.hash);
+			if (!nextURL || nextURL === bySPA.URL) return;
+			bySPA.load(nextURL, { push: false, replace: true });
+		});
+		// === SPA.js ===
 	};
 })(typeof window !== "undefined" ? window : this);
 

@@ -52,19 +52,15 @@
 	bySPA.ROUTES = {
 		// "/"
 		[`${ROUTE_ROOT}`]: { URI: `/main.example.html`, ...ROOT_COMPONENTS },
-		[`/${ROUTE_ES}`]: { URI: `?${new URLSearchParams({ lang: "es" })}`, ...ROOT_COMPONENTS },
-		[`/${ROUTE_EN}`]: { URI: `?${new URLSearchParams({ lang: "en" })}`, ...ROOT_COMPONENTS },
-		[`/${ROUTE_HOME_ES}`]: { URI: `/main.example.html?${new URLSearchParams({ lang: "es" })}`, ...ROOT_COMPONENTS },
-		[`/${ROUTE_HOME_EN}`]: { URI: `/main.example.html?${new URLSearchParams({ lang: "en" })}`, ...ROOT_COMPONENTS },
-		[`/${ROUTE_PAGE_ES}`]: { URI: `/page.example.html?${new URLSearchParams({ lang: "es" })}`, ...ROOT_COMPONENTS },
-		[`/${ROUTE_PAGE_EN}`]: { URI: `/page.example.html?${new URLSearchParams({ lang: "en" })}`, ...ROOT_COMPONENTS },
+		[`/${ROUTE_ES}`]: { URI: ``, GET: { lang: "es" }, ...ROOT_COMPONENTS },
+		[`/${ROUTE_EN}`]: { URI: ``, GET: { lang: "en" }, ...ROOT_COMPONENTS },
+		[`/${ROUTE_HOME_ES}`]: { URI: `/main.example.html`, GET: { lang: "es" }, ...ROOT_COMPONENTS },
+		[`/${ROUTE_HOME_EN}`]: { URI: `/main.example.html`, GET: { lang: "en" }, ...ROOT_COMPONENTS },
+		[`/${ROUTE_PAGE_ES}`]: { URI: `/page.example.html`, GET: { lang: "es" }, ...ROOT_COMPONENTS },
+		[`/${ROUTE_PAGE_EN}`]: { URI: `/page.example.html`, GET: { lang: "en" }, ...ROOT_COMPONENTS },
 		[`/${ROUTE_VIDEO}`]: { URI: `/video.example.html`, ...ROOT_COMPONENTS },
 		[`/${ROUTE_PDF}`]: { FILE: `/img/pdf/sample.pdf` }
 	};
 
 	localStorage.setItem("ROUTES", JSON.stringify(bySPA.ROUTES));
-
-	if (bySPA.APP_ENV === "DEV") {
-		console.log("ROUTES", bySPA.ROUTES);
-	}
 })(typeof window !== "undefined" ? window : this);

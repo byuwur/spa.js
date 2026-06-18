@@ -16,19 +16,6 @@
 	global.bySPA = global.bySPA || {};
 	const bySPA = global.bySPA;
 
-	function parseJSON(json) {
-		if (typeof json !== "string") return null;
-		try {
-			return JSON.parse(json);
-		} catch {
-			return null;
-		}
-	}
-
-	function isObject(value) {
-		return value && typeof value === "object" && !Array.isArray(value);
-	}
-
 	function safeDecode(value) {
 		try {
 			return decodeURIComponent(value);
@@ -65,10 +52,15 @@
 		return get;
 	}
 
+	function routeQueryToObject(route) {
+		if (typeof route?.URI !== "string" || !route.URI.includes("?")) return {};
+		return queryToObject(new URLSearchParams(route.URI.split("?", 2)[1]));
+	}
+
 	function getRoutes() {
-		if (isObject(bySPA.ROUTES)) return bySPA.ROUTES;
-		const storedRoutes = parseJSON(localStorage.getItem("ROUTES"));
-		return isObject(storedRoutes) ? storedRoutes : {};
+		if (is_object(bySPA.ROUTES)) return bySPA.ROUTES;
+		const storedRoutes = parse_json(localStorage.getItem("ROUTES"));
+		return is_object(storedRoutes) ? storedRoutes : {};
 	}
 
 	function getHomePath() {
@@ -129,15 +121,23 @@
 		const appVersion = bySPA.APP_VERSION || localStorage.getItem("APP_VERSION") || "0.1by";
 		const routerMode = bySPA.ROUTER_MODE || localStorage.getItem("ROUTER_MODE") || "hash";
 		const routes = getRoutes();
-		const post = parseJSON(localStorage.getItem("_POST")) || {};
+		const storedGet = parse_json(localStorage.getItem("_GET")) || {};
+		const post = parse_json(localStorage.getItem("_POST")) || {};
 		let get = queryToObject(locationURL.searchParams);
 		let { uri, url } = parseURI(getInitialURI(locationURL), get);
 		const route = routes[uri];
 
 		if (!route || (!Object.prototype.hasOwnProperty.call(route, "URI") && !Object.prototype.hasOwnProperty.call(route, "FILE"))) return routerError(404, `Route "${uri}" does not exist.`);
 
-		get = { ...get, ...(isObject(route.GET) ? route.GET : {}) };
-		const routePost = { ...post, ...(isObject(route.POST) ? route.POST : {}) };
+		get = { ...get, ...routeQueryToObject(route), ...(is_object(route.GET) ? route.GET : {}) };
+		if (route.URI === "") {
+			const currentURI = storedGet.uri || localStorage.getItem("URI") || "/";
+			get.uri = routes[currentURI]?.URI ? currentURI : "/";
+		}
+		if (get.lang && typeof bySPA.setLanguage === "function") get.lang = bySPA.setLanguage(get.lang);
+		const routePost = { ...post, ...(is_object(route.POST) ? route.POST : {}) };
+
+		localStorage.removeItem("ROUTER_ERROR");
 
 		bySPA.APP_ENV = appEnv;
 		bySPA.APP_VERSION = appVersion;
@@ -148,9 +148,9 @@
 		bySPA._GET = get;
 		bySPA._POST = routePost;
 
-		localStorage.removeItem("ROUTER_ERROR");
 		localStorage.setItem("APP_ENV", appEnv);
 		localStorage.setItem("APP_VERSION", appVersion);
+		localStorage.setItem("APP_LANG", bySPA.APP_LANG || "");
 		localStorage.setItem("ROUTER_MODE", routerMode);
 		localStorage.setItem("URI", uri);
 		localStorage.setItem("URL", url);
@@ -159,16 +159,13 @@
 		localStorage.setItem("_POST", JSON.stringify(routePost));
 
 		if (appEnv === "DEV") {
-			console.log("=== JS Router ===");
-			console.log("APP_ENV", appEnv);
+			console.log("=== JS ROUTER ===");
 			console.log("APP_VERSION", appVersion);
-			console.log("ROUTER_MODE", routerMode);
 			console.log("URI", uri);
 			console.log("URL", url);
-			console.log("ROUTES", JSON.stringify(routes));
 			console.log("_GET", JSON.stringify(get));
 			console.log("_POST", JSON.stringify(routePost));
-			console.log("=== JS Router ===");
+			console.log("=== JS ROUTER ===");
 		}
 
 		if (route.FILE) {
