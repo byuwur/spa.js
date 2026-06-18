@@ -59,6 +59,8 @@ This project is a simple, easy-to-use framework for building single-page applica
 3. Add custom functionality by creating new HTML files and adding them to the routes.
 4. Serve the folder with any static server and navigate. Suit yourself.
 
+> Opening `index.html` directly as `file://` only shows a fallback notice. Browsers block AJAX requests from `file://`, so route fragments such as `main.example.html` and components such as `sidebar.html` need a local/static server (`http://localhost/...`) to load correctly.
+
 ## Some other things I've made and used here
 
 - [easy-http-error](https://github.com/byuwur/easy-http-error) - Custom error page with server configurations.

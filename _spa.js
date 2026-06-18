@@ -48,6 +48,10 @@
 		return bySPA.ROUTER_MODE !== "path";
 	};
 
+	bySPA.usesFileProtocol = function () {
+		return window.location.protocol === "file:";
+	};
+
 	bySPA.hashToURL = function (hash) {
 		hash = String(hash || "");
 		const hashIndex = hash.indexOf("#/");
@@ -58,7 +62,38 @@
 	bySPA.browserURL = function (url) {
 		const base = String(bySPA.HOME_PATH || "").replace(/\/$/, "");
 		const routeURL = bySPA.parseURL(url).url;
+		if (bySPA.usesFileProtocol()) return `#${routeURL}`;
 		return bySPA.usesHashRouting() ? `${base}/#${routeURL}` : `${base}${routeURL}`;
+	};
+
+	bySPA.fileHistory = function (url, replace = false) {
+		const routeURL = bySPA.parseURL(url).url;
+		const hash = `#${routeURL}`;
+		try {
+			(replace ? history.replaceState : history.pushState).call(history, { index: bySPA.HISTORY_INDEX, url }, "");
+		} catch (e) {
+			if (bySPA.APP_ENV === "DEV") console.warn("fileHistory(): history state skipped.", e);
+		}
+		if (window.location.hash !== hash) {
+			if (replace) window.location.replace(hash);
+			else window.location.hash = routeURL;
+		}
+	};
+
+	bySPA.renderFileProtocolNotice = function () {
+		if (!$("#spa-content").length) $("body").append($("<main>", { id: "spa-content" }));
+		$("#spa-content").html(
+			[
+				'<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:#0007;color:#fee;">',
+				'<div style="max-width:42rem;">',
+				"<h1>SPA.js needs HTTP</h1>",
+				"<p>This shell opened from <code>file://</code>, so the browser blocked the HTML fragments and components that SPA.js loads with AJAX.</p>",
+				"<p>Serve this folder from WAMP, Apache, or any small static server and open it through <code>http://localhost/...</code>.</p>",
+				"</div>",
+				"</div>"
+			].join("")
+		);
+		$("#spa-loader").fadeOut(111);
 	};
 
 	bySPA.buildRequestURL = function (path, get = {}) {
@@ -94,6 +129,7 @@
 		bySPA.HISTORY_INDEX++;
 		bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
 		// === SPA.js ===
+		if (bySPA.usesFileProtocol()) return bySPA.fileHistory(url);
 		history.pushState({ index: bySPA.HISTORY_INDEX, url }, "", bySPA.browserURL(url));
 	};
 
@@ -105,6 +141,7 @@
 		if (bySPA.HISTORY_INDEX < 0) bySPA.HISTORY_INDEX = 0;
 		bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
 		// === SPA.js ===
+		if (bySPA.usesFileProtocol()) return bySPA.fileHistory(url, true);
 		history.replaceState({ index: bySPA.HISTORY_INDEX, url }, "", bySPA.browserURL(url));
 	};
 
@@ -331,6 +368,10 @@
 		if (historyMode.replace) bySPA.historyReplace(routing.url);
 		$("#spa-content").html("");
 		const { path, uri, file, get, post, component } = routing;
+		if (bySPA.usesFileProtocol()) {
+			bySPA.renderFileProtocolNotice();
+			return Promise.resolve(null);
+		}
 		// Log debug information if in development mode
 		if (bySPA.APP_ENV === "DEV") {
 			console.log(`loadSPA("${url}")`);
@@ -371,8 +412,10 @@
 				});
 			})
 			.catch(function (xhr, status, error) {
-				console.error(`Error (SPA): ${xhr?.status} ${status} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
-				document.documentElement.innerHTML = xhr.responseText;
+        console.error(`Error (SPA): ${xhr?.status} ${status} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
+				// === SPA.js ===
+				if (xhr?.responseText) document.documentElement.innerHTML = xhr.responseText;
+				else $("#spa-content").html(`<pre>Error (SPA): ${xhr?.status || 0} ${status || ""} ${error || ""}</pre>`);
 				window.addEventListener(
 					"popstate",
 					function () {

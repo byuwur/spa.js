@@ -82,7 +82,12 @@
 
 		const homeURL = new URL(`${getHomePath()}/`, global.location.href);
 		const homePath = homeURL.pathname.replace(/\/$/, "");
-		if (homePath && locationURL.pathname.startsWith(homePath)) return locationURL.pathname.slice(homePath.length) || "/";
+		if (homePath && locationURL.pathname.startsWith(homePath)) {
+			const relativePath = locationURL.pathname.slice(homePath.length) || "/";
+			if (global.location.protocol === "file:" && /^\/index\.html?$/i.test(relativePath)) return "/";
+			return relativePath;
+		}
+		if (global.location.protocol === "file:") return "/";
 		return locationURL.pathname || "/";
 	}
 
