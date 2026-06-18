@@ -52,9 +52,20 @@
 		return params;
 	}
 
+	function hashToURI(hash) {
+		hash = String(hash || "");
+		if (!hash.startsWith("#/")) return null;
+		return hash.slice(1) || "/";
+	}
+
+	function mergeQueryString(queryString, get) {
+		new URLSearchParams(queryString || "").forEach(function (value, key) {
+			get[key] = value;
+		});
+		return get;
+	}
+
 	function getRoutes() {
-		if (isObject(global.routes)) return global.routes;
-		if (isObject(bySPA.routes)) return bySPA.routes;
 		if (isObject(bySPA.ROUTES)) return bySPA.ROUTES;
 		const storedRoutes = parseJSON(localStorage.getItem("ROUTES"));
 		return isObject(storedRoutes) ? storedRoutes : {};
@@ -74,6 +85,9 @@
 		const queryURI = locationURL.searchParams.get("uri");
 		if (typeof queryURI === "string" && queryURI !== "") return queryURI;
 
+		const hashURI = hashToURI(locationURL.hash);
+		if (hashURI) return hashURI;
+
 		const homeURL = new URL(`${getHomePath()}/`, global.location.href);
 		const homePath = homeURL.pathname.replace(/\/$/, "");
 		if (homePath && locationURL.pathname.startsWith(homePath)) return locationURL.pathname.slice(homePath.length) || "/";
@@ -81,8 +95,13 @@
 	}
 
 	function parseURI(uri, get) {
+		uri = typeof uri === "string" ? uri : "/";
+		const queryIndex = uri.indexOf("?");
+		const queryString = queryIndex >= 0 ? uri.slice(queryIndex + 1) : "";
+		uri = queryIndex >= 0 ? uri.slice(0, queryIndex) : uri;
 		uri = normalizeURI(uri);
-		const url = uri;
+		mergeQueryString(queryString, get);
+		const url = `${uri}${queryString ? `?${queryString}` : ""}`;
 		if (!uri.includes("/$/")) return { uri, url, get };
 
 		const parts = uri.split("/$/");
@@ -106,8 +125,9 @@
 		const locationURL = new URL(global.location.href);
 		const host = global.location.host || "";
 		const notEnvAppEnv = /^(localhost|127\.0\.0\.1|\[::1\]|::1)(:\d+)?$/.test(host) ? "DEV" : "PROD";
-		const appEnv = global.APP_ENV || bySPA.APP_ENV || localStorage.getItem("APP_ENV") || notEnvAppEnv;
-		const appVersion = global.APP_VERSION || bySPA.APP_VERSION || localStorage.getItem("APP_VERSION") || "0.1by";
+		const appEnv = bySPA.APP_ENV || localStorage.getItem("APP_ENV") || notEnvAppEnv;
+		const appVersion = bySPA.APP_VERSION || localStorage.getItem("APP_VERSION") || "0.1by";
+		const routerMode = bySPA.ROUTER_MODE || localStorage.getItem("ROUTER_MODE") || "hash";
 		const routes = getRoutes();
 		const post = parseJSON(localStorage.getItem("_POST")) || {};
 		let get = queryToObject(locationURL.searchParams);
@@ -121,6 +141,7 @@
 
 		bySPA.APP_ENV = appEnv;
 		bySPA.APP_VERSION = appVersion;
+		bySPA.ROUTER_MODE = routerMode;
 		bySPA.URI = uri;
 		bySPA.URL = url;
 		bySPA.ROUTES = routes;
@@ -130,6 +151,7 @@
 		localStorage.removeItem("ROUTER_ERROR");
 		localStorage.setItem("APP_ENV", appEnv);
 		localStorage.setItem("APP_VERSION", appVersion);
+		localStorage.setItem("ROUTER_MODE", routerMode);
 		localStorage.setItem("URI", uri);
 		localStorage.setItem("URL", url);
 		localStorage.setItem("ROUTES", JSON.stringify(routes));
@@ -140,6 +162,7 @@
 			console.log("=== JS Router ===");
 			console.log("APP_ENV", appEnv);
 			console.log("APP_VERSION", appVersion);
+			console.log("ROUTER_MODE", routerMode);
 			console.log("URI", uri);
 			console.log("URL", url);
 			console.log("ROUTES", JSON.stringify(routes));

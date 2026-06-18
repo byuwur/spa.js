@@ -62,9 +62,9 @@
 		[`/${ROUTE_PDF}`]: { FILE: `/img/pdf/sample.pdf` }
 	};
 
-  localStorage.setItem("ROUTES", bySPA.ROUTES);
+	localStorage.setItem("ROUTES", JSON.stringify(bySPA.ROUTES));
 
 	if (bySPA.APP_ENV === "DEV") {
-    console.log("ROUTES", bySPA.ROUTES);
+		console.log("ROUTES", bySPA.ROUTES);
 	}
 })(typeof window !== "undefined" ? window : this);

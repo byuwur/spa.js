@@ -22,6 +22,7 @@
 	bySPA._POST = parse_json(localStorage.getItem("_POST")) ?? {};
 	bySPA.HISTORY_INDEX = -1;
 	bySPA.APP_ENV = localStorage.getItem("APP_ENV") ?? "PROD";
+	bySPA.ROUTER_MODE = localStorage.getItem("ROUTER_MODE") ?? "hash";
 	bySPA.APP_VERSION = localStorage.getItem("APP_VERSION") ?? "0.1by";
 	bySPA.ROUTES = parse_json(localStorage.getItem("ROUTES")) ?? {};
 	bySPA.TO_HOME = localStorage.getItem("TO_HOME");
@@ -40,6 +41,36 @@
 		return state;
 	};
 
+	bySPA.usesHashRouting = function () {
+		return bySPA.ROUTER_MODE !== "path";
+	};
+
+	bySPA.hashToURL = function (hash) {
+		hash = String(hash || "");
+		const hashIndex = hash.indexOf("#/");
+		if (hashIndex < 0) return null;
+		return hash.slice(hashIndex + 1) || "/";
+	};
+
+	bySPA.browserURL = function (url) {
+		const base = String(bySPA.HOME_PATH || "").replace(/\/$/, "");
+		const routeURL = bySPA.parseURL(url).url;
+		return bySPA.usesHashRouting() ? `${base}/#${routeURL}` : `${base}${routeURL}`;
+	};
+
+	bySPA.buildRequestURL = function (path, get = {}) {
+		const base = `${String(bySPA.HOME_PATH || window.location.origin).replace(/\/$/, "")}/`;
+		const requestPath = String(path || "/null");
+		const target = /^[a-z][a-z0-9+.-]*:\/\//i.test(requestPath) ? new URL(requestPath) : new URL(requestPath.replace(/^\/+/, ""), base);
+		const search = new URLSearchParams(target.search);
+		Object.entries(get || {}).forEach(function ([key, value]) {
+			if (value === undefined || value === null) return;
+			search.set(key, value);
+		});
+		target.search = search.toString();
+		return target.href;
+	};
+
 	// Backward-compatible alias for code that used the old method name.
 	bySPA.getLocalStorageItems = function () {
 		return bySPA.setRouteState();
@@ -53,7 +84,7 @@
 		bySPA.HISTORY_PATH = bySPA.HISTORY_PATH.slice(0, bySPA.HISTORY_INDEX + 1);
 		bySPA.HISTORY_INDEX++;
 		bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
-		history.pushState({ index: bySPA.HISTORY_INDEX, url }, "", `${bySPA.HOME_PATH}${url}`);
+		history.pushState({ index: bySPA.HISTORY_INDEX, url }, "", bySPA.browserURL(url));
 	};
 
 	/**
@@ -63,7 +94,7 @@
 	bySPA.historyReplace = function (url) {
 		if (bySPA.HISTORY_INDEX < 0) bySPA.HISTORY_INDEX = 0;
 		bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
-		history.replaceState({ index: bySPA.HISTORY_INDEX, url }, "", `${bySPA.HOME_PATH}${url}`);
+		history.replaceState({ index: bySPA.HISTORY_INDEX, url }, "", bySPA.browserURL(url));
 	};
 
 	/**
@@ -178,7 +209,7 @@
 		// If no file is provided, clear the component's content
 		if (!file || file == "null") return $(componentId).html("");
 		return $.ajax({
-			url: `${bySPA.HOME_PATH}${file}?${new URLSearchParams({ ...get, uri: false }).toString()}`,
+			url: bySPA.buildRequestURL(file, { ...get, uri: false }),
 			type: "POST",
 			data: { ...post },
 			dataType: "text"
@@ -204,12 +235,13 @@
 		if (uri.includes("://")) {
 			try {
 				const parsed = new URL(uri);
-				uri = parsed.pathname + parsed.search;
+				uri = bySPA.hashToURL(parsed.hash) ?? parsed.pathname + parsed.search;
 			} catch (e) {
 				uri = "/";
 			}
+		} else {
+			uri = bySPA.hashToURL(uri) ?? (uri.split("#", 1)[0] || "/");
 		}
-		uri = uri.split("#", 1)[0] || "/";
 		const [pathInput, queryInput = ""] = uri.split("?", 2);
 		// Ensure the URI starts with a "/" and doesn't end with one
 		let pathUri = pathInput || "/";
@@ -282,7 +314,7 @@
 			console.log("routeURL(): PATH=", path, "; URI=", uri, "; FILE=", file, "; _GET=", get, "; _POST=", post, "; COMPONENT=", component);
 		}
 		// If a file is specified in the route, navigate to it directly
-		if (file) return (window.location = `${bySPA.HOME_PATH}${path}`);
+		if (file) return (window.location = bySPA.buildRequestURL(file));
 		// If the SPA container is missing, create the element
 		if (!$("#spa-content").length) {
 			// Checks for reloadComponent to continue, if not: reload completely
@@ -299,7 +331,7 @@
 		for (let key in component || {}) componentLoads.push(bySPA.reloadComponent(key, component[key], get, post));
 		// Retrieve the page data
 		return $.ajax({
-			url: `${bySPA.HOME_PATH}${uri ?? "/null"}?${new URLSearchParams(get).toString()}`,
+			url: bySPA.buildRequestURL(uri ?? "/null", get),
 			type: "POST",
 			data: { ...post },
 			dataType: "text"
@@ -346,6 +378,7 @@
 		// Log debug information if in development mode
 		if (bySPA.APP_ENV === "DEV") {
 			console.log("APP_VERSION=", bySPA.APP_VERSION);
+			console.log("ROUTER_MODE=", bySPA.ROUTER_MODE);
 			console.log("TO_HOME=", bySPA.TO_HOME);
 			console.log("HOME_PATH=", bySPA.HOME_PATH);
 			console.log("URI=", bySPA.URI);
@@ -363,17 +396,24 @@
 			bySPA.load(e.state.url ?? bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX], { push: false });
 			if (bySPA.APP_ENV === "DEV") console.log("HISTORY_INDEX=", bySPA.HISTORY_INDEX, "; HISTORY_PATH=", bySPA.HISTORY_PATH);
 		});
+		window.addEventListener("hashchange", function () {
+			if (!bySPA.usesHashRouting()) return;
+			const nextURL = bySPA.hashToURL(window.location.hash);
+			if (!nextURL || nextURL === bySPA.URL) return;
+			bySPA.load(nextURL, { push: false, replace: true });
+		});
 		// Attaches click event handlers to links for SPA navigation.
 		$(document).on("click", "a[href]", function (e) {
 			if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 			if (this.target === "_blank" || this.hasAttribute("download") || this.getAttribute("custom-folder") == "true") return;
 			const href = this.getAttribute("href");
-			if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+			if (!href || href.startsWith("javascript:")) return;
+			if (href.startsWith("#") && !href.startsWith("#/")) return;
 			let nextURL = href;
 			try {
 				const absolute = new URL(href, window.location.href);
 				if (absolute.origin != window.location.origin) return;
-				nextURL = bySPA.HOME_PATH && absolute.href.startsWith(bySPA.HOME_PATH) ? absolute.href.slice(bySPA.HOME_PATH.length) || "/" : `${absolute.pathname}${absolute.search}`;
+				nextURL = bySPA.hashToURL(absolute.hash) ?? (bySPA.HOME_PATH && absolute.href.startsWith(bySPA.HOME_PATH) ? absolute.href.slice(bySPA.HOME_PATH.length) || "/" : `${absolute.pathname}${absolute.search}`);
 			} catch (error) {
 				return;
 			}

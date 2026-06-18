@@ -31,11 +31,13 @@
 
 	const host = global.location.host || "";
 	const NOTENV_APP_ENV = /^(localhost|127\.0\.0\.1|\[::1\]|::1)(:\d+)?$/.test(host) ? "DEV" : "PROD";
+	const ROUTER_MODE = (localStorage.getItem("ROUTER_MODE") || "hash").toLowerCase();
 
 	const currentScript = document.currentScript;
 	const scriptURL = new URL(currentScript?.getAttribute("src") || "_var.js", global.location.href);
 
-	bySPA.APP_ENV = global.APP_ENV || localStorage.getItem("APP_ENV") || NOTENV_APP_ENV;
+	bySPA.APP_ENV = localStorage.getItem("APP_ENV") || NOTENV_APP_ENV;
+	bySPA.ROUTER_MODE = ROUTER_MODE === "path" ? "path" : "hash";
 	bySPA.PROTOCOL = global.location.protocol === "https:" ? "https://" : "http://";
 	bySPA.THIS__FILE__ = stdDirSeparator(scriptURL.href);
 	bySPA.THIS_PATH = dirname(bySPA.THIS__FILE__);
@@ -58,6 +60,7 @@
 	bySPA.PATH_DIFF = Math.max(0, currentParts.length - homeParts.length);
 
 	localStorage.setItem("APP_ENV", bySPA.APP_ENV);
+	localStorage.setItem("ROUTER_MODE", bySPA.ROUTER_MODE);
 	localStorage.setItem("PROTOCOL", bySPA.PROTOCOL);
 	localStorage.setItem("PATH_DIFF", String(bySPA.PATH_DIFF));
 	localStorage.setItem("TO_HOME", bySPA.TO_HOME);
@@ -65,6 +68,7 @@
 	localStorage.setItem("HOME_PATH", bySPA.HOME_PATH);
 
 	if (bySPA.APP_ENV === "DEV") {
+		console.log("ROUTER_MODE", bySPA.ROUTER_MODE);
 		console.log("PROTOCOL", bySPA.PROTOCOL);
 		console.log("PATH_DIFF", bySPA.PATH_DIFF);
 		console.log("TO_HOME", bySPA.TO_HOME);
