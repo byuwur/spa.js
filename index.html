@@ -1,24 +1,25 @@
 <!DOCTYPE html>
+<html lang="es" dir="ltr">
 <!-- /*
  * File: index.html
  * Desc: Entry point for the Single Page Application (SPA). This file initializes configurations, handles routing, and loads the main structure of the SPA, including the header, content container, and footer. The page also includes necessary CSS and JS resources.
- * Deps: _var.php, _common.php, _functions.php, _plugin.php, _routes.php, _router.php
+ * Deps: _var.js, _common.js, _functions.js, _routes.js, _router.js
  * Copyright (c) 2025 Andrés Trujillo [Mateus] byUwUr
  */ -->
 
 <head>
-    <title>SPA.php | byUwUr</title>
+    <title>SPA.js | byUwUr</title>
     <meta charset="utf-8" />
-    <meta property="og:title" content="SPA.php | byUwUr" />
+    <meta property="og:title" content="SPA.js | byUwUr" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://byuwur.co/img/logo.png" />
-    <meta property="og:url" content="https://byuwur.co/spa.php" />
-    <meta property="og:site_name" content="SPA.php | byUwUr" />
-    <meta property="og:description" content="SPA made easy, with love, and PHP." />
+    <meta property="og:url" content="https://byuwur.co/spa.js" />
+    <meta property="og:site_name" content="SPA.js | byUwUr" />
+    <meta property="og:description" content="SPA made easy, with love, and JS." />
     <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no" />
-    <meta name="description" content="SPA made easy, with love, and PHP." />
+    <meta name="description" content="SPA made easy, with love, and JS." />
     <meta name="author" content="Andrés Trujillo [Mateus] byUwUr" />
-    <meta name="keywords" content="SPA.php, SPA, PHP, Mateus, byUwUr, byuwur, Mateus byUwUr" />
+    <meta name="keywords" content="SPA.js, SPA, JS, Mateus, byUwUr, byuwur, Mateus byUwUr" />
     <meta name="copyright" content="[Mateus] byUwUr" />
     <!--meta name="robots" content="index, follow" /> <!-- Decommented to get indexed -->
     <meta name="theme-color" content="#300" />
@@ -59,15 +60,15 @@
 </head>
 
 <body>
-    <!-- byuwur/spa.php | Copyright (c) 2025 Andrés Trujillo [Mateus] byUwUr -->
+    <!-- byuwur/spa.js | Copyright (c) 2026 Andrés Trujillo [Mateus] byUwUr -->
     <section id="intro" class="d-none">
         <!-- Add a short description to help SEO -->
-        SPA made easy, with love, and PHP. — byUwUr/SPA.php
+        SPA made easy, with love, and JS. — byUwUr/SPA.JS
     </section>
     <div id="spa-loader">
         <div class="load-circle-back"></div>
         <div class="load-circle-fore"></div>
-        <div class="load-text"><?= $load ?></div>
+        <div class="load-text" data-i18n-html="load">Loading...</div>
     </div>
     <div id="bywr-accessibility">
         <a href="javascript:byCommon.accessibilityToggle();" data-bs-toggle="tooltip" data-bs-title="Accesibilidad" title="Accesibilidad">
