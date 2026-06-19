@@ -21,7 +21,7 @@
 			</div>
 		</div>
 		<p class="m-0 p-2 border-top" style="font-size: 0.75rem">
-			&copy; <span data-current-year></span> <a href="https://byuwur.co">[Mateus] byUwUr</a>. <span>Derechos reservados.</span><br /><span>Hecho con</span>
+			&copy; <span id="current-year"></span> <a href="https://byuwur.co">[Mateus] byUwUr</a>. <span>Derechos reservados.</span><br /><span>Hecho con</span>
 			<i class="fas fa-heart" aria-hidden="true"></i> <span>por</span> <a href="https://byuwur.co" target="_blank">[Mateus] byUwUr</a>
 		</p>
 	</div>
@@ -30,3 +30,8 @@
 		<div class="navbar-brand has-background-contain mt-auto" style="height: 48px; width: 48px; background-image: url(&quot;img/byuwur.png&quot;)"></div>
 	</div>
 </nav>
+<script>
+	$(() => {
+		$("#current-year").html(new Date().getFullYear());
+	});
+</script>
