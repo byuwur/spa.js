@@ -15,6 +15,9 @@
 (function (global) {
 	global.bySPA = global.bySPA || {};
 	const bySPA = global.bySPA;
+
+	// --- functions ---
+
 	/**
 	 * Replaces "\\" directory separators to "/"
 	 * @param {string} path String to convert
@@ -33,18 +36,29 @@
 		return std_dir_separator(path).replace(/\/[^/]*$/, "") || ".";
 	};
 
+	// Check if we're on localhost for DEVbugging
 	const host = global.location.host || "";
 	const NOTENV_APP_ENV = /^(localhost|127\.0\.0\.1|\[::1\]|::1)(:\d+)?$/.test(host) ? "DEV" : "PROD";
-	const ROUTER_MODE = (localStorage.getItem("ROUTER_MODE") || "hash").toLowerCase();
 
+	/*
+	 * Initializes the path variables that _var.php normally calculates from
+	 * PHP server values. Static /spa.js/ uses the script URL and browser
+	 * location instead of __FILE__, SCRIPT_FILENAME and PHP_SELF.
+	 */
 	const currentScript = document.currentScript;
 	const scriptURL = new URL(currentScript?.getAttribute("src") || "_var.js", global.location.href);
 
+	// === /spa.js/ only: static routing can run in hash or path mode ===
+	const ROUTER_MODE = (localStorage.getItem("ROUTER_MODE") || "hash").toLowerCase();
+
 	bySPA.APP_ENV = localStorage.getItem("APP_ENV") || NOTENV_APP_ENV;
 	bySPA.ROUTER_MODE = ROUTER_MODE === "path" ? "path" : "hash";
+	// Determine the protocol (HTTP or HTTPS)
 	bySPA.PROTOCOL = global.location.protocol === "https:" ? "https://" : "http://";
+	// Get this script's file and directory path
 	bySPA.THIS__FILE__ = std_dir_separator(scriptURL.href);
 	bySPA.THIS_PATH = dirname(bySPA.THIS__FILE__);
+	// Set the absolute path to the home directory
 	bySPA.HOME_PATH = bySPA.THIS_PATH;
 
 	const currentDir = dirname(global.location.href);
@@ -54,15 +68,17 @@
 	const homeParts = homeURL.pathname.split("/").filter(Boolean);
 	const currentParts = currentURL.pathname.split("/").filter(Boolean);
 
+	// Calculate the difference in directory depth between the current document and the root directory
 	let common = 0;
 	while (homeParts[common] && homeParts[common] === currentParts[common]) common++;
+	bySPA.PATH_DIFF = Math.max(0, currentParts.length - homeParts.length);
 
 	const up = "../".repeat(Math.max(0, currentParts.length - common));
 	const down = homeParts.slice(common).join("/");
+	// Set the relative path to the home directory
 	bySPA.TO_HOME = up + down || ".";
 
-	bySPA.PATH_DIFF = Math.max(0, currentParts.length - homeParts.length);
-
+	// Store the calculated paths in the browser's localStorage
 	localStorage.setItem("APP_ENV", bySPA.APP_ENV);
 	localStorage.setItem("ROUTER_MODE", bySPA.ROUTER_MODE);
 	localStorage.setItem("PROTOCOL", bySPA.PROTOCOL);

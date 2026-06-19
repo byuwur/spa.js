@@ -16,6 +16,12 @@
 	global.bySPA = global.bySPA || {};
 	const bySPA = global.bySPA;
 
+	/*
+	 * === /spa.js/ only: browser helpers replacing PHP globals/rewrite rules ===
+	 * _router.php starts with $_GET["uri"] after Apache/nginx rewrites the URL.
+	 * Static /spa.js/ has to infer that same URI from ?uri=, #/hash routes,
+	 * normal path routing, or file:// fallback paths.
+	 */
 	function safeDecode(value) {
 		try {
 			return decodeURIComponent(value);
@@ -117,8 +123,10 @@
 		if (typeof bySPA.errorPage === "function") bySPA.errorPage(status, message);
 		return null;
 	}
+	/* === end /spa.js/ only === */
 
 	bySPA.initRouter = function () {
+		// The PHP rewrite rule is replaced here by reading the current browser URL.
 		const locationURL = new URL(global.location.href);
 		const host = global.location.host || "";
 		const notEnvAppEnv = /^(localhost|127\.0\.0\.1|\[::1\]|::1)(:\d+)?$/.test(host) ? "DEV" : "PROD";
@@ -128,17 +136,24 @@
 		const routes = getRoutes();
 		const storedGet = parse_json(localStorage.getItem("_GET")) || {};
 		const post = parse_json(localStorage.getItem("_POST")) || {};
+
+		// Initialize the URI from the GET parameter, hash route, path route, or fallback "/".
 		let get = queryToObject(locationURL.searchParams);
+		// Ensure the URI starts with a "/" and doesn't end with one, then handle /$/ parameters.
 		let { uri, url } = parseURI(getInitialURI(locationURL), get);
 		const route = routes[uri];
 
+		// Check if the URI exists in the routes object; if not, return a 404 error.
 		if (!route || (!Object.prototype.hasOwnProperty.call(route, "URI") && !Object.prototype.hasOwnProperty.call(route, "FILE"))) return routerError(404, `Route "${uri}" does not exist.`);
 
+		// Merge additional GET and POST parameters from the routes object.
 		get = { ...get, ...routeQueryToObject(route), ...(is_object(route.GET) ? route.GET : {}) };
 		if (route.URI === "") {
+			// === /spa.js/ only: preserve the current page for component-only routes ===
 			const currentURI = storedGet.uri || localStorage.getItem("URI") || "/";
 			get.uri = routes[currentURI]?.URI ? currentURI : "/";
 		}
+		// === /spa.js/ only: language support can adjust GET before localStorage is written ===
 		if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { uri, url, route });
 		const routePost = { ...post, ...(is_object(route.POST) ? route.POST : {}) };
 
@@ -153,6 +168,7 @@
 		bySPA._GET = get;
 		bySPA._POST = routePost;
 
+		// Store environment and routing information in localStorage for client-side use.
 		localStorage.setItem("APP_ENV", appEnv);
 		localStorage.setItem("APP_VERSION", appVersion);
 		localStorage.setItem("ROUTER_MODE", routerMode);
@@ -173,12 +189,13 @@
 		}
 
 		if (route.FILE) {
+			// === /spa.js/ only: static JS cannot send headers/readfile, so redirect to the asset ===
 			global.location.replace(homePathURL(route.FILE));
 			return { uri, url, file: route.FILE, get, post: routePost };
 		}
 
 		return { uri, url, route, get, post: routePost };
 	};
-
-	bySPA.initRouter();
 })(typeof window !== "undefined" ? window : this);
+
+bySPA.initRouter();
