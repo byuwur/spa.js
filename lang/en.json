@@ -9,14 +9,5 @@
 	"home_desc": "Welcome to our website. Explore our services and products.",
 	"page_desc": "Discover our latest news and updates here.",
 	"thisis": "This is",
-	"description": "The following is a test for this home-handmade SPA framework and router. Enjoy yourselves.",
-	"nav.home": "Home",
-	"nav.page": "Page",
-	"nav.video": "Video",
-	"nav.error": "Error",
-	"nav.languages": "Languages:",
-	"nav.toggle": "Toggle sidebar",
-	"footer.rights": "All rights reserved.",
-	"footer.made": "Made with",
-	"footer.by": "by"
+	"description": "The following is a test for this home-handmade SPA framework and router. Enjoy yourselves."
 }

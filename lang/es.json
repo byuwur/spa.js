@@ -9,14 +9,5 @@
 	"home_desc": "Bienvenido a nuestro sitio web. Explora nuestros servicios y productos.",
 	"page_desc": "Descubre nuestras \u00faltimas noticias y actualizaciones aqu\u00ed.",
 	"thisis": "Este es",
-	"description": "Lo siguiente es un test para este framework y enrutador casero y hecho a mano. Disfr\u00fatense.",
-	"nav.home": "Inicio",
-	"nav.page": "P\u00e1gina",
-	"nav.video": "Video",
-	"nav.error": "Error",
-	"nav.languages": "Idiomas:",
-	"nav.toggle": "Alternar men\u00fa lateral",
-	"footer.rights": "Derechos reservados.",
-	"footer.made": "Hecho con",
-	"footer.by": "por"
+	"description": "Lo siguiente es un test para este framework y enrutador casero y hecho a mano. Disfr\u00fatense."
 }

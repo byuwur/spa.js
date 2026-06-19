@@ -1,5 +1,3 @@
-## This is better replaced by [github.com/byuwur/spa.php](https://github.com/byuwur/spa.php). This repo will no longer be maintained to keep this in order in the base repo it is used. [This repo can also be used standalone]
-
 # byuwur/spa.js
 
 **byUwUr's Easy JS SPA**
