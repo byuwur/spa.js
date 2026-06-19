@@ -139,7 +139,7 @@
 			const currentURI = storedGet.uri || localStorage.getItem("URI") || "/";
 			get.uri = routes[currentURI]?.URI ? currentURI : "/";
 		}
-		if (get.lang && typeof bySPA.setLanguage === "function") get.lang = bySPA.setLanguage(get.lang);
+		if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { uri, url, route });
 		const routePost = { ...post, ...(is_object(route.POST) ? route.POST : {}) };
 
 		localStorage.removeItem("ROUTER_ERROR");
@@ -155,7 +155,6 @@
 
 		localStorage.setItem("APP_ENV", appEnv);
 		localStorage.setItem("APP_VERSION", appVersion);
-		localStorage.setItem("APP_LANG", bySPA.APP_LANG || "");
 		localStorage.setItem("ROUTER_MODE", routerMode);
 		localStorage.setItem("URI", uri);
 		localStorage.setItem("URL", url);

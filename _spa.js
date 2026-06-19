@@ -29,7 +29,6 @@
 	bySPA.HISTORY_PATH = [];
 	// === SPA.js ===
 	bySPA.ROUTER_MODE = localStorage.getItem("ROUTER_MODE") ?? "hash";
-	bySPA.APP_LANG = localStorage.getItem("APP_LANG") ?? "es";
 
 	/**
 	 * Updates local route variables in memory.
@@ -333,7 +332,7 @@
 		const route = bySPA.ROUTES[path] ?? {};
 		// === SPA.js ===
 		const get = { ...bySPA.queryFromURL(route?.URI), ...(route?.GET ?? {}), ...params, ...query };
-		if (get.lang && typeof bySPA.setLanguage === "function") get.lang = bySPA.setLanguage(get.lang);
+		if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { path, route, params, query });
 		// === SPA.js ===
 		const post = { ...(route?.POST ?? {}) };
 		// Determine the final URI based on the route
@@ -412,7 +411,7 @@
 				});
 			})
 			.catch(function (xhr, status, error) {
-        console.error(`Error (SPA): ${xhr?.status} ${status} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
+				console.error(`Error (SPA): ${xhr?.status} ${status} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
 				// === SPA.js ===
 				if (xhr?.responseText) document.documentElement.innerHTML = xhr.responseText;
 				else $("#spa-content").html(`<pre>Error (SPA): ${xhr?.status || 0} ${status || ""} ${error || ""}</pre>`);
@@ -436,9 +435,6 @@
 	 */
 	bySPA.afterLoad = function (routing) {
 		if (typeof byCommon !== "undefined" && byCommon) {
-			// === SPA.js ===
-			if (typeof byCommon.initLanguage === "function") byCommon.initLanguage(routing);
-			// === SPA.js ===
 			["initMisc", "initBootstrap", "initCaptcha", "initSidebar", "initParticles"].forEach(function (fn) {
 				if (typeof byCommon[fn] === "function") byCommon[fn]();
 			});
@@ -462,7 +458,6 @@
 			console.log("HISTORY_PATH=", bySPA.HISTORY_PATH);
 			// === SPA.js ===
 			console.log("ROUTER_MODE=", bySPA.ROUTER_MODE);
-			console.log("APP_LANG=", bySPA.APP_LANG);
 		}
 		// Handles the popstate event for navigating through browser history.
 		window.addEventListener("popstate", function (e) {

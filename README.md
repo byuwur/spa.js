@@ -25,16 +25,17 @@ This project is a simple, easy-to-use framework for building single-page applica
 
 ### Core Files [in priority order]
 
-- **\_spa.js:** Contains the main JavaScript functions for managing the SPA's frontend logic.
+- **\_functions.js:** Contains standalone helpers used across different parts of the application.
+- **\_common.js:** Optional Bootstrap/jQuery preset that initializes common UI elements.
 - **\_var.js:** Defines runtime variables and project-level SPA settings.
+- **\_lang.js:** Owns language state, JSON dictionaries, `data-i18n` hydration, and the optional Google Translate callback.
 - **\_routes.js:** Defines the route table and shared components.
-- **\_router.js:** Merges `_var.js` and `_routes.js`, prepares runtime route config, and starts the SPA engine.
+- **\_router.js:** Merges `_var.js`, `_lang.js`, and `_routes.js`, then prepares runtime route config.
+- **\_spa.js:** Contains the main JavaScript functions for managing the SPA's frontend logic.
 - **index.html:** Static entry point that loads the shell, assets, routes, and router.
 
 ### Additional Files
 
-- **\_functions.js:** Contains optional general-purpose helpers used across different parts of the application.
-- **\_common.js:** Optional Bootstrap/jQuery preset that initializes common UI elements.
 - **\_common.css:** Optional CSS file that styles common UI elements.
 - **\_error.html:** File rendered when SPA throws an error.
 - **lang/**: Contains static JSON language dictionaries.
@@ -60,6 +61,10 @@ This project is a simple, easy-to-use framework for building single-page applica
 4. Serve the folder with any static server and navigate. Suit yourself.
 
 > Opening `index.html` directly as `file://` only shows a fallback notice. Browsers block AJAX requests from `file://`, so route fragments such as `main.example.html` and components such as `sidebar.html` need a local/static server (`http://localhost/...`) to load correctly.
+
+> `_lang.js` chooses the current language from `?lang=`, route query values, the `lang` cookie, `localStorage.APP_LANG`, the browser language, then the default (`es`). It stores the selected value back into the cookie/localStorage and updates the `<html lang="">` attribute.
+
+> Language files live in `lang/{code}.json`. Use `data-i18n` for text content, `data-i18n-html` for trusted HTML snippets, `data-i18n-title` for `title`/Bootstrap tooltip titles, and `data-i18n-route` when a link route should come from the loaded JSON.
 
 ## Some other things I've made and used here
 

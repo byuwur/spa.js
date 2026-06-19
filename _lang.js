@@ -8,17 +8,25 @@
 
 /**
  * Initializes global object and assigns its properties.
- * This IIFE (Immediately Invoked Function Expression) ensures byCommon object exists globally
+ * This IIFE (Immediately Invoked Function Expression) ensures byCommon and bySPA objects exist globally
  * (typically on `window` in a browser) to avoid pollution and conflicts in the global namespace.
  * @param {Object} global - The global object, usually `window` in a browser.
  */
 (function (global) {
 	global.byCommon = global.byCommon || {};
+	global.bySPA = global.bySPA || {};
 	const byCommon = global.byCommon;
+	const bySPA = global.bySPA;
+
+	const DEFAULT_APP_LANG = "es";
+	const APP_LANGS = ["es", "en"];
+
 	// Common selectors
-	byCommon.LANG_PATH = "/lang";
-	byCommon.LANG_CACHE = {};
-	byCommon.LANG_STRINGS = {};
+	byCommon.LANG_PATH = byCommon.LANG_PATH || "/lang";
+	byCommon.LANG_CACHE = byCommon.LANG_CACHE || {};
+	byCommon.LANG_STRINGS = byCommon.LANG_STRINGS || {};
+	bySPA.APP_LANGS = Array.isArray(bySPA.APP_LANGS) && bySPA.APP_LANGS.length ? bySPA.APP_LANGS : APP_LANGS;
+	bySPA.DEFAULT_APP_LANG = bySPA.DEFAULT_APP_LANG || DEFAULT_APP_LANG;
 
 	function eachMatching(root, selector, callback) {
 		root = root && root.nodeType ? root : document;
@@ -26,42 +34,41 @@
 		root.querySelectorAll?.(selector).forEach(callback);
 	}
 
-	function normalizeLanguage(lang) {
-		const bySPA = global.bySPA || {};
-		if (typeof bySPA.normalizeLanguage === "function") return bySPA.normalizeLanguage(lang);
+	bySPA.normalizeLanguage = function (lang) {
 		lang = String(lang || "")
 			.trim()
 			.slice(0, 2)
 			.toLowerCase();
-		return ["es", "en"].includes(lang) ? lang : "";
-	}
+		return bySPA.APP_LANGS.includes(lang) ? lang : "";
+	};
 
-	function getCookie(name) {
-		return `; ${document.cookie}`.split(`; ${name}=`).pop().split(";").shift() || "";
-	}
-
-	byCommon.setLanguage = function (lang) {
-		const bySPA = global.bySPA || {};
-		if (typeof bySPA.setLanguage === "function") return bySPA.setLanguage(lang);
-		const normalized = normalizeLanguage(lang) || "es";
+	bySPA.setLanguage = function (lang) {
+		const normalized = bySPA.normalizeLanguage(lang) || bySPA.normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
+		bySPA.APP_LANG = normalized;
 		localStorage.setItem("APP_LANG", normalized);
-		document.cookie = `lang=${encodeURIComponent(normalized)};max-age=31536000;path=/`;
+		set_cookie("lang", normalized);
 		document.documentElement.setAttribute("lang", normalized);
 		document.documentElement.setAttribute("dir", "ltr");
 		return normalized;
 	};
 
+	byCommon.setLanguage = bySPA.setLanguage;
+
 	byCommon.getLanguage = function (routing = {}) {
-		const bySPA = global.bySPA || {};
 		return (
-			normalizeLanguage(routing?.get?.lang) ||
-			normalizeLanguage(bySPA._GET?.lang) ||
-			normalizeLanguage(bySPA.APP_LANG) ||
-			normalizeLanguage(localStorage.getItem("APP_LANG")) ||
-			normalizeLanguage(getCookie("lang")) ||
-			normalizeLanguage(global.navigator?.language) ||
-			"es"
+			bySPA.normalizeLanguage(routing?.get?.lang) ||
+			bySPA.normalizeLanguage(bySPA._GET?.lang) ||
+			bySPA.normalizeLanguage(bySPA.APP_LANG) ||
+			bySPA.normalizeLanguage(localStorage.getItem("APP_LANG")) ||
+			bySPA.normalizeLanguage(get_cookie("lang")) ||
+			bySPA.normalizeLanguage(global.navigator?.language) ||
+			bySPA.DEFAULT_APP_LANG
 		);
+	};
+
+	bySPA.prepareRouteGet = function (get = {}) {
+		if (get.lang) get.lang = bySPA.setLanguage(get.lang);
+		return get;
 	};
 
 	byCommon.getLangString = function (key, fallback = "") {
@@ -76,7 +83,6 @@
 	byCommon.loadLanguage = function (lang) {
 		lang = byCommon.setLanguage(lang);
 		if (byCommon.LANG_CACHE[lang]) return Promise.resolve(byCommon.LANG_CACHE[lang]);
-		const bySPA = global.bySPA || {};
 		const path = `${byCommon.LANG_PATH}/${lang}.json`;
 		const url = typeof bySPA.buildRequestURL === "function" ? bySPA.buildRequestURL(path) : `${String(bySPA.HOME_PATH || "").replace(/\/$/, "")}${path}`;
 		return Promise.resolve(
@@ -130,4 +136,9 @@
 				return null;
 			});
 	};
+
+	bySPA.setLanguage(get_url_param("lang") || get_cookie("lang") || localStorage.getItem("APP_LANG") || global.navigator?.language);
+	document.addEventListener("byspa:load", function (event) {
+		byCommon.initLanguage(event.detail);
+	});
 })(typeof window !== "undefined" ? window : this);
