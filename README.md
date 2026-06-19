@@ -6,9 +6,13 @@
 
 Looking for a more robust light SPA micro-framework with PHP? Check out [byuwur/spa.php](https://github.com/byuwur/spa.php)
 
+Test it out at: [byuwur.co/spa.php/](https://byuwur.co/spa.php/)
+
 ## What's this about?
 
 This project is a simple, easy-to-use framework for building single-page applications (SPAs) using vanilla JS. Since this is vanilla JS, this SPA is thought for static sites. It provides a structure for handling routing, static page fragments, reusable components, modals, and basic operations required for an SPA. The framework is designed to be lightweight and easy to integrate into existing projects.
+
+**[NEW!]** Try use this repository as a git submodule: See how it's used at [github.com/byuwur/stream.fgc](https://github.com/byuwur/stream.fgc/tree/main/frontend/dist). Easier than a package, because sometimes you don't need a package.
 
 ## What does it do?
 
