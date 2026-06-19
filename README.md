@@ -66,6 +66,8 @@ This project is a simple, easy-to-use framework for building single-page applica
 
 > Language files live in `lang/{code}.json`. Use `data-i18n` for text content, `data-i18n-html` for trusted HTML snippets, `data-i18n-title` for `title`/Bootstrap tooltip titles, and `data-i18n-route` when a link route should come from the loaded JSON.
 
+> `_spa.js` uses `POST` for page/component requests by default to stay close to `spa.php`, but is now switched to `GET` for better compatibility with engines like Wails. You can turn back to `POST` if you're using a more traditional server like Apache.
+
 ## Some other things I've made and used here
 
 - [easy-http-error](https://github.com/byuwur/easy-http-error) - Custom error page with server configurations.

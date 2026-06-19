@@ -176,7 +176,8 @@
 		const requestError = function (path) {
 			return $.ajax({
 				url: `${path}?e=${status}`,
-				type: "POST",
+				// === /spa.js/ only: GET by default for static nature ===
+				type: "GET",
 				data: { custom_error_message },
 				dataType: "text",
 			})
@@ -269,7 +270,8 @@
 		return $.ajax({
 			// === /spa.js/ only: static-safe component URL builder ===
 			url: bySPA.buildRequestURL(file, { ...get, uri: false }),
-			type: "POST",
+			// === /spa.js/ only: GET by default for static nature ===
+			type: "GET",
 			data: { ...post },
 			dataType: "text",
 		})
@@ -404,7 +406,8 @@
 		return $.ajax({
 			// === /spa.js/ only: static-safe page fragment URL ===
 			url: bySPA.buildRequestURL(uri ?? "/null", get),
-			type: "POST",
+			// === /spa.js/ only: GET by default for static nature ===
+			type: "GET",
 			data: { ...post },
 			dataType: "text",
 		})
