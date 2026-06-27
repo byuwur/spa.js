@@ -12,6 +12,7 @@
 
 	"sidebar.toggle": "Toggle sidebar menu",
 	"sidebar.menu": "menu",
+	"sidebar.logo_alt": "byuwur/spa.js logo",
 
 	"language.selector": "Languages:",
 	"language.spanish": "Español",
@@ -39,5 +40,12 @@
 	"demo.description": "The following is a test for this home-handmade SPA framework and router. Enjoy yourselves.",
 	"demo.this_is": "This is",
 	"demo.home.description": "Welcome to our website. Explore our services and products.",
-	"demo.page.description": "Discover our latest news and updates here."
+	"demo.page.description": "Discover our latest news and updates here.",
+
+	"title.default": "SPA.js | byUwUr",
+	"title.home": "SPA Home | byUwUr",
+	"title.page": "SPA Page | byUwUr",
+	"title.video": "SPA Subbed Video Demo | byUwUr",
+	"title.socket_server": "SPA Socket Server | byUwUr",
+	"title.socket_client": "SPA Socket Client | byUwUr"
 }

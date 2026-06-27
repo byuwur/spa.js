@@ -12,6 +12,7 @@
 
 	"sidebar.toggle": "サイドバーメニューを切り替え",
 	"sidebar.menu": "メニュー",
+	"sidebar.logo_alt": "byuwur/spa.js ロゴ",
 
 	"language.selector": "言語:",
 	"language.spanish": "Español",
@@ -39,5 +40,12 @@
 	"demo.description": "これは手作りのSPAフレームワークとルーターのテストです。楽しんでください。",
 	"demo.this_is": "これは",
 	"demo.home.description": "ウェブサイトへようこそ。サービスや製品をご覧ください。",
-	"demo.page.description": "最新ニュースと更新情報はこちらで確認できます。"
+	"demo.page.description": "最新ニュースと更新情報はこちらで確認できます。",
+
+	"title.default": "SPA.js | byUwUr",
+	"title.home": "SPA ホーム | byUwUr",
+	"title.page": "SPA ページ | byUwUr",
+	"title.video": "SPA 字幕付き動画デモ | byUwUr",
+	"title.socket_server": "SPA Socket Server | byUwUr",
+	"title.socket_client": "SPA Socket Client | byUwUr"
 }
