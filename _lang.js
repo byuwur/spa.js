@@ -19,7 +19,7 @@
 	const bySPA = global.bySPA;
 
 	const DEFAULT_APP_LANG = "es";
-	const APP_LANGS = ["es", "en"];
+	const APP_LANGS = ["es", "en", "ja"];
 
 	// Common selectors
 	byCommon.LANG_PATH = byCommon.LANG_PATH || "/lang";

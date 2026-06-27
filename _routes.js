@@ -17,6 +17,8 @@
 	const ROUTE_PAGE_ES = "pagina";
 	const ROUTE_HOME_EN = "home";
 	const ROUTE_PAGE_EN = "page";
+	const ROUTE_HOME_JA = "ja/home";
+	const ROUTE_PAGE_JA = "ja/page";
 	const ROUTE_VIDEO = "video";
 	const ROUTE_WEBSOCKET = "socket";
 	const ROUTE_PDF = "pdf";
@@ -34,10 +36,15 @@
 			ROUTE_HOME = "home";
 			ROUTE_PAGE = "page";
 			break;
+		case "ja":
+			ROUTE_HOME = "ja/home";
+			ROUTE_PAGE = "ja/page";
+			break;
 	}
 
 	const ROUTE_ES = "es";
 	const ROUTE_EN = "en";
+	const ROUTE_JA = "ja";
 	const ROUTE_ERROR = "error";
 	const ROUTE_LOGIN = "login";
 	const ROUTE_LOGOUT = "logout";
@@ -54,10 +61,13 @@
 		[`${ROUTE_ROOT}`]: { URI: `/main.example.html`, ...ROOT_COMPONENTS },
 		[`/${ROUTE_ES}`]: { URI: ``, GET: { lang: "es" }, ...ROOT_COMPONENTS },
 		[`/${ROUTE_EN}`]: { URI: ``, GET: { lang: "en" }, ...ROOT_COMPONENTS },
+		[`/${ROUTE_JA}`]: { URI: ``, GET: { lang: "ja" }, ...ROOT_COMPONENTS },
 		[`/${ROUTE_HOME_ES}`]: { URI: `/main.example.html`, GET: { lang: "es" }, ...ROOT_COMPONENTS },
 		[`/${ROUTE_HOME_EN}`]: { URI: `/main.example.html`, GET: { lang: "en" }, ...ROOT_COMPONENTS },
+		[`/${ROUTE_HOME_JA}`]: { URI: `/main.example.html`, GET: { lang: "ja" }, ...ROOT_COMPONENTS },
 		[`/${ROUTE_PAGE_ES}`]: { URI: `/page.example.html`, GET: { lang: "es" }, ...ROOT_COMPONENTS },
 		[`/${ROUTE_PAGE_EN}`]: { URI: `/page.example.html`, GET: { lang: "en" }, ...ROOT_COMPONENTS },
+		[`/${ROUTE_PAGE_JA}`]: { URI: `/page.example.html`, GET: { lang: "ja" }, ...ROOT_COMPONENTS },
 		[`/${ROUTE_VIDEO}`]: { URI: `/video.example.html`, ...ROOT_COMPONENTS },
 		[`/${ROUTE_PDF}`]: { FILE: `/img/pdf/sample.pdf` },
 	};
