@@ -34,6 +34,10 @@
 		root.querySelectorAll?.(selector).forEach(callback);
 	}
 
+	function refreshBootstrapWidgets() {
+		if (typeof byCommon.initBootstrap === "function") byCommon.initBootstrap();
+	}
+
 	bySPA.normalizeLanguage = function (lang) {
 		lang = String(lang || "")
 			.trim()
@@ -115,11 +119,22 @@
 			if (element.hasAttribute("data-bs-toggle")) element.setAttribute("data-bs-title", value);
 			if (typeof bootstrap !== "undefined" && bootstrap.Tooltip) bootstrap.Tooltip.getInstance(element)?.dispose();
 		});
+		eachMatching(root, "[data-i18n-label]", function (element) {
+			const key = element.getAttribute("data-i18n-label");
+			const value = byCommon.getLangString(key, element.getAttribute("aria-label") || element.getAttribute("title") || "");
+			element.setAttribute("aria-label", value);
+		});
+		eachMatching(root, "[data-i18n-alt]", function (element) {
+			const key = element.getAttribute("data-i18n-alt");
+			const value = byCommon.getLangString(key, element.getAttribute("alt") || "");
+			element.setAttribute("alt", value);
+		});
 		eachMatching(root, "[data-i18n-route]", function (element) {
 			const key = element.getAttribute("data-i18n-route");
 			const route = byCommon.getLangString(key, "").replace(/^\/+/, "");
 			if (route) element.setAttribute("href", `#/${route}`);
 		});
+		refreshBootstrapWidgets();
 		document.dispatchEvent(new CustomEvent("bycommon:language", { detail: { lang: localStorage.getItem("APP_LANG"), strings: byCommon.LANG_STRINGS } }));
 	};
 

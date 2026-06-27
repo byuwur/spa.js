@@ -22,6 +22,7 @@ This project is a simple, easy-to-use framework for building single-page applica
 - **Component Loading:** Load shared static fragments such as sidebars, navs, and footers.
 - **Static Language Files:** Load language dictionaries from JSON files without a backend.
 - **Bootstrap Integration:** Use the included optional helpers to reinitialize Bootstrap UI after each route load.
+- **Accessible i18n Attributes:** Translate visible text, trusted HTML, tooltips, aria labels, alt text, and localized routes from the same JSON files.
 - **AJAX Support:** The core uses `fetch`; optional helper functions can use jQuery when your project includes it.
 - **Custom Error Handling:** Set up static custom error pages for missing routes or failed fragment loads.
 
@@ -68,7 +69,9 @@ This project is a simple, easy-to-use framework for building single-page applica
 
 > `_lang.js` chooses the current language from `?lang=`, route query values, the `lang` cookie, `localStorage.APP_LANG`, the browser language, then the default (`es`). It stores the selected value back into the cookie/localStorage and updates the `<html lang="">` attribute.
 
-> Language files live in `lang/{code}.json`. Use `data-i18n` for text content, `data-i18n-html` for trusted HTML snippets, `data-i18n-title` for `title`/Bootstrap tooltip titles, and `data-i18n-route` when a link route should come from the loaded JSON.
+> Language files live in `lang/{code}.json`. Prefer dotted keys such as `nav.home`, `accessibility.open_panel`, and `demo.home.description` so page/feature ownership stays obvious. Use `data-i18n` for text content, `data-i18n-html` for trusted HTML snippets, `data-i18n-title` for `title`/Bootstrap tooltip titles, `data-i18n-label` for `aria-label`, `data-i18n-alt` for image alt text, and `data-i18n-route` when a link route should come from the loaded JSON.
+
+> `_spa.js` calls `byCommon.init()` after dynamic content is swapped. Keep reusable Bootstrap, tooltip, sidebar, and accessibility setup behind that common initializer so projects can inherit behavior instead of duplicating route hooks.
 
 > `_spa.js` uses `POST` for page/component requests by default to stay close to `spa.php`, but is now switched to `GET` for better compatibility with engines like Wails. You can turn back to `POST` if you're using a more traditional server like Apache.
 

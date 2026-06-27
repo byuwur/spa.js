@@ -442,11 +442,7 @@
 	 * @param {object} routing The route data that was loaded.
 	 */
 	bySPA.afterLoad = function (routing) {
-		if (typeof byCommon !== "undefined" && byCommon) {
-			["initMisc", "initBootstrap", "initCaptcha", "initSidebar", "initParticles"].forEach(function (fn) {
-				if (typeof byCommon[fn] === "function") byCommon[fn]();
-			});
-		}
+		if (typeof byCommon !== "undefined" && typeof byCommon.init === "function") byCommon.init();
 		document.dispatchEvent(new CustomEvent("byspa:load", { detail: routing }));
 	};
 
