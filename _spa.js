@@ -47,25 +47,12 @@
 		return state;
 	};
 
-	// Backward-compatible alias for code that used the old method name.
-	bySPA.getLocalStorageItems = function () {
-		return bySPA.setRouteState();
-	};
-
 	/*
 	 * === /spa.js/ only: static browser support ===
 	 * The original /spa.php/_spa.js starts below with historyPush(). PHP and the
 	 * web server have already normalized routes by then, so these helpers replace
 	 * only the server-side work that static HTML cannot do on its own.
 	 */
-	bySPA.usesHashRouting = function () {
-		return bySPA.ROUTER_MODE !== "path";
-	};
-
-	bySPA.usesFileProtocol = function () {
-		return window.location.protocol === "file:";
-	};
-
 	bySPA.hashToURL = function (hash) {
 		hash = String(hash || "");
 		const hashIndex = hash.indexOf("#/");
@@ -76,8 +63,8 @@
 	bySPA.browserURL = function (url) {
 		const base = String(bySPA.HOME_PATH || "").replace(/\/$/, "");
 		const routeURL = bySPA.parseURL(url).url;
-		if (bySPA.usesFileProtocol()) return `#${routeURL}`;
-		return bySPA.usesHashRouting() ? `${base}/#${routeURL}` : `${base}${routeURL}`;
+		if (window.location.protocol === "file:") return `#${routeURL}`;
+		return bySPA.ROUTER_MODE !== "path" ? `${base}/#${routeURL}` : `${base}${routeURL}`;
 	};
 
 	bySPA.fileHistory = function (url, replace = false) {
@@ -138,7 +125,7 @@
 		bySPA.HISTORY_INDEX++;
 		bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
 		// === /spa.js/ only: hash/file history instead of the PHP path URL ===
-		if (bySPA.usesFileProtocol()) return bySPA.fileHistory(url);
+		if (window.location.protocol === "file:") return bySPA.fileHistory(url);
 		history.pushState({ index: bySPA.HISTORY_INDEX, url }, "", bySPA.browserURL(url));
 	};
 
@@ -150,7 +137,7 @@
 		if (bySPA.HISTORY_INDEX < 0) bySPA.HISTORY_INDEX = 0;
 		bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
 		// === /spa.js/ only: hash/file history instead of the PHP path URL ===
-		if (bySPA.usesFileProtocol()) return bySPA.fileHistory(url, true);
+		if (window.location.protocol === "file:") return bySPA.fileHistory(url, true);
 		history.replaceState({ index: bySPA.HISTORY_INDEX, url }, "", bySPA.browserURL(url));
 	};
 
@@ -376,7 +363,7 @@
 		$("#spa-content").html("");
 		const { path, uri, file, get, post, component } = routing;
 		// === /spa.js/ only: browsers block AJAX fragment loading from file:// ===
-		if (bySPA.usesFileProtocol()) {
+		if (window.location.protocol === "file:") {
 			bySPA.renderFileProtocolNotice();
 			return Promise.resolve(null);
 		}
@@ -495,7 +482,7 @@
 		bySPA.load(`${bySPA.URL}`, { replace: true });
 		// === /spa.js/ only: hash routes do not emit popstate consistently ===
 		window.addEventListener("hashchange", function () {
-			if (!bySPA.usesHashRouting()) return;
+			if (!bySPA.ROUTER_MODE !== "path") return;
 			const nextURL = bySPA.hashToURL(window.location.hash);
 			if (!nextURL || nextURL === bySPA.URL) return;
 			bySPA.load(nextURL, { push: false, replace: true });
