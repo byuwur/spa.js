@@ -649,6 +649,9 @@ th {
   z-index: 0;
 }
 .overlay,
+.overlay-inverted,
+.overlay-vertical,
+.overlay-vertical-inverted,
 .overlay-primary,
 .overlay-secondary {
   position: absolute;
@@ -665,6 +668,27 @@ th {
   background: -o-linear-gradient(90deg, var(--secondary-color) 0%, var(--primary-color) 100%);
   background: -ms-linear-gradient(90deg, var(--secondary-color) 0%, var(--primary-color) 100%);
   background: linear-gradient(90deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+}
+.overlay-inverted {
+  background: -moz-linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: -webkit-linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: -o-linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: -ms-linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+.overlay-vertical {
+  background: -moz-linear-gradient(0deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+  background: -webkit-linear-gradient(0deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+  background: -o-linear-gradient(0deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+  background: -ms-linear-gradient(0deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+  background: linear-gradient(0deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+}
+.overlay-vertical-inverted {
+  background: -moz-linear-gradient(0deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: -webkit-linear-gradient(0deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: -o-linear-gradient(0deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: -ms-linear-gradient(0deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: linear-gradient(0deg, var(--primary-color) 0%, var(--secondary-color) 100%);
 }
 .overlay-primary {
   background: var(--primary-color);
@@ -1183,10 +1207,10 @@ th {
     width: 100vw;
   }
   .app-container {
-    padding: 0.5rem 0.5rem 0.5rem calc(0.5rem + var(--sidebar-width));
+    padding: 0rem 0rem 0rem calc(0rem + var(--sidebar-width));
   }
   .app-container.bywr-sidebar-expanded {
-    padding-left: 0.5rem;
+    padding-left: 0rem;
   }
   .bywr-sidebar-hidden {
     pointer-events: none;
@@ -1205,10 +1229,10 @@ th {
     visibility: visible;
   }
   .app-container {
-    padding: var(--sidebar-width) 0.5rem 0.5rem 0.5rem;
+    padding: var(--sidebar-width) 0rem 0rem 0rem;
   }
   .app-container.bywr-sidebar-expanded {
-    padding-top: 0.5rem;
+    padding-top: 0rem;
   }
   .bywr-sidebar:not(.bywr-sidebar-expanded) .bywr-sidebar-hidden {
     display: none;
@@ -1220,6 +1244,7 @@ th {
   background: linear-gradient(to bottom, #fefefe 0%, #fff 100%);
   border: 1px solid #ccc;
   box-shadow: 0 2px #fff inset;
+  margin: 1rem;
 }
 .app-content .container-fluid {
   padding: 2rem 4rem;
