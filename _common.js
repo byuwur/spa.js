@@ -21,6 +21,7 @@
   byCommon.SIDEBAR_HIDDEN_ID = "#bywr-sidebar-hidden";
   byCommon.APP_CONTAINER_SELECTOR = ".app-container";
   byCommon.COOKIE_CONSENT_READY = byCommon.COOKIE_CONSENT_READY || false;
+  byCommon.SECTION_TOP_OVERHEAD = 0;
 
   /**
    * Initializes the <Sidebar /> component in #spa-nav.
@@ -99,7 +100,7 @@
         if ($(this.hash).length)
           $(`html, body, ${byCommon.APP_CONTAINER_SELECTOR}`)
             .stop()
-            .animate({ scrollTop: $(this.hash).offset().top - 0 }, 999, "easeInOutExpo");
+            .animate({ scrollTop: $(this.hash).offset().top - byCommon.SECTION_TOP_OVERHEAD }, 99, "swing");
         // Collapse the navbar after clicking the link
         setTimeout(() => {
           $(".navbar-collapse").collapse("hide");
@@ -161,7 +162,15 @@
       // Initialize Offcanvas components
       [...document.querySelectorAll(".offcanvas")].forEach((offcanvasEl) => bootstrap.Offcanvas.getInstance(offcanvasEl) ?? new bootstrap.Offcanvas(offcanvasEl));
       // Initialize Tooltip components
-      [...document.querySelectorAll("[data-bs-toggle='tooltip']")].forEach((tooltipEl) => bootstrap.Tooltip.getInstance(tooltipEl) ?? new bootstrap.Tooltip(tooltipEl, { animation: false }));
+      [...document.querySelectorAll("[data-bs-toggle='tooltip']")].forEach((tooltipEl) => {
+        const tooltip = bootstrap.Tooltip.getInstance(tooltipEl) ?? new bootstrap.Tooltip(tooltipEl, { animation: false });
+        $(tooltipEl)
+          .off("pointerdown pointerleave pointerdown.tooltipDismiss pointerleave.tooltipDismiss")
+          .on("pointerdown pointerleave pointerdown.tooltipDismiss pointerleave.tooltipDismiss", function () {
+            tooltip.hide();
+          });
+        return tooltip;
+      });
       // Initialize Popover components
       [...document.querySelectorAll("[data-bs-toggle='popover']")].forEach((popoverEl) => bootstrap.Popover.getInstance(popoverEl) ?? new bootstrap.Popover(popoverEl, { animation: false }));
       // Initialize ScrollSpy components
