@@ -176,7 +176,7 @@
         });
     };
     const loadError = function (paths, index = 0) {
-      return remote_file_exists(paths[index]).then(function (exists) {
+      return remote_file_exists(`${paths[index]}?probe=1`).then(function (exists) {
         if (exists) return requestError(paths[index]);
         if (index + 1 < paths.length) return loadError(paths, index + 1);
         console.error(`Error (errorPage): No error page found.`, bySPA.APP_ENV == "DEV" ? paths : "");
@@ -351,15 +351,17 @@
    */
   bySPA.load = function (url, mode = { push: true }) {
     const historyMode = typeof mode === "object" ? mode : {};
+    // Log debug information if in development mode
+    if (bySPA.APP_ENV === "DEV") console.log(`loadSPA("${url}", ${parse_json(mode)})`);
     $("#spa-loader").fadeIn(1);
     const routing = bySPA.routeURL(`${url}`);
+    if (historyMode.push) bySPA.historyPush(`${url}`);
+    if (historyMode.replace) bySPA.historyReplace(`${url}`);
     // If routing fails, return early
     if (!routing)
       return bySPA.errorPage(404, `Route "${url}" does not exist.`).always(function () {
         setTimeout(() => $("#spa-loader").fadeOut(333), 333);
       });
-    if (historyMode.push) bySPA.historyPush(routing.url);
-    if (historyMode.replace) bySPA.historyReplace(routing.url);
     $("#spa-content").html("");
     const { path, uri, file, get, post, component } = routing;
     // === /spa.js/ only: browsers block AJAX fragment loading from file:// ===
@@ -367,11 +369,7 @@
       bySPA.renderFileProtocolNotice();
       return Promise.resolve(null);
     }
-    // Log debug information if in development mode
-    if (bySPA.APP_ENV === "DEV") {
-      console.log(`loadSPA("${url}")`);
-      console.log("routeURL(): PATH=", path, "; URI=", uri, "; FILE=", file, "; _GET=", get, "; _POST=", post, "; COMPONENT=", component);
-    }
+    if (bySPA.APP_ENV === "DEV") console.log("routeURL(): PATH=", path, "; URI=", uri, "; FILE=", file, "; _GET=", get, "; _POST=", post, "; COMPONENT=", component);
     // If a file is specified in the route, navigate to it directly
     // === /spa.js/ only: static-safe file route URL ===
     if (file) return (window.location = bySPA.buildRequestURL(file));
