@@ -3,7 +3,7 @@
  * File: _lang.js
  * Desc: Contains the logic in charge of multi-language support.
  * Deps: jQuery, /_functions.js
- * Copyright (c) 2025 Andrés Trujillo [Mateus] byUwUr
+ * Copyright (c) 2026 Andrés Trujillo [Mateus] byUwUr
  */
 
 /**
