@@ -332,22 +332,20 @@
     const requestedLang = params.get("lang") || cookieLang || "es";
     const lang = requestedLang === "en" ? "en" : "es";
 
-    const requestedError = params.get("e");
+    const requestedError = window.bySPA?.ERROR_STATUS?.toString() || params.get("e");
     const err = Object.hasOwn(errors, requestedError) ? requestedError : "500";
     const error = errors[err];
 
-    document.addEventListener("DOMContentLoaded", () => {
-      document.documentElement.lang = lang;
-      document.cookie = `lang=${lang}; Max-Age=31536000; Path=/; SameSite=Lax`;
-      document.getElementById("back").textContent = lang === "en" ? "Go back" : "Volver";
-      document.getElementById("sorry").textContent = lang === "en" ? "Sorry for the inconvenience." : "Lamentamos las molestias.";
-      document.getElementById("e_code").textContent = err;
-      document.getElementById("e_string_es").textContent = error.es;
-      document.getElementById("e_string_en").textContent = error.en;
-      document.getElementById("e_message").textContent = error.message[lang];
-      document.getElementById("custom_message").textContent = params.get("custom_message") || "";
-      document.title = `ERROR ${err}`;
-    });
+    document.documentElement.lang = lang;
+    document.cookie = `lang=${lang}; Max-Age=31536000; Path=/; SameSite=Lax`;
+    document.getElementById("back").textContent = lang === "en" ? "Go back" : "Volver";
+    document.getElementById("sorry").textContent = lang === "en" ? "Sorry for the inconvenience." : "Lamentamos las molestias.";
+    document.getElementById("e_code").textContent = err;
+    document.getElementById("e_string_es").textContent = error.es;
+    document.getElementById("e_string_en").textContent = error.en;
+    document.getElementById("e_message").textContent = error.message[lang];
+    document.getElementById("custom_message").textContent = window.bySPA?.ERROR_MESSAGE ?? params.get("custom_message") ?? "";
+    document.title = `ERROR ${err}`;
   </script>
 </body>
 
