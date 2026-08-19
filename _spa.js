@@ -150,28 +150,25 @@
     // === /spa.js/ only: static error fragment instead of PHP _error.php ===
     const paths = [`${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`];
     const render = function (data) {
-      // === /spa.js/ only: send bySPA variables to the error page
+      // Temporarily expose bySPA variables to the error page
       bySPA.ERROR_STATUS = status;
       bySPA.ERROR_MESSAGE = custom_error_message;
 
       document.documentElement.innerHTML = data;
-
-      // === /spa.js/ only: extract all <script> inside data to remove them and re-append them to force them to run
+      // extract all <script> inside data to remove them and re-append them to force them to run
       document.querySelectorAll("script").forEach(function (oldScript) {
         const newScript = document.createElement("script");
         for (const attr of oldScript.attributes) newScript.setAttribute(attr.name, attr.value);
         newScript.textContent = oldScript.textContent;
         oldScript.replaceWith(newScript);
       });
-
-      window.addEventListener(
+      /* window.addEventListener(
         "popstate",
         function () {
           window.location.reload();
         },
         { once: true }
-      );
-
+      ); */
       delete bySPA.ERROR_STATUS;
       delete bySPA.ERROR_MESSAGE;
       return data;
