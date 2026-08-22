@@ -27,6 +27,8 @@
   bySPA.TO_HOME = localStorage.getItem("TO_HOME");
   bySPA.HOME_PATH = localStorage.getItem("HOME_PATH");
   bySPA.HISTORY_PATH = [];
+  // These properties can be previously initialized to be overriden
+  byCommon.GLOBAL_TRANSITION_DURATION = byCommon.GLOBAL_TRANSITION_DURATION || 199;
 
   /*
    * === /spa.js/ only: static routing mode ===
@@ -94,7 +96,7 @@
         "</div>"
       ].join("")
     );
-    $("#spa-loader").fadeOut(111);
+    $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
   };
 
   bySPA.buildRequestURL = function (path, get = {}) {
@@ -162,13 +164,13 @@
         newScript.textContent = oldScript.textContent;
         oldScript.replaceWith(newScript);
       });
-      /* window.addEventListener(
+      window.addEventListener(
         "popstate",
         function () {
           window.location.reload();
         },
         { once: true }
-      ); */
+      );
       delete bySPA.ERROR_STATUS;
       delete bySPA.ERROR_MESSAGE;
       return data;
@@ -373,7 +375,7 @@
     // If routing fails, return early
     if (!routing)
       return bySPA.errorPage(404, `Route "${url}" does not exist.`).always(function () {
-        setTimeout(() => $("#spa-loader").fadeOut(333), 333);
+        $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
       });
     $("#spa-content").html("");
     const { path, uri, file, get, post, component } = routing;
@@ -431,7 +433,7 @@
         return null;
       })
       .always(function () {
-        setTimeout(() => $("#spa-loader").fadeOut(333), 333);
+        $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
       });
   };
 
