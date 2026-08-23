@@ -73,6 +73,10 @@
     return String(bySPA.HOME_PATH || localStorage.getItem("HOME_PATH") || global.location.origin).replace(/\/$/, "");
   }
 
+  function getRoutePath() {
+    return String(bySPA.ROUTE_PATH || getHomePath()).replace(/\/$/, "");
+  }
+
   function homePathURL(path) {
     if (/^[a-z][a-z0-9+.-]*:\/\//i.test(path)) return path;
     path = String(path || "");
@@ -86,10 +90,10 @@
     const hashURI = hashToURI(locationURL.hash);
     if (hashURI) return hashURI;
 
-    const homeURL = new URL(`${getHomePath()}/`, global.location.href);
-    const homePath = homeURL.pathname.replace(/\/$/, "");
-    if (homePath && locationURL.pathname.startsWith(homePath)) {
-      const relativePath = locationURL.pathname.slice(homePath.length) || "/";
+    const routeURL = new URL(`${getRoutePath()}/`, global.location.href);
+    const routePath = routeURL.pathname.replace(/\/$/, "");
+    if (routePath && locationURL.pathname.startsWith(routePath)) {
+      const relativePath = locationURL.pathname.slice(routePath.length) || "/";
       if (global.location.protocol === "file:" && /^\/index\.html?$/i.test(relativePath)) return "/";
       return relativePath;
     }
