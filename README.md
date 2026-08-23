@@ -43,13 +43,14 @@ This project is a simple, easy-to-use framework for building single-page applica
 
 ### Application configuration
 
+- **\_var.js:** Application-owned runtime and path settings. The repository demo supplies `demo/_var.js`.
 - **\_routes.js:** Application-owned route definitions. The repository demo supplies `demo/_routes.js`.
-- **lang/**: Application-owned JSON dictionaries. The repository demo supplies `demo/lang/` and configures `byCommon.LANG_PATH`.
+- **lang/**: Application-owned JSON dictionaries. The repository demo supplies `demo/lang/`.
 - **index.html:** The application shell. The repository demo supplies `demo/index.html`; the root file is only a compatibility redirect.
 
 ### Demo
 
-The runnable showcase is fully contained in `demo/`: its shell, routes, page fragments, sidebar, dictionaries, flags, sample PDF, and sample video. Visiting `https://byuwur.github.io/spa.js/` redirects to it while preserving the query string and hash route.
+The runnable showcase is fully contained in `demo/`: its application variables, shell, routes, page fragments, sidebar, dictionaries, flags, sample PDF, and sample video. It owns `HOME_PATH` like a real consumer and loads reusable framework files from the parent directory, which takes the place a submodule folder would have in another repository. Visiting `https://byuwur.github.io/spa.js/` redirects to it while preserving the query string and hash route.
 
 The root `img/icon-back.png`, `img/icon-fore.png`, and `img/byuwur.png` remain beside `_common.css` because shared CSS references them.
 
@@ -60,18 +61,17 @@ The root `img/icon-back.png`, `img/icon-fore.png`, and `img/byuwur.png` remain b
 
 ## Usage
 
-1. Define your application's routes in its own `_routes.js`.
-2. Use the routing system to manage your SPA's navigation.
-3. Add custom functionality by creating new HTML files and adding them to the routes.
-4. Serve the folder with any static server and navigate. Suit yourself.
+1. Keep application variables in your own `_var.js`.
+2. Define your application's routes in its own `_routes.js`.
+3. Use the routing system to manage your SPA's navigation.
+4. Add custom functionality by creating new HTML files and adding them to the routes.
+5. Serve the folder with any static server and navigate. Suit yourself.
 
 > Opening `demo/index.html` directly as `file://` only shows a fallback notice. Browsers block AJAX requests from `file://`, so demo route fragments and components need a local/static server (`http://localhost/...`) to load correctly.
 
 > `_lang.js` chooses the current language from `?lang=`, route query values, the `lang` cookie, `localStorage.APP_LANG`, the browser language, then the default (`es`). It stores the selected value back into the cookie/localStorage and updates the `<html lang="">` attribute.
 
-> Set `byCommon.LANG_PATH` when dictionaries do not live at the application root. The demo uses `/demo/lang`, resolved by SPA.js relative to the framework `HOME_PATH`. Prefer dotted keys such as `nav.home`, `accessibility.open_panel`, and `demo.home.description`.
-
-> Set `bySPA.ROUTE_PATH` when the browser-facing application path differs from the framework resource root. The demo uses it to keep hash history under `/demo/` while `HOME_PATH` continues to point at reusable root files.
+> Set `byCommon.LANG_PATH` when dictionaries do not live at the application root. The demo uses the default `/lang` path relative to its own `HOME_PATH`. Prefer dotted keys such as `nav.home`, `accessibility.open_panel`, and `demo.home.description`.
 
 > `_spa.js` calls `byCommon.init()` after dynamic content is swapped. Keep reusable Bootstrap, tooltip, sidebar, and accessibility setup behind that common initializer so projects can inherit behavior instead of duplicating route hooks.
 

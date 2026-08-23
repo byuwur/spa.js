@@ -26,7 +26,6 @@
   bySPA.ROUTES = parse_json(localStorage.getItem("ROUTES")) ?? {};
   bySPA.TO_HOME = localStorage.getItem("TO_HOME");
   bySPA.HOME_PATH = localStorage.getItem("HOME_PATH");
-  bySPA.ROUTE_PATH = bySPA.ROUTE_PATH || bySPA.HOME_PATH;
   bySPA.HISTORY_PATH = [];
   // These properties can be previously initialized to be overriden
   byCommon.GLOBAL_TRANSITION_DURATION = byCommon.GLOBAL_TRANSITION_DURATION || 199;
@@ -64,7 +63,7 @@
   };
 
   bySPA.browserURL = function (url) {
-    const base = String(bySPA.ROUTE_PATH || bySPA.HOME_PATH || "").replace(/\/$/, "");
+    const base = String(bySPA.HOME_PATH || "").replace(/\/$/, "");
     const routeURL = bySPA.parseURL(url).url;
     if (window.location.protocol === "file:") return `#${routeURL}`;
     return bySPA.ROUTER_MODE !== "path" ? `${base}/#${routeURL}` : `${base}${routeURL}`;
@@ -151,7 +150,7 @@
    */
   bySPA.errorPage = function (status, custom_error_message = "") {
     // === /spa.js/ only: static error fragment instead of PHP _error.php ===
-    const paths = [`${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`];
+    const paths = [bySPA.ERROR_PATH, `${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`].filter(Boolean);
     const render = function (data) {
       // Temporarily expose bySPA variables to the error page
       bySPA.ERROR_STATUS = status;
@@ -454,7 +453,6 @@
       console.log("APP_VERSION=", bySPA.APP_VERSION);
       console.log("TO_HOME=", bySPA.TO_HOME);
       console.log("HOME_PATH=", bySPA.HOME_PATH);
-      console.log("ROUTE_PATH=", bySPA.ROUTE_PATH);
       console.log("URI=", bySPA.URI);
       console.log("URL=", bySPA.URL);
       console.log("ROUTES=", bySPA.ROUTES);
@@ -484,12 +482,7 @@
         const absolute = new URL(href, window.location.href);
         if (absolute.origin != window.location.origin) return;
         // === /spa.js/ only: unwrap hash URLs before routing ===
-        const routePath = String(bySPA.ROUTE_PATH || "").replace(/\/$/, "");
-        const hashURL = bySPA.hashToURL(absolute.hash);
-        if (hashURL) nextURL = hashURL;
-        else if (routePath && (absolute.href === routePath || absolute.href.startsWith(`${routePath}/`))) nextURL = absolute.href.slice(routePath.length) || "/";
-        else if (bySPA.HOME_PATH && absolute.href.startsWith(bySPA.HOME_PATH)) nextURL = absolute.href.slice(bySPA.HOME_PATH.length) || "/";
-        else nextURL = `${absolute.pathname}${absolute.search}`;
+        nextURL = bySPA.hashToURL(absolute.hash) ?? (bySPA.HOME_PATH && absolute.href.startsWith(bySPA.HOME_PATH) ? absolute.href.slice(bySPA.HOME_PATH.length) || "/" : `${absolute.pathname}${absolute.search}`);
       } catch (error) {
         return;
       }

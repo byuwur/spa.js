@@ -53,23 +53,23 @@
 
   // Default components to include on each route
   const COMPONENTS_EMPTY = { COMPONENT: { "nav#spa-nav": "", "footer#spa-foot": "" } };
-  const ROOT_COMPONENTS = { COMPONENT: { "nav#spa-nav": "/demo/sidebar.html", "footer#spa-foot": "" } };
+  const ROOT_COMPONENTS = { COMPONENT: { "nav#spa-nav": "/sidebar.html", "footer#spa-foot": "" } };
 
   // Route definitions
   bySPA.ROUTES = {
     // "/"
-    [`${ROUTE_ROOT}`]: { URI: `/demo/main.example.html`, ...ROOT_COMPONENTS },
+    [`${ROUTE_ROOT}`]: { URI: `/main.example.html`, ...ROOT_COMPONENTS },
     [`/${ROUTE_ES}`]: { URI: ``, GET: { lang: "es" }, ...ROOT_COMPONENTS },
     [`/${ROUTE_EN}`]: { URI: ``, GET: { lang: "en" }, ...ROOT_COMPONENTS },
     [`/${ROUTE_JA}`]: { URI: ``, GET: { lang: "ja" }, ...ROOT_COMPONENTS },
-    [`/${ROUTE_HOME_ES}`]: { URI: `/demo/main.example.html`, GET: { lang: "es" }, ...ROOT_COMPONENTS },
-    [`/${ROUTE_HOME_EN}`]: { URI: `/demo/main.example.html`, GET: { lang: "en" }, ...ROOT_COMPONENTS },
-    [`/${ROUTE_HOME_JA}`]: { URI: `/demo/main.example.html`, GET: { lang: "ja" }, ...ROOT_COMPONENTS },
-    [`/${ROUTE_PAGE_ES}`]: { URI: `/demo/page.example.html`, GET: { lang: "es" }, ...ROOT_COMPONENTS },
-    [`/${ROUTE_PAGE_EN}`]: { URI: `/demo/page.example.html`, GET: { lang: "en" }, ...ROOT_COMPONENTS },
-    [`/${ROUTE_PAGE_JA}`]: { URI: `/demo/page.example.html`, GET: { lang: "ja" }, ...ROOT_COMPONENTS },
-    [`/${ROUTE_VIDEO}`]: { URI: `/demo/video.example.html`, ...ROOT_COMPONENTS },
-    [`/${ROUTE_PDF}`]: { FILE: `/demo/img/pdf/sample.pdf` }
+    [`/${ROUTE_HOME_ES}`]: { URI: `/main.example.html`, GET: { lang: "es" }, ...ROOT_COMPONENTS },
+    [`/${ROUTE_HOME_EN}`]: { URI: `/main.example.html`, GET: { lang: "en" }, ...ROOT_COMPONENTS },
+    [`/${ROUTE_HOME_JA}`]: { URI: `/main.example.html`, GET: { lang: "ja" }, ...ROOT_COMPONENTS },
+    [`/${ROUTE_PAGE_ES}`]: { URI: `/page.example.html`, GET: { lang: "es" }, ...ROOT_COMPONENTS },
+    [`/${ROUTE_PAGE_EN}`]: { URI: `/page.example.html`, GET: { lang: "en" }, ...ROOT_COMPONENTS },
+    [`/${ROUTE_PAGE_JA}`]: { URI: `/page.example.html`, GET: { lang: "ja" }, ...ROOT_COMPONENTS },
+    [`/${ROUTE_VIDEO}`]: { URI: `/video.example.html`, ...ROOT_COMPONENTS },
+    [`/${ROUTE_PDF}`]: { FILE: `/img/pdf/sample.pdf` }
   };
 
   localStorage.setItem("ROUTES", JSON.stringify(bySPA.ROUTES));
