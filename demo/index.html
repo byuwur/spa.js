@@ -4,7 +4,7 @@
 /*
  * File: index.html
  * Desc: Entry point for the Single Page Application (SPA). This file initializes configurations, handles routing, and loads the main structure of the SPA, including the header, content container, and footer. The page also includes necessary CSS and JS resources.
- * Deps: _functions.js, _common.js, _var.js, _lang.js, _routes.js, _router.js, _spa.js
+ * Deps: _functions.js, _common.js, _var.js, _lang.js, ./_routes.js, _router.js, _spa.js
  * Copyright (c) 2026 Andrés Trujillo [Mateus] byUwUr
  */
  -->
@@ -34,38 +34,44 @@
   <meta name="twitter:image:alt" content="SPA.js | byUwUr" />
   <meta name="theme-color" content="#300" />
   <link rel="canonical" href="https://byuwur.co/spa.js" />
-  <link rel="icon" type="image/png" href="./img/byuwur.png" />
-  <link rel="apple-touch-icon" href="./img/byuwur.png" />
+  <link rel="icon" type="image/png" href="../img/byuwur.png" />
+  <link rel="apple-touch-icon" href="../img/byuwur.png" />
   <!-- Remove per your needs -->
-  <link rel="stylesheet" href="./css/animate.min.css" />
-  <link rel="stylesheet" href="./css/fontawesome.min.css" />
-  <link rel="stylesheet" href="./css/jquery-ui.min.css" />
-  <link rel="stylesheet" href="./css/shards.css" />
-  <link rel="stylesheet" href="./css/bootstrap.min.css" />
-  <link rel="stylesheet" href="./css/swiper.min.css" />
-  <link rel="stylesheet" href="./css/video.min.css" />
-  <link rel="stylesheet" href="./css/select2.min.css" />
-  <link rel="stylesheet" href="./css/dropzone.min.css" />
-  <link rel="stylesheet" href="./_common.css" />
-  <script src="./js/jquery.min.js" defer></script>
-  <script src="./js/jquery-ui.min.js" defer></script>
-  <script src="./js/popper.min.js" defer></script>
-  <script src="./js/shards.min.js" defer></script>
-  <script src="./js/bootstrap.min.js" defer></script>
-  <script src="./js/swiper.min.js" defer></script>
-  <script src="./js/video.min.js" defer></script>
-  <script src="./js/select2.full.min.js" defer></script>
-  <script src="./js/dropzone.min.js" defer></script>
-  <script src="./js/typed.min.js" defer></script>
-  <script src="./js/particles-ui.min.js" defer></script>
-  <script src="./js/cookies.min.js" defer></script>
-  <script src="./_functions.js" defer></script>
-  <script src="./_common.js" defer></script>
-  <script src="./_var.js" defer></script>
-  <script src="./_lang.js" defer></script>
+  <link rel="stylesheet" href="../css/animate.min.css" />
+  <link rel="stylesheet" href="../css/fontawesome.min.css" />
+  <link rel="stylesheet" href="../css/jquery-ui.min.css" />
+  <link rel="stylesheet" href="../css/shards.css" />
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+  <link rel="stylesheet" href="../css/swiper.min.css" />
+  <link rel="stylesheet" href="../css/video.min.css" />
+  <link rel="stylesheet" href="../css/select2.min.css" />
+  <link rel="stylesheet" href="../css/dropzone.min.css" />
+  <link rel="stylesheet" href="../_common.css" />
+  <script>
+    window.bySPA = window.bySPA || {};
+    window.byCommon = window.byCommon || {};
+    window.bySPA.ROUTE_PATH = new URL("./", window.location.href).href.replace(/\/$/, "");
+    window.byCommon.LANG_PATH = "/demo/lang";
+  </script>
+  <script src="../js/jquery.min.js" defer></script>
+  <script src="../js/jquery-ui.min.js" defer></script>
+  <script src="../js/popper.min.js" defer></script>
+  <script src="../js/shards.min.js" defer></script>
+  <script src="../js/bootstrap.min.js" defer></script>
+  <script src="../js/swiper.min.js" defer></script>
+  <script src="../js/video.min.js" defer></script>
+  <script src="../js/select2.full.min.js" defer></script>
+  <script src="../js/dropzone.min.js" defer></script>
+  <script src="../js/typed.min.js" defer></script>
+  <script src="../js/particles-ui.min.js" defer></script>
+  <script src="../js/cookies.min.js" defer></script>
+  <script src="../_functions.js" defer></script>
+  <script src="../_common.js" defer></script>
+  <script src="../_var.js" defer></script>
+  <script src="../_lang.js" defer></script>
   <script src="./_routes.js" defer></script>
-  <script src="./_router.js" defer></script>
-  <script src="./_spa.js" defer></script>
+  <script src="../_router.js" defer></script>
+  <script src="../_spa.js" defer></script>
   <!--script src="https://www.google.com/recaptcha/api.js" defer></script-->
   <!--script src="https://translate.google.com/translate_a/element.js?cb=byCommon.initTranslate" defer></script-->
   <!-- Add your overrides below -->
