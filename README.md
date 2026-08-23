@@ -28,7 +28,7 @@ This project is a simple, easy-to-use framework for building single-page applica
 
 ## How is it done?
 
-### Framework/core files [in priority order]
+### Framework/Core files [in priority order]
 
 - **\_functions.js:** Contains standalone helpers used across different parts of the application.
 - **\_common.js:** Optional Bootstrap/jQuery preset that initializes common UI elements.
