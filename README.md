@@ -23,34 +23,64 @@ This project is a simple, easy-to-use framework for building single-page applica
 - **Static Language Files:** Load language dictionaries from JSON files without a backend.
 - **Bootstrap Integration:** Use the included optional helpers to reinitialize Bootstrap UI after each route load.
 - **Accessible i18n Attributes:** Translate visible text, trusted HTML, tooltips, aria labels, alt text, and localized routes from the same JSON files.
-- **AJAX Support:** The core uses `fetch`; optional helper functions can use jQuery when your project includes it.
+- **AJAX Support:** The SPA runtime uses jQuery AJAX to load routed fragments and components without a full page refresh.
 - **Custom Error Handling:** Set up static custom error pages for missing routes or failed fragment loads.
 
 ## How is it done?
 
+### What "SPA root" means
+
+- The **application root** is the public directory that owns one independently routed SPA, such as `stream.fgc/frontend/` or this repository's `demo/` directory.
+- The **framework root** is the `spa.js/` checkout or submodule consumed by that application. It normally lives at `application-root/spa.js/`; the repository demo uses the parent directory as the equivalent framework root. Reusable files stay there and are referenced from the application.
+
+The old `(root)` and `(main)` labels mixed location with responsibility. The distinction used here is **application-owned** versus **framework-owned**, followed by whether the file is required by the default setup.
+
+### REQUIRED at each application root
+
+The default static SPA layout requires:
+
+```text
+application-root/
+|-- index.html      # REQUIRED application shell
+|-- _var.js         # REQUIRED application path/environment configuration
+|-- _routes.js      # REQUIRED application route table
+`-- spa.js/         # REQUIRED framework checkout/submodule
+```
+
+- **index.html:** Loads the application shell and scripts in dependency order: framework helpers, the application `_var.js`, optional language support, the application `_routes.js`, then the framework router and SPA runtime.
+- **\_var.js:** Must be owned by each independent SPA root because its own script URL establishes `HOME_PATH`, `TO_HOME`, the environment, and the routing mode. Do not replace it with `spa.js/_var.js`; use the framework file as the starting implementation for the application copy.
+- **\_routes.js:** Must define the application's route table before `spa.js/_router.js` executes. Route fragments and components can live anywhere the table points.
+- **spa.js/:** In a normal consumer, the framework directory must remain reachable by browser asset URLs at this application-root path. The repository demo references the parent directory instead because it already is the framework checkout. A normal Git submodule still checks out the full directory.
+
+Hash routing needs no server rewrite. If an application selects path routing, its host must fall back to the application `index.html` for non-file routes.
+
 ### Framework/Core files [in priority order]
 
-- **\_functions.js:** Contains standalone helpers used across different parts of the application.
-- **\_common.js:** Optional Bootstrap/jQuery preset that initializes common UI elements.
-- **\_var.js:** Defines runtime variables and project-level SPA settings.
-- **\_lang.js:** Owns language state, JSON dictionaries, `data-i18n` hydration, and the optional Google Translate callback.
-- **\_router.js:** Combines the framework state with the application's route table and prepares runtime route config.
-- **\_spa.js:** Contains the main JavaScript functions for managing the SPA's frontend logic.
-- **\_common.css:** Optional shared styles.
-- **\_error.html:** Shared static error page.
-- **css/** and **js/**: Optional reusable vendor assets.
-- **img/**: Assets required by shared code or retained for compatibility.
+- **\_functions.js:** Provides the JSON, URL/path, HTTP, WebSocket, cookie, modal, form-request, and other standalone helpers used by the runtime and application scripts.
+- **\_common.js:** Provides the default `byCommon` runtime used by `_spa.js` and initializes shared sidebar, accessibility, Bootstrap, tooltip, modal, cookie-consent, particle, and video behavior when those elements or libraries are present.
+- **\_var.js:** Provides the starting implementation for the required application-owned `_var.js`, defining the paths and runtime settings consumed by the router and SPA loader.
+- **\_lang.js:** Optionally owns language selection and persistence, JSON dictionary loading, `data-i18n` hydration after route changes, and the Google Translate callback.
+- **\_router.js:** Reads the application route table, normalizes the initial hash or path URI, merges route parameters, handles direct file routes, and prepares the state consumed by `_spa.js`.
+- **\_spa.js:** Handles browser history, SPA link interception, routed fragment/component requests, content replacement, error loading, and the lifecycle run after dynamic content is inserted.
+- **\_common.css:** Provides the shared loader, sidebar, accessibility, and interface styles used by the default shell.
+- **\_error.html:** Provides the default static error page loaded when a route, fragment, or component request fails.
+- **css/** and **js/**: Reusable vendor assets used by the demo and available to applications. `_spa.js` requires jQuery, while Bootstrap and the other libraries are required only by the helpers or UI an application enables.
+- **img/**: Contains loader and interface assets referenced by `_common.css`, plus assets retained at framework-root paths for compatibility.
 
-### Application configuration
+### Application-owned optional files
 
-- **\_var.js:** Application-owned runtime and path settings. The repository demo supplies `demo/_var.js`.
-- **\_routes.js:** Application-owned route definitions. The repository demo supplies `demo/_routes.js`.
-- **lang/**: Application-owned JSON dictionaries. The repository demo supplies `demo/lang/`.
-- **index.html:** The application shell. The repository demo supplies `demo/index.html`; the root file is only a compatibility redirect.
+- **lang/**: JSON dictionaries required when the application loads `_lang.js`. The repository demo supplies `demo/lang/`.
+- **Route fragments and components:** Required only when referenced by `_routes.js`; the demo supplies its pages and sidebar under `demo/`.
+- **Application CSS, JavaScript, and images:** Required only when referenced by the application shell or its routed content.
+
+### Repository compatibility files
+
+- **index.html:** Redirects requests made to the deployed repository root into `demo/`. It is not the application shell consumers should copy.
+- **.nojekyll:** Keeps GitHub Pages from processing the static framework and demo files through Jekyll; it is not required on other static hosts.
 
 ### Demo
 
-The runnable showcase is fully contained in `demo/`: its application variables, shell, routes, page fragments, sidebar, dictionaries, flags, sample PDF, and sample video. It owns `HOME_PATH` like a real consumer and loads reusable framework files from the parent directory, which takes the place a submodule folder would have in another repository. Visiting `https://byuwur.github.io/spa.js/` redirects to it while preserving the query string and hash route.
+The runnable showcase is fully contained in `demo/`: its application variables, shell, routes, page fragments, sidebar, dictionaries, flags, sample PDF, and sample video. It owns `HOME_PATH` like a real consumer and loads reusable framework files from the parent directory, which takes the place a submodule folder would have in another repository. Visiting `https://byuwur.github.io/spa.js/` redirects to it.
 
 The root `img/icon-back.png`, `img/icon-fore.png`, and `img/byuwur.png` remain beside `_common.css` because shared CSS references them.
 
