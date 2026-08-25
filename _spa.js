@@ -343,7 +343,8 @@
     if (!Object.keys(bySPA.ROUTES).includes(path)) return null;
     const route = bySPA.ROUTES[path] ?? {};
     // === /spa.js/ only: preserve route URI query strings and language GET hooks ===
-    const get = { ...bySPA.queryFromURL(route?.URI), ...(route?.GET ?? {}), ...params, ...query };
+    // Application configuration is authoritative: route > /$/ params > query.
+    const get = { ...query, ...params, ...bySPA.queryFromURL(route?.URI), ...(route?.GET ?? {}) };
     if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { path, route, params, query });
     const post = { ...(route?.POST ?? {}) };
     // Determine the final URI based on the route

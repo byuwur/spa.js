@@ -167,6 +167,8 @@
     if (!route || (!Object.prototype.hasOwnProperty.call(route, "URI") && !Object.prototype.hasOwnProperty.call(route, "FILE"))) return routerError(404, `Route "${uri}" does not exist.`);
 
     // Merge additional GET and POST parameters from the routes object.
+    // Initial routing uses the same authority as client navigation:
+    // route-defined values > /$/ parameters > ordinary query values.
     get = { ...get, ...routeQueryToObject(route), ...(is_object(route.GET) ? route.GET : {}) };
     if (route.URI === "") {
       // === /spa.js/ only: preserve the current page for component-only routes ===
