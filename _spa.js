@@ -493,7 +493,7 @@
     bySPA.load(`${bySPA.URL}`, { replace: true });
     // === /spa.js/ only: hash routes do not emit popstate consistently ===
     window.addEventListener("hashchange", function () {
-      if (!bySPA.ROUTER_MODE !== "path") return;
+      if (bySPA.ROUTER_MODE === "path") return;
       const nextURL = bySPA.hashToURL(window.location.hash);
       if (!nextURL || nextURL === bySPA.URL) return;
       bySPA.load(nextURL, { push: false, replace: true });
