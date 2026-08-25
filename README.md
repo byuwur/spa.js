@@ -1,10 +1,12 @@
 # byuwur/spa.js
 
-SPA.js is a static SPA micro-framework/toolkit: a plain-JavaScript runtime using jQuery for AJAX and DOM integration.
+SPA.js is a static SPA micro-framework: a plain-JavaScript runtime using jQuery for AJAX and DOM integration.
 
 ## Runtime contracts
 
 jQuery and the core framework scripts are hard runtime dependencies. Bootstrap and bundled plugin integrations are optional unless used by the application. Current evergreen browsers served over HTTP(S) are supported; `file://` cannot reliably load fragments.
+
+`bySPA.VERSION` is the framework/runtime version and can be read with `console.log(bySPA.VERSION)`. `bySPA.APP_VERSION` remains the consuming application's version.
 
 Route data precedence is fixed: route-defined values override `/$/` path parameters, which override ordinary query parameters. Use `DATA` for static route request data. `POST` remains a compatible legacy alias, but static fragment requests are GET requests and do not have PHP-style POST semantics.
 
@@ -115,7 +117,7 @@ The root `img/icon-back.png`, `img/icon-fore.png`, and `img/byuwur.png` remain b
 4. Add custom functionality by creating new HTML files and adding them to the routes.
 5. Serve the folder with any static server and navigate. Suit yourself.
 
-### Migration
+### Migration [v14]
 
 `_var.js` was renamed to `_init.js`. Existing applications must rename their copied file and update every script reference from `_var.js` to `_init.js`; no compatibility alias is provided.
 
