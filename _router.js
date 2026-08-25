@@ -69,6 +69,26 @@
     return is_object(storedRoutes) ? storedRoutes : {};
   }
 
+  /**
+   * Validates the small public route contract before routing starts.
+   * @param {Object<string, Object>} routes Route table to validate.
+   * @return {Object<string, Object>} The same validated route table.
+   * @throws {TypeError} When a route or supported field has the wrong shape.
+   */
+  function validateRoutes(routes) {
+    Object.entries(routes).forEach(function ([path, route]) {
+      if (!is_object(route)) throw new TypeError(`Route "${path}" must be an object.`);
+      if (!("URI" in route) && !("FILE" in route)) throw new TypeError(`Route "${path}" must define URI or FILE.`);
+      ["URI", "FILE"].forEach(function (field) {
+        if (field in route && typeof route[field] !== "string") throw new TypeError(`Route "${path}" field ${field} must be a string.`);
+      });
+      ["GET", "POST", "DATA", "COMPONENT"].forEach(function (field) {
+        if (field in route && !is_object(route[field])) throw new TypeError(`Route "${path}" field ${field} must be an object.`);
+      });
+    });
+    return routes;
+  }
+
   function getHomePath() {
     return String(bySPA.HOME_PATH || byStorage.getItem("HOME_PATH") || global.location.origin).replace(/\/$/, "");
   }
@@ -133,7 +153,7 @@
     const appEnv = bySPA.APP_ENV || byStorage.getItem("APP_ENV") || notEnvAppEnv;
     const appVersion = bySPA.APP_VERSION || byStorage.getItem("APP_VERSION") || "0.1by";
     const routerMode = bySPA.ROUTER_MODE || byStorage.getItem("ROUTER_MODE") || "hash";
-    const routes = getRoutes();
+    const routes = validateRoutes(getRoutes());
     const storedGet = parse_json(byStorage.getItem("_GET")) || {};
     const post = parse_json(byStorage.getItem("_POST")) || {};
 
