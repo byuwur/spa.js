@@ -1,0 +1,14 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --check _functions.js && node --check _var.js && node --check _router.js && node --check _spa.js && node --check _lang.js
+      - run: node --test tests/runtime.test.js
