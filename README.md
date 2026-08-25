@@ -58,15 +58,17 @@ The default static SPA layout requires:
 ```text
 application-root/
 |-- index.html      # REQUIRED application shell
-|-- _var.js         # REQUIRED application path/environment configuration
+|-- _init.js        # REQUIRED application-specific SPA initialization
 |-- _routes.js      # REQUIRED application route table
 `-- spa.js/         # REQUIRED framework checkout/submodule
 ```
 
-- **index.html:** Loads the application shell and scripts in dependency order: framework helpers, the application `_var.js`, optional language support, the application `_routes.js`, then the framework router and SPA runtime.
-- **\_var.js:** Must be owned by each independent SPA root because its own script URL establishes `HOME_PATH`, `TO_HOME`, the environment, and the routing mode. Do not replace it with `spa.js/_var.js`; use the framework file as the starting implementation for the application copy.
+- **index.html:** Loads the application shell and scripts in dependency order: framework helpers, the application `_init.js`, optional language support, the application `_routes.js`, then the framework router and SPA runtime.
+- **\_init.js:** Copy this application-specific initialization file into each SPA root. Its own script URL and consuming document establish `HOME_PATH`, `TO_HOME`, the environment, routing mode, and namespaced storage. Loading `spa.js/_init.js` directly would make application context depend on the framework directory instead of the consuming static application.
 - **\_routes.js:** Must define the application's route table before `spa.js/_router.js` executes. Route fragments and components can live anywhere the table points.
 - **spa.js/:** In a normal consumer, the framework directory must remain reachable by browser asset URLs at this application-root path. The repository demo references the parent directory instead because it already is the framework checkout. A normal Git submodule still checks out the full directory.
+
+Framework files are reusable implementation; `_init.js` and `_routes.js` are application-owned copies/configuration. If a project has multiple independent SPA roots, each root needs its own `_init.js` and route table because initialization belongs to that entry-point context.
 
 Hash routing needs no server rewrite. If an application selects path routing, its host must fall back to the application `index.html` for non-file routes.
 
@@ -74,7 +76,7 @@ Hash routing needs no server rewrite. If an application selects path routing, it
 
 - **\_functions.js:** Provides the JSON, URL/path, HTTP, WebSocket, cookie, modal, form-request, and other standalone helpers used by the runtime and application scripts.
 - **\_common.js:** Provides the default `byCommon` runtime used by `_spa.js` and initializes shared sidebar, accessibility, Bootstrap, tooltip, modal, cookie-consent, particle, and video behavior when those elements or libraries are present.
-- **\_var.js:** Provides the starting implementation for the required application-owned `_var.js`, defining the paths and runtime settings consumed by the router and SPA loader.
+- **\_init.js:** Provides the starting implementation to copy as the required application-owned `_init.js`; it initializes paths, environment values, routing mode, namespaced storage, and runtime state before routes, the router, and the SPA loader.
 - **\_lang.js:** Optionally owns language selection and persistence, JSON dictionary loading, `data-i18n` hydration after route changes, and the Google Translate callback.
 - **\_router.js:** Reads the application route table, normalizes the initial hash or path URI, merges route parameters, handles direct file routes, and prepares the state consumed by `_spa.js`.
 - **\_spa.js:** Handles browser history, SPA link interception, routed fragment/component requests, content replacement, error loading, and the lifecycle run after dynamic content is inserted.
@@ -96,7 +98,7 @@ Hash routing needs no server rewrite. If an application selects path routing, it
 
 ### Demo
 
-The runnable showcase is fully contained in `demo/`: its application variables, shell, routes, page fragments, sidebar, dictionaries, flags, sample PDF, and sample video. It owns `HOME_PATH` like a real consumer and loads reusable framework files from the parent directory, which takes the place a submodule folder would have in another repository. Visiting `https://byuwur.github.io/spa.js/` redirects to it.
+The runnable showcase is fully contained in `demo/`: its application initialization, shell, routes, page fragments, sidebar, dictionaries, flags, sample PDF, and sample video. It owns `HOME_PATH` like a real consumer and loads reusable framework files from the parent directory, which takes the place a submodule folder would have in another repository. Visiting `https://byuwur.github.io/spa.js/` redirects to it.
 
 The root `img/icon-back.png`, `img/icon-fore.png`, and `img/byuwur.png` remain beside `_common.css` because shared CSS references them.
 
@@ -107,11 +109,15 @@ The root `img/icon-back.png`, `img/icon-fore.png`, and `img/byuwur.png` remain b
 
 ## Usage
 
-1. Keep application variables in your own `_var.js`.
+1. Copy `_init.js` into the application root and keep that application-specific initialization there.
 2. Define your application's routes in its own `_routes.js`.
 3. Use the routing system to manage your SPA's navigation.
 4. Add custom functionality by creating new HTML files and adding them to the routes.
 5. Serve the folder with any static server and navigate. Suit yourself.
+
+### Migration
+
+`_var.js` was renamed to `_init.js`. Existing applications must rename their copied file and update every script reference from `_var.js` to `_init.js`; no compatibility alias is provided.
 
 > Opening `demo/index.html` directly as `file://` only shows a fallback notice. Browsers block AJAX requests from `file://`, so demo route fragments and components need a local/static server (`http://localhost/...`) to load correctly.
 

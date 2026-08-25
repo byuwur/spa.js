@@ -1,7 +1,7 @@
 "use strict";
 /*
- * File: _var.js
- * Desc: Initializes the system environment, sets up path-related variables, and optionally stores these values in the browser's byStorage. (MUST be included in every file)
+ * File: _init.js
+ * Desc: Initializes the application-specific SPA environment, paths, storage, and runtime state. (MUST load before routes and the SPA runtime)
  * Deps: none
  * Copyright (c) 2026 Andrés Trujillo [Mateus] byUwUr
  */
@@ -104,12 +104,12 @@
   const NOTENV_APP_ENV = /^(localhost|127\.0\.0\.1|\[::1\]|::1)(:\d+)?$/.test(host) ? "DEV" : "PROD";
 
   /*
-   * Initializes the path variables that _var.php normally calculates from
+   * Initializes the path values that _init.php normally calculates from
    * PHP server values. Static /spa.js/ uses the script URL and browser
    * location instead of __FILE__, SCRIPT_FILENAME and PHP_SELF.
    */
   const currentScript = document.currentScript;
-  const scriptURL = new URL(currentScript?.getAttribute("src") || "_var.js", global.location.href);
+  const scriptURL = new URL(currentScript?.getAttribute("src") || "_init.js", global.location.href);
 
   // === /spa.js/ only: static routing can run in hash or path mode ===
   const ROUTER_MODE = (byStorage.getItem("ROUTER_MODE") || "hash").toLowerCase();
