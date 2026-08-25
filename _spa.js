@@ -346,7 +346,9 @@
     // Application configuration is authoritative: route > /$/ params > query.
     const get = { ...query, ...params, ...bySPA.queryFromURL(route?.URI), ...(route?.GET ?? {}) };
     if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { path, route, params, query });
-    const post = { ...(route?.POST ?? {}) };
+    // Keep POST as a compatibility alias for existing static route tables.
+    // DATA is preferred and still travels through the GET-based static request.
+    const post = { ...(route?.POST ?? {}), ...(route?.DATA ?? {}) };
     // Determine the final URI based on the route
     uri = route?.URI;
     // Determine the correct URI if it's not explicitly set
