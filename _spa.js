@@ -179,6 +179,13 @@
         newScript.textContent = oldScript.textContent;
         oldScript.replaceWith(newScript);
       });
+      window.addEventListener(
+        "popstate",
+        function () {
+          window.location.reload();
+        },
+        { once: true }
+      );
       delete bySPA.ERROR_STATUS;
       delete bySPA.ERROR_MESSAGE;
       return data;
