@@ -2,26 +2,22 @@
   "route.home": "home",
   "route.page": "page",
   "route.video": "video",
-
   "loader.loading": "<strong>Loading...</strong><br><br>Still loading? <a href='javascript:location.reload();'>Try reloading.</a>",
-
   "nav.home": "Home",
   "nav.page": "Page",
   "nav.video": "Subbed Video Demo",
+  "nav.json": "JSON",
+  "nav.md": "MarkDown",
   "nav.error": "Error",
-
   "sidebar.toggle": "Toggle sidebar menu",
   "sidebar.menu": "menu",
   "sidebar.logo_alt": "byuwur/spa.js logo",
-
   "language.selector": "Languages:",
   "language.spanish": "Español",
   "language.english": "English",
-
   "footer.rights": "All rights reserved.",
   "footer.made_with": "Made with",
   "footer.by": "by",
-
   "accessibility.open_panel": "Open accessibility tools",
   "accessibility.increase_text": "Increase text size",
   "accessibility.reset_text": "Reset text size",
@@ -36,12 +32,10 @@
   "accessibility.protanopia": "Use protanopia filter",
   "accessibility.deuteranopia": "Use deuteranopia filter",
   "accessibility.tritanopia": "Use tritanopia filter",
-
   "demo.description": "The following is a test for this home-handmade SPA framework and router. Enjoy yourselves.",
   "demo.this_is": "This is",
   "demo.home.description": "Welcome to our website. Explore our services and products.",
   "demo.page.description": "Discover our latest news and updates here.",
-  
   "title.default": "SPA.js | byUwUr",
   "title.home": "SPA Home | byUwUr",
   "title.page": "SPA Page | byUwUr",

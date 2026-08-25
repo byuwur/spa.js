@@ -20,6 +20,8 @@
   const ROUTE_HOME_JA = "ja/home";
   const ROUTE_PAGE_JA = "ja/page";
   const ROUTE_VIDEO = "video";
+  const ROUTE_JSON = "json";
+  const ROUTE_MD = "md";
   const ROUTE_WEBSOCKET = "socket";
   const ROUTE_PDF = "pdf";
 
@@ -69,6 +71,8 @@
     [`/${ROUTE_PAGE_EN}`]: { URI: `/page.example.html`, GET: { lang: "en" }, ...ROOT_COMPONENTS },
     [`/${ROUTE_PAGE_JA}`]: { URI: `/page.example.html`, GET: { lang: "ja" }, ...ROOT_COMPONENTS },
     [`/${ROUTE_VIDEO}`]: { URI: `/video.example.html`, ...ROOT_COMPONENTS },
+    [`/${ROUTE_JSON}`]: { URI: `/json.example.html`, ...ROOT_COMPONENTS },
+    [`/${ROUTE_MD}`]: { URI: `/md.example.html`, ...ROOT_COMPONENTS },
     [`/${ROUTE_PDF}`]: { FILE: `/img/pdf/sample.pdf` }
   };
 

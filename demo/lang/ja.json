@@ -2,26 +2,22 @@
   "route.home": "ja/home",
   "route.page": "ja/page",
   "route.video": "video",
-
   "loader.loading": "<strong>読み込み中...</strong><br><br>読み込みが終わらない場合は、<a href='javascript:location.reload();'>再読み込みしてください。</a>",
-
   "nav.home": "ホーム",
   "nav.page": "ページ",
   "nav.video": "字幕付き動画デモ",
+  "nav.json": "JSON",
+  "nav.md": "MarkDown",
   "nav.error": "エラー",
-
   "sidebar.toggle": "サイドバーメニューを切り替え",
   "sidebar.menu": "menu",
   "sidebar.logo_alt": "byuwur/spa.js ロゴ",
-
   "language.selector": "言語:",
   "language.spanish": "Español",
   "language.english": "English",
-
   "footer.rights": "無断転載を禁じます。",
   "footer.made_with": "作成:",
   "footer.by": "by",
-
   "accessibility.open_panel": "アクセシビリティツールを開く",
   "accessibility.increase_text": "文字サイズを大きくする",
   "accessibility.reset_text": "文字サイズをリセット",
@@ -36,12 +32,10 @@
   "accessibility.protanopia": "1型色覚フィルターを使用",
   "accessibility.deuteranopia": "2型色覚フィルターを使用",
   "accessibility.tritanopia": "3型色覚フィルターを使用",
-
   "demo.description": "これは手作りのSPAフレームワークとルーターのテストです。楽しんでください。",
   "demo.this_is": "これは",
   "demo.home.description": "ウェブサイトへようこそ。サービスや製品をご覧ください。",
   "demo.page.description": "最新ニュースと更新情報はこちらで確認できます。",
-  
   "title.default": "SPA.js | byUwUr",
   "title.home": "SPA ホーム | byUwUr",
   "title.page": "SPA ページ | byUwUr",

@@ -20,6 +20,16 @@
       <span data-i18n="nav.video">Video</span>
       <i class="fas fa-angle-right ms-auto"></i>
     </a>
+    <a class="bywr-sidebar-option" href="#/json" data-i18n-route="route.json">
+      <i class="fas fa-code"></i>
+      <span data-i18n="nav.json">JSON</span>
+      <i class="fas fa-angle-right ms-auto"></i>
+    </a>
+    <a class="bywr-sidebar-option" href="#/md" data-i18n-route="route.md">
+      <i class="fas fa-laptop-code"></i>
+      <span data-i18n="nav.md">MarkDown</span>
+      <i class="fas fa-angle-right ms-auto"></i>
+    </a>
     <a class="bywr-sidebar-option" href="#/error">
       <i class="fas fa-bug"></i>
       <span data-i18n="nav.error">Error</span>
@@ -66,6 +76,11 @@
   </div>
 </nav>
 <script>
+  /*
+   * Keep fragment-local declarations inside this callback.
+   * SPA routes execute in the same document, so top-level const/let bindings
+   * remain declared and cause redeclaration errors when a fragment loads again.
+   */
   $(() => {
     $("#current-year").html(new Date().getFullYear());
   });
