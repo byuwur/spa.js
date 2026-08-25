@@ -94,7 +94,8 @@
         url,
         type: "GET",
         dataType: "json",
-        cache: true
+        cache: true,
+        timeout: bySPA.REQUEST_TIMEOUT
       })
     ).then(function (strings) {
       byCommon.LANG_CACHE[lang] = strings || {};
@@ -135,14 +136,23 @@
       if (route) element.setAttribute("href", `#/${route}`);
     });
     refreshBootstrapWidgets();
-    document.dispatchEvent(new CustomEvent("bycommon:language", { detail: { lang: byStorage.getItem("APP_LANG"), strings: byCommon.LANG_STRINGS } }));
+    document.dispatchEvent(new CustomEvent("byCommon:language", { detail: { lang: byStorage.getItem("APP_LANG"), strings: byCommon.LANG_STRINGS } }));
   };
 
+  /**
+   * Loads and applies the active route language for its navigation generation.
+   * A late dictionary response is cached but cannot overwrite a newer route.
+   * @param {Object} [routing={}] Route detail, including optional `navigationId` and GET data.
+   * @return {Promise<Object|null>} Applied dictionary, or null after failure/staleness.
+   */
   byCommon.initLanguage = function (routing = {}) {
     const lang = byCommon.getLanguage(routing);
+    const navigationId = routing.navigationId ?? bySPA.NAVIGATION_ID;
     return byCommon
       .loadLanguage(lang)
       .then(function (strings) {
+        // Language is route-owned; do not translate newer content with an old response.
+        if (navigationId !== bySPA.NAVIGATION_ID) return null;
         byCommon.applyLanguage(document, strings);
         return strings;
       })
@@ -153,7 +163,7 @@
   };
 
   bySPA.setLanguage(get_url_param("lang") || get_cookie("lang") || byStorage.getItem("APP_LANG") || global.navigator?.language);
-  document.addEventListener("byspa:load", function (event) {
+  document.addEventListener("bySPA:load", function (event) {
     byCommon.initLanguage(event.detail);
   });
 })(typeof window !== "undefined" ? window : this);

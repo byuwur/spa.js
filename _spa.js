@@ -27,6 +27,10 @@
   bySPA.TO_HOME = byStorage.getItem("TO_HOME");
   bySPA.HOME_PATH = byStorage.getItem("HOME_PATH");
   bySPA.HISTORY_PATH = [];
+  // Monotonic route ownership prevents older asynchronous work from mutating a newer route.
+  bySPA.NAVIGATION_ID = 0;
+  // Applications may override this before requests are started.
+  bySPA.REQUEST_TIMEOUT = bySPA.REQUEST_TIMEOUT || 30000;
   // These properties can be previously initialized to be overriden
   byCommon.GLOBAL_TRANSITION_DURATION = byCommon.GLOBAL_TRANSITION_DURATION || 199;
 
@@ -145,13 +149,18 @@
 
   /**
    * Displays an error page by sending an AJAX request to the server.
-   * @param {int} status HTTP status code.
+   * Error fragments render inside the current shell and stale navigation responses are ignored.
+   * @param {number} status HTTP status code.
    * @param {string} custom_error_message A custom error message to display.
+   * @param {number} navigationId Navigation generation that owns the error.
+   * @return {Promise<string|null>} Error-fragment request result.
    */
-  bySPA.errorPage = function (status, custom_error_message = "") {
+  bySPA.errorPage = function (status, custom_error_message = "", navigationId = bySPA.NAVIGATION_ID) {
     // === /spa.js/ only: static error fragment instead of PHP _error.php ===
     const paths = [bySPA.ERROR_PATH, `${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`].filter(Boolean);
     const render = function (data) {
+      // A late error must not replace content belonging to a newer route.
+      if (navigationId !== bySPA.NAVIGATION_ID) return null;
       // Temporarily expose bySPA variables to the error page
       bySPA.ERROR_STATUS = status;
       bySPA.ERROR_MESSAGE = custom_error_message;
@@ -164,13 +173,6 @@
         newScript.textContent = oldScript.textContent;
         oldScript.replaceWith(newScript);
       });
-      window.addEventListener(
-        "popstate",
-        function () {
-          window.location.reload();
-        },
-        { once: true }
-      );
       delete bySPA.ERROR_STATUS;
       delete bySPA.ERROR_MESSAGE;
       return data;
@@ -181,21 +183,21 @@
         // === /spa.js/ only: GET by default for static nature ===
         type: "GET",
         data: { custom_error_message },
-        dataType: "text"
+        dataType: "text",
+        timeout: bySPA.REQUEST_TIMEOUT
       })
         .then(render)
         .catch(function (xhr, ajaxStatus, error) {
+          if (navigationId !== bySPA.NAVIGATION_ID) return null;
           if (xhr?.responseText) return render(xhr.responseText);
           console.error(`Error (errorPage): ${xhr?.status} ${ajaxStatus} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
           return null;
         });
     };
     const loadError = function (paths, index = 0) {
-      return remote_file_exists(`${paths[index]}?probe=1`).then(function (exists) {
-        if (exists) return requestError(paths[index]);
-        if (index + 1 < paths.length) return loadError(paths, index + 1);
-        console.error(`Error (errorPage): No error page found.`, bySPA.APP_ENV == "DEV" ? paths : "");
-        return null;
+      return requestError(paths[index]).then(function (data) {
+        if (data !== null || index + 1 >= paths.length) return data;
+        return loadError(paths, index + 1);
       });
     };
     return loadError(paths);
@@ -256,8 +258,10 @@
    * @param {string} file The file path to load the content from.
    * @param {object} get The GET parameters to pass.
    * @param {object} post The POST parameters to pass.
+   * @param {number} navigationId Navigation generation that owns the component request.
+   * @return {Promise<string|null>|jQuery|undefined} Component request or immediate clear/validation result.
    */
-  bySPA.reloadComponent = function (component, file, get, post) {
+  bySPA.reloadComponent = function (component, file, get, post, navigationId = bySPA.NAVIGATION_ID) {
     if (!component.includes("#")) return console.warn(`Can't use Component: ID${bySPA.APP_ENV === "DEV" ? " " + component : ""} isn't valid`);
     if (!bySPA.validateQuerySelector(component)) return console.warn(`Can't use Component: ${bySPA.APP_ENV === "DEV" ? component : ""} isn't valid`);
     if (!bySPA.componentIdExists(component)) {
@@ -275,13 +279,17 @@
       // === /spa.js/ only: GET by default for static nature ===
       type: "GET",
       data: { ...post },
-      dataType: "text"
+      dataType: "text",
+      timeout: bySPA.REQUEST_TIMEOUT
     })
       .then(function (data) {
+        // Ignore a slow component after the user has moved to another route.
+        if (navigationId !== bySPA.NAVIGATION_ID) return null;
         $(componentId).html(data);
         return data;
       })
       .catch(function (xhr, status, error) {
+        if (navigationId !== bySPA.NAVIGATION_ID) return null;
         console.warn(`Error (component): ${xhr?.status} ${status} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
         $(componentId).html("");
         return null;
@@ -365,10 +373,16 @@
   /**
    * Loads the SPA content for the given URL, optionally pushing the state to history.
    * @param {string} url The URL to load.
-   * @param {object} mode History handling options.
+   * Each call owns a new navigation generation; older page, component, error,
+   * loader, language, and lifecycle results cannot mutate the current route.
+   * Emits bySPA:before-unload, followed by bySPA:load or bySPA:error.
+   * @param {object} mode History handling options (`push` and `replace`).
+   * @return {Promise<string|null>|void} Page request, error request, or direct file navigation.
    */
   bySPA.load = function (url, mode = { push: true }) {
+    const navigationId = ++bySPA.NAVIGATION_ID;
     const historyMode = typeof mode === "object" ? mode : {};
+    document.dispatchEvent(new CustomEvent("bySPA:before-unload", { detail: { navigationId, url } }));
     // Log debug information if in development mode
     if (bySPA.APP_ENV === "DEV") console.log(`loadSPA("${url}", ${parse_json(mode)})`);
     $("#spa-loader").fadeIn(1);
@@ -404,7 +418,7 @@
     }
     // Reload each component associated with the route
     const componentLoads = [];
-    for (let key in component || {}) componentLoads.push(bySPA.reloadComponent(key, component[key], get, post));
+    for (let key in component || {}) componentLoads.push(bySPA.reloadComponent(key, component[key], get, post, navigationId));
     // Retrieve the page data
     return $.ajax({
       // === /spa.js/ only: static-safe page fragment URL ===
@@ -412,41 +426,39 @@
       // === /spa.js/ only: GET by default for static nature ===
       type: "GET",
       data: { ...post },
-      dataType: "text"
+      dataType: "text",
+      timeout: bySPA.REQUEST_TIMEOUT
     })
       .then(function (data) {
+        // Correctness does not depend on aborting XHR: stale responses simply
+        // lose ownership of all DOM and lifecycle side effects.
+        if (navigationId !== bySPA.NAVIGATION_ID) return null;
         $("#spa-content").html(data);
         return Promise.allSettled(componentLoads.map((load) => Promise.resolve(load))).then(function () {
-          bySPA.afterLoad(routing);
+          if (navigationId === bySPA.NAVIGATION_ID) bySPA.afterLoad({ ...routing, navigationId });
           return data;
         });
       })
       .catch(function (xhr, status, error) {
+        if (navigationId !== bySPA.NAVIGATION_ID) return null;
         console.error(`Error (SPA): ${xhr?.status} ${status} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
         // === /spa.js/ only: XHR can fail before responseText exists in static mode ===
-        if (xhr?.responseText) document.documentElement.innerHTML = xhr.responseText;
-        else $("#spa-content").html(`<pre>Error (SPA): ${xhr?.status || 0} ${status || ""} ${error || ""}</pre>`);
-        window.addEventListener(
-          "popstate",
-          function () {
-            window.location.reload();
-          },
-          { once: true }
-        );
+        document.dispatchEvent(new CustomEvent("bySPA:error", { detail: { navigationId, url, status: xhr?.status || 0, error } }));
+        $("#spa-content").html(xhr?.responseText || `<pre>Error (SPA): ${xhr?.status || 0} ${status || ""} ${error || ""}</pre>`);
         return null;
       })
       .always(function () {
-        $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
+        if (navigationId === bySPA.NAVIGATION_ID) $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
       });
   };
 
   /**
    * Runs page/component lifecycle hooks after dynamic content is swapped.
-   * @param {object} routing The route data that was loaded.
+   * @param {object} routing The loaded route data, including its navigationId.
    */
   bySPA.afterLoad = function (routing) {
     if (typeof byCommon !== "undefined" && typeof byCommon.init === "function") byCommon.init();
-    document.dispatchEvent(new CustomEvent("byspa:load", { detail: routing }));
+    document.dispatchEvent(new CustomEvent("bySPA:load", { detail: routing }));
   };
 
   bySPA.init = function () {
