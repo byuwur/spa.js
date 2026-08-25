@@ -65,12 +65,12 @@
 
   function getRoutes() {
     if (is_object(bySPA.ROUTES)) return bySPA.ROUTES;
-    const storedRoutes = parse_json(localStorage.getItem("ROUTES"));
+    const storedRoutes = parse_json(byStorage.getItem("ROUTES"));
     return is_object(storedRoutes) ? storedRoutes : {};
   }
 
   function getHomePath() {
-    return String(bySPA.HOME_PATH || localStorage.getItem("HOME_PATH") || global.location.origin).replace(/\/$/, "");
+    return String(bySPA.HOME_PATH || byStorage.getItem("HOME_PATH") || global.location.origin).replace(/\/$/, "");
   }
 
   function homePathURL(path) {
@@ -118,7 +118,7 @@
   function routerError(status, message) {
     const error = { status, message };
     bySPA.ROUTER_ERROR = error;
-    localStorage.setItem("ROUTER_ERROR", JSON.stringify(error));
+    byStorage.setItem("ROUTER_ERROR", JSON.stringify(error));
     console.error(`Error ${status}: ${message}`);
     if (typeof bySPA.errorPage === "function") bySPA.errorPage(status, message);
     return null;
@@ -130,12 +130,12 @@
     const locationURL = new URL(global.location.href);
     const host = global.location.host || "";
     const notEnvAppEnv = /^(localhost|127\.0\.0\.1|\[::1\]|::1)(:\d+)?$/.test(host) ? "DEV" : "PROD";
-    const appEnv = bySPA.APP_ENV || localStorage.getItem("APP_ENV") || notEnvAppEnv;
-    const appVersion = bySPA.APP_VERSION || localStorage.getItem("APP_VERSION") || "0.1by";
-    const routerMode = bySPA.ROUTER_MODE || localStorage.getItem("ROUTER_MODE") || "hash";
+    const appEnv = bySPA.APP_ENV || byStorage.getItem("APP_ENV") || notEnvAppEnv;
+    const appVersion = bySPA.APP_VERSION || byStorage.getItem("APP_VERSION") || "0.1by";
+    const routerMode = bySPA.ROUTER_MODE || byStorage.getItem("ROUTER_MODE") || "hash";
     const routes = getRoutes();
-    const storedGet = parse_json(localStorage.getItem("_GET")) || {};
-    const post = parse_json(localStorage.getItem("_POST")) || {};
+    const storedGet = parse_json(byStorage.getItem("_GET")) || {};
+    const post = parse_json(byStorage.getItem("_POST")) || {};
 
     // Initialize the URI from the GET parameter, hash route, path route, or fallback "/".
     let get = queryToObject(locationURL.searchParams);
@@ -150,14 +150,14 @@
     get = { ...get, ...routeQueryToObject(route), ...(is_object(route.GET) ? route.GET : {}) };
     if (route.URI === "") {
       // === /spa.js/ only: preserve the current page for component-only routes ===
-      const currentURI = storedGet.uri || localStorage.getItem("URI") || "/";
+      const currentURI = storedGet.uri || byStorage.getItem("URI") || "/";
       get.uri = routes[currentURI]?.URI ? currentURI : "/";
     }
     // === /spa.js/ only: language support can adjust GET before localStorage is written ===
     if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { uri, url, route });
     const routePost = { ...post, ...(is_object(route.POST) ? route.POST : {}) };
 
-    localStorage.removeItem("ROUTER_ERROR");
+    byStorage.removeItem("ROUTER_ERROR");
 
     bySPA.APP_ENV = appEnv;
     bySPA.APP_VERSION = appVersion;
@@ -169,14 +169,14 @@
     bySPA._POST = routePost;
 
     // Store environment and routing information in localStorage for client-side use.
-    localStorage.setItem("APP_ENV", appEnv);
-    localStorage.setItem("APP_VERSION", appVersion);
-    localStorage.setItem("ROUTER_MODE", routerMode);
-    localStorage.setItem("URI", uri);
-    localStorage.setItem("URL", url);
-    localStorage.setItem("ROUTES", JSON.stringify(routes));
-    localStorage.setItem("_GET", JSON.stringify(get));
-    localStorage.setItem("_POST", JSON.stringify(routePost));
+    byStorage.setItem("APP_ENV", appEnv);
+    byStorage.setItem("APP_VERSION", appVersion);
+    byStorage.setItem("ROUTER_MODE", routerMode);
+    byStorage.setItem("URI", uri);
+    byStorage.setItem("URL", url);
+    byStorage.setItem("ROUTES", JSON.stringify(routes));
+    byStorage.setItem("_GET", JSON.stringify(get));
+    byStorage.setItem("_POST", JSON.stringify(routePost));
 
     if (appEnv === "DEV") {
       console.log("=== JS ROUTER ===");

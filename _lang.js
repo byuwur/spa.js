@@ -49,7 +49,7 @@
   bySPA.setLanguage = function (lang) {
     const normalized = bySPA.normalizeLanguage(lang) || bySPA.normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
     bySPA.APP_LANG = normalized;
-    localStorage.setItem("APP_LANG", normalized);
+    byStorage.setItem("APP_LANG", normalized);
     set_cookie("lang", normalized);
     document.documentElement.setAttribute("lang", normalized);
     document.documentElement.setAttribute("dir", "ltr");
@@ -63,7 +63,7 @@
       bySPA.normalizeLanguage(routing?.get?.lang) ||
       bySPA.normalizeLanguage(bySPA._GET?.lang) ||
       bySPA.normalizeLanguage(bySPA.APP_LANG) ||
-      bySPA.normalizeLanguage(localStorage.getItem("APP_LANG")) ||
+      bySPA.normalizeLanguage(byStorage.getItem("APP_LANG")) ||
       bySPA.normalizeLanguage(get_cookie("lang")) ||
       bySPA.normalizeLanguage(global.navigator?.language) ||
       bySPA.DEFAULT_APP_LANG
@@ -135,7 +135,7 @@
       if (route) element.setAttribute("href", `#/${route}`);
     });
     refreshBootstrapWidgets();
-    document.dispatchEvent(new CustomEvent("bycommon:language", { detail: { lang: localStorage.getItem("APP_LANG"), strings: byCommon.LANG_STRINGS } }));
+    document.dispatchEvent(new CustomEvent("bycommon:language", { detail: { lang: byStorage.getItem("APP_LANG"), strings: byCommon.LANG_STRINGS } }));
   };
 
   byCommon.initLanguage = function (routing = {}) {
@@ -152,7 +152,7 @@
       });
   };
 
-  bySPA.setLanguage(get_url_param("lang") || get_cookie("lang") || localStorage.getItem("APP_LANG") || global.navigator?.language);
+  bySPA.setLanguage(get_url_param("lang") || get_cookie("lang") || byStorage.getItem("APP_LANG") || global.navigator?.language);
   document.addEventListener("byspa:load", function (event) {
     byCommon.initLanguage(event.detail);
   });
