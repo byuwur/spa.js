@@ -103,6 +103,12 @@
     $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
   };
 
+  /**
+   * Builds a static fragment URL while preserving query parameters already present in the route URI.
+   * @param {string} path Fragment path, optionally containing a query string.
+   * @param {Object} [get={}] Additional request values. These replace matching URI query values.
+   * @return {string} Absolute request URL, safe for nested deployments.
+   */
   bySPA.buildRequestURL = function (path, get = {}) {
     const base = `${String(bySPA.HOME_PATH || window.location.origin).replace(/\/$/, "")}/`;
     const requestPath = String(path || "/null");
@@ -341,6 +347,7 @@
 
   /**
    * Routes the given URI within the SPA, managing state and navigation.
+   * Route GET values override /$/ parameters, which override ordinary query values.
    * @param {string} uri The URI to route.
    * @return {object} An object containing the routed path, URI, file, parameters, and components.
    */

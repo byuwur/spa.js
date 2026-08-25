@@ -1,5 +1,21 @@
 # byuwur/spa.js
 
+SPA.js is a static SPA micro-framework/toolkit: a plain-JavaScript runtime using jQuery for AJAX and DOM integration.
+
+## Runtime contracts
+
+jQuery and the core framework scripts are hard runtime dependencies. Bootstrap and bundled plugin integrations are optional unless used by the application. Current evergreen browsers served over HTTP(S) are supported; `file://` cannot reliably load fragments.
+
+Route data precedence is fixed: route-defined values override `/$/` path parameters, which override ordinary query parameters. Use `DATA` for static route request data. `POST` remains a compatible legacy alias, but static fragment requests are GET requests and do not have PHP-style POST semantics.
+
+Route state is namespaced per application path and falls back to memory when browser storage is unavailable; legacy values are migrated automatically.
+
+Navigation emits `bySPA:before-unload`, then `bySPA:load` on success or `bySPA:error` on failure. Older slow responses are ignored. `bySPA.REQUEST_TIMEOUT` defaults to 30 seconds. Same-origin links are intercepted only when they belong to the application path or identify a configured route; `custom-folder="true"` remains the explicit opt-out.
+
+`ERROR_PATH` is retained as an optional override for deployments, including the repository demo, whose error fragment is outside the application root. Without it, conventional application and framework error-fragment paths are tried.
+
+HTML fragments and translation strings are trusted application content and must be sanitized if they contain untrusted input.
+
 **byUwUr's Easy JS SPA**
 
 ~ SPA made easy, with love, and JS. ~
