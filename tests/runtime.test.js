@@ -39,33 +39,64 @@ test("runtime exposes and logs one framework version without replacing APP_VERSI
 
 test("application init keeps nested paths and early state application-relative", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "_init.js"), "utf8");
-  const values = new Map();
-  const location = {
-    href: "https://example.test/project/app-a/nested/page.html",
-    host: "example.test",
-    protocol: "https:",
-  };
-  const document = {
-    baseURI: location.href,
-    currentScript: { getAttribute: () => "../_init.js" },
-  };
+  const entries = [
+    ["https://example.test/project/app-a/", "/project/app-a/_init.js", "https://example.test/project/app-a", "bySPA:/project/app-a:"],
+    ["https://example.test/project/app-a/foo", "/project/app-a/_init.js", "https://example.test/project/app-a", "bySPA:/project/app-a:"],
+    ["https://example.test/project/app-a/foo/bar", "/project/app-a/_init.js", "https://example.test/project/app-a", "bySPA:/project/app-a:"],
+    ["https://example.test/project/app-b/foo", "/project/app-b/_init.js", "https://example.test/project/app-b", "bySPA:/project/app-b:"]
+  ];
+  for (const [href, initPath, homePath, prefix] of entries) {
+    const values = new Map();
+    const location = { href, host: "example.test", protocol: "https:" };
+    const document = { baseURI: href, currentScript: { getAttribute: () => initPath } };
+    const window = {
+      location,
+      localStorage: {
+        getItem: (key) => values.get(key) ?? null,
+        setItem: (key, value) => values.set(key, String(value)),
+        removeItem: (key) => values.delete(key)
+      }
+    };
+
+    vm.runInNewContext(source, { URL, console: { log() {} }, document, window });
+    assert.equal(window.bySPA.HOME_PATH, homePath);
+    assert.equal(window.byStorage.prefix, prefix);
+    assert.equal(values.get(prefix + "HOME_PATH"), window.bySPA.HOME_PATH);
+  }
+});
+
+test("storage migration removes legacy values and memory fallback remains usable", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "_init.js"), "utf8");
+  const values = new Map([["CUSTOM", "legacy"]]);
+  const location = { href: "https://example.test/app/route", host: "example.test", protocol: "https:" };
+  const document = { baseURI: location.href, currentScript: { getAttribute: () => "/app/_init.js" } };
   const window = {
     location,
     localStorage: {
       getItem: (key) => values.get(key) ?? null,
       setItem: (key, value) => values.set(key, String(value)),
-      removeItem: (key) => values.delete(key),
-    },
+      removeItem: (key) => values.delete(key)
+    }
   };
-
   vm.runInNewContext(source, { URL, console: { log() {} }, document, window });
+  assert.equal(window.byStorage.getItem("CUSTOM"), "legacy");
+  assert.equal(values.has("CUSTOM"), false);
+  window.byStorage.removeItem("CUSTOM");
+  assert.equal(window.byStorage.getItem("CUSTOM"), null);
 
-  assert.equal(window.bySPA.THIS_PATH, "https://example.test/project/app-a");
-  assert.equal(window.bySPA.HOME_PATH, "https://example.test/project/app-a");
-  assert.equal(window.bySPA.PATH_DIFF, 1);
-  assert.equal(window.bySPA.TO_HOME, "../");
-  assert.equal(window.byStorage.prefix, "bySPA:/project/app-a/nested:");
-  assert.equal(values.get("bySPA:/project/app-a/nested:HOME_PATH"), window.bySPA.HOME_PATH);
+  const fallbackWindow = {
+    location,
+    localStorage: {
+      getItem() { throw new Error("unavailable"); },
+      setItem() { throw new Error("unavailable"); },
+      removeItem() { throw new Error("unavailable"); }
+    }
+  };
+  vm.runInNewContext(source, { URL, console: { log() {} }, document, window: fallbackWindow });
+  fallbackWindow.byStorage.setItem("CUSTOM", "memory");
+  assert.equal(fallbackWindow.byStorage.getItem("CUSTOM"), "memory");
+  fallbackWindow.byStorage.removeItem("CUSTOM");
+  assert.equal(fallbackWindow.byStorage.getItem("CUSTOM"), null);
 });
 
 test("demo loads init before routes, router, and runtime", () => {

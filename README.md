@@ -10,7 +10,7 @@ jQuery and the core framework scripts are hard runtime dependencies. Bootstrap a
 
 Route data precedence is fixed: route-defined values override `/$/` path parameters, which override ordinary query parameters. Use `DATA` for static route request data from the initial route onward. `POST` remains a compatible legacy alias, `DATA` overrides duplicate `POST` keys, and static fragment requests are GET requests without PHP-style POST semantics.
 
-Route state is namespaced per application path and falls back to memory when browser storage is unavailable; legacy values are migrated automatically.
+Route state is namespaced from the finalized application root and falls back to memory when browser storage is unavailable; successfully migrated legacy values are removed so they cannot reappear later.
 
 Navigation emits `bySPA:before-unload`, then `bySPA:load` on success or `bySPA:error` on failure. Older slow responses are ignored. `bySPA.REQUEST_TIMEOUT` defaults to 30 seconds. Same-origin links are intercepted only when they belong to the application path or identify a configured route; `custom-folder="true"` remains the explicit opt-out.
 
