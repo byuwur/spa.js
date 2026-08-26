@@ -129,18 +129,26 @@
    * @param {Element} target Element whose contents will be replaced.
    * @param {string} html Trusted application fragment HTML.
    * @param {number} navigationId Navigation generation that owns the fragment.
+   * @param {boolean} replaceDocument Whether to intentionally replace the full document.
    * @return {Promise<string|null>} Inserted HTML, or null when navigation ownership was lost.
    */
-  async function setHTML(target, html, navigationId) {
+  async function setHTML(target, html, navigationId, replaceDocument = false) {
     if (navigationId !== bySPA.NAVIGATION_ID) return null;
-    const template = document.createElement("template");
-    template.innerHTML = html;
-    const scripts = [...template.content.querySelectorAll("script")].map(function (script) {
+    let root;
+    if (replaceDocument) {
+      target.innerHTML = html;
+      root = target;
+    } else {
+      const template = document.createElement("template");
+      template.innerHTML = html;
+      root = template.content;
+    }
+    const scripts = [...root.querySelectorAll("script")].map(function (script) {
       const placeholder = document.createComment("bySPA script");
       script.replaceWith(placeholder);
       return { script, placeholder };
     });
-    target.replaceChildren(template.content);
+    if (!replaceDocument) target.replaceChildren(root);
 
     for (const item of scripts) {
       // Script failure -> continue. Stale navigation -> stop.
@@ -213,8 +221,8 @@
   }
 
   /**
-   * Displays an error page by sending an AJAX request to the server.
-   * Error fragments render inside the current shell and stale navigation responses are ignored.
+   * Displays a standalone error page by intentionally replacing the full document.
+   * Ordered scripts finish before temporary SPA error state is discarded.
    * @param {number} status HTTP status code.
    * @param {string} custom_error_message A custom error message to display.
    * @param {number} navigationId Navigation generation that owns the error.
@@ -223,21 +231,15 @@
   bySPA.errorPage = function (status, custom_error_message = "", navigationId = bySPA.NAVIGATION_ID) {
     // === /spa.js/ only: static error fragment instead of PHP _error.php ===
     const paths = [bySPA.ERROR_PATH, `${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`].filter(Boolean);
-    const render = function (data) {
+    const render = async function (data) {
       // A late error must not replace content belonging to a newer route.
       if (navigationId !== bySPA.NAVIGATION_ID) return null;
       // Temporarily expose bySPA variables to the error page
       bySPA.ERROR_STATUS = status;
       bySPA.ERROR_MESSAGE = custom_error_message;
 
-      document.documentElement.innerHTML = data;
-      // extract all <script> inside data to remove them and re-append them to force them to run
-      document.querySelectorAll("script").forEach(function (oldScript) {
-        const newScript = document.createElement("script");
-        for (const attr of oldScript.attributes) newScript.setAttribute(attr.name, attr.value);
-        newScript.textContent = oldScript.textContent;
-        oldScript.replaceWith(newScript);
-      });
+      // Full-document replacement is intentional; only the ordered script runner is shared with fragments.
+      const inserted = await setHTML(document.documentElement, data, navigationId, true);
       window.addEventListener(
         "popstate",
         function () {
@@ -247,7 +249,7 @@
       );
       delete bySPA.ERROR_STATUS;
       delete bySPA.ERROR_MESSAGE;
-      return data;
+      return inserted;
     };
     const requestError = function (path) {
       return $.ajax({
