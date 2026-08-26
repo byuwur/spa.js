@@ -99,6 +99,13 @@ test("storage migration removes legacy values and memory fallback remains usable
   assert.equal(fallbackWindow.byStorage.getItem("CUSTOM"), null);
 });
 
+test("link interception uses the browser-resolved anchor URL", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "_spa.js"), "utf8");
+  assert.match(source, /const absolute = new URL\(this\.href\);/);
+  assert.doesNotMatch(source, /new URL\(href, window\.location\.href\)/);
+  assert.equal(new URL("page.html", "https://example.test/assets/").href, "https://example.test/assets/page.html");
+});
+
 test("demo loads init before routes, router, and runtime", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "demo", "index.html"), "utf8");
   const scripts = [...source.matchAll(/<script src="([^"]+)" defer><\/script>/g)].map((match) => match[1]);
