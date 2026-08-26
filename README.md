@@ -34,7 +34,7 @@ Test it out at: [byuwur.github.io/spa.js](https://byuwur.github.io/spa.js)
 
 ## What's this about?
 
-This project is a simple, easy-to-use framework for building single-page applications (SPAs) using vanilla JS. Since this is vanilla JS, this SPA is thought for static sites. It provides a structure for handling routing, static page fragments, reusable components, modals, and basic operations required for an SPA. The framework is designed to be lightweight and easy to integrate into existing projects.
+This project is a simple, easy-to-use plain-JavaScript framework for building static single-page applications using jQuery for AJAX and DOM integration. It provides routing, static page fragments, reusable components, modals, and the basic operations required for an SPA while remaining lightweight and easy to integrate.
 
 **[NEW!]** Try use this repository as a git submodule: See how it's used at [github.com/byuwur/stream.fgc](https://github.com/byuwur/stream.fgc/). Easier than a package, because sometimes you don't need a package.
 
