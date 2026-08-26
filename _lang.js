@@ -38,16 +38,16 @@
     if (typeof byCommon.initBootstrap === "function") byCommon.initBootstrap();
   }
 
-  bySPA.normalizeLanguage = function (lang) {
+  function normalizeLanguage(lang) {
     lang = String(lang || "")
       .trim()
       .slice(0, 2)
       .toLowerCase();
     return bySPA.APP_LANGS.includes(lang) ? lang : "";
-  };
+  }
 
   bySPA.setLanguage = function (lang) {
-    const normalized = bySPA.normalizeLanguage(lang) || bySPA.normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
+    const normalized = normalizeLanguage(lang) || normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
     bySPA.APP_LANG = normalized;
     byStorage.setItem("APP_LANG", normalized);
     set_cookie("lang", normalized);
@@ -58,17 +58,17 @@
 
   byCommon.setLanguage = bySPA.setLanguage;
 
-  byCommon.getLanguage = function (routing = {}) {
+  function getLanguage(routing = {}) {
     return (
-      bySPA.normalizeLanguage(routing?.get?.lang) ||
-      bySPA.normalizeLanguage(bySPA._GET?.lang) ||
-      bySPA.normalizeLanguage(bySPA.APP_LANG) ||
-      bySPA.normalizeLanguage(byStorage.getItem("APP_LANG")) ||
-      bySPA.normalizeLanguage(get_cookie("lang")) ||
-      bySPA.normalizeLanguage(global.navigator?.language) ||
+      normalizeLanguage(routing?.get?.lang) ||
+      normalizeLanguage(bySPA._GET?.lang) ||
+      normalizeLanguage(bySPA.APP_LANG) ||
+      normalizeLanguage(byStorage.getItem("APP_LANG")) ||
+      normalizeLanguage(get_cookie("lang")) ||
+      normalizeLanguage(global.navigator?.language) ||
       bySPA.DEFAULT_APP_LANG
     );
-  };
+  }
 
   bySPA.prepareRouteGet = function (get = {}) {
     if (get.lang) get.lang = bySPA.setLanguage(get.lang);
@@ -84,7 +84,7 @@
     return value ?? fallback;
   };
 
-  byCommon.loadLanguage = function (lang) {
+  function loadLanguage(lang) {
     lang = byCommon.setLanguage(lang);
     if (byCommon.LANG_CACHE[lang]) return Promise.resolve(byCommon.LANG_CACHE[lang]);
     const path = `${byCommon.LANG_PATH}/${lang}.json`;
@@ -101,9 +101,9 @@
       byCommon.LANG_CACHE[lang] = strings || {};
       return byCommon.LANG_CACHE[lang];
     });
-  };
+  }
 
-  byCommon.applyLanguage = function (root = document, strings = byCommon.LANG_STRINGS) {
+  function applyLanguage(root = document, strings = byCommon.LANG_STRINGS) {
     byCommon.LANG_STRINGS = strings || {};
     eachMatching(root, "[data-i18n]", function (element) {
       const key = element.getAttribute("data-i18n");
@@ -137,7 +137,7 @@
     });
     refreshBootstrapWidgets();
     document.dispatchEvent(new CustomEvent("byCommon:language", { detail: { lang: byStorage.getItem("APP_LANG"), strings: byCommon.LANG_STRINGS } }));
-  };
+  }
 
   /**
    * Loads and applies the active route language for its navigation generation.
@@ -145,25 +145,24 @@
    * @param {Object} [routing={}] Route detail, including optional `navigationId` and GET data.
    * @return {Promise<Object|null>} Applied dictionary, or null after failure/staleness.
    */
-  byCommon.initLanguage = function (routing = {}) {
-    const lang = byCommon.getLanguage(routing);
+  function initLanguage(routing = {}) {
+    const lang = getLanguage(routing);
     const navigationId = routing.navigationId ?? bySPA.NAVIGATION_ID;
-    return byCommon
-      .loadLanguage(lang)
+    return loadLanguage(lang)
       .then(function (strings) {
         // Language is route-owned; do not translate newer content with an old response.
         if (navigationId !== bySPA.NAVIGATION_ID) return null;
-        byCommon.applyLanguage(document, strings);
+        applyLanguage(document, strings);
         return strings;
       })
       .catch(function (xhr, status, error) {
         console.warn(`initLanguage(): ${lang}`, xhr?.status || status || error || xhr);
         return null;
       });
-  };
+  }
 
   bySPA.setLanguage(get_url_param("lang") || get_cookie("lang") || byStorage.getItem("APP_LANG") || global.navigator?.language);
   document.addEventListener("bySPA:load", function (event) {
-    byCommon.initLanguage(event.detail);
+    initLanguage(event.detail);
   });
 })(typeof window !== "undefined" ? window : this);

@@ -145,7 +145,7 @@
   }
   /* === end /spa.js/ only === */
 
-  bySPA.initRouter = function () {
+  function initRouter() {
     // The PHP rewrite rule is replaced here by reading the current browser URL.
     const locationURL = new URL(global.location.href);
     const host = global.location.host || "";
@@ -217,7 +217,7 @@
     }
 
     return { uri, url, route, get, post: routePost };
-  };
-})(typeof window !== "undefined" ? window : this);
+  }
 
-bySPA.initRouter();
+  initRouter();
+})(typeof window !== "undefined" ? window : this);

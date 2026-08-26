@@ -14,6 +14,8 @@ Route state is namespaced per application path and falls back to memory when bro
 
 Navigation emits `bySPA:before-unload`, then `bySPA:load` on success or `bySPA:error` on failure. Older slow responses are ignored. `bySPA.REQUEST_TIMEOUT` defaults to 30 seconds. Same-origin links are intercepted only when they belong to the application path or identify a configured route; `custom-folder="true"` remains the explicit opt-out.
 
+Scripts in trusted route and component fragments execute as real browser `<script>` elements. Inline scripts and non-`async` external scripts keep source order; `defer` external scripts are treated as ordered fragment dependencies because dynamic fragments have no document-parser defer phase. Non-`async` module scripts are also awaited. Explicit external `async` scripts start independently and do not delay later fragment scripts or `bySPA:load`. Attributes, including CSP/SRI and data attributes, are preserved. External load failures are logged but do not fail navigation or stop later scripts; stale navigation stops the old fragment before it can continue. `bySPA:load` fires only after the current route and component fragments finish processing their ordered scripts.
+
 `ERROR_PATH` is retained as an optional override for deployments, including the repository demo, whose error fragment is outside the application root. Without it, conventional application and framework error-fragment paths are tried.
 
 HTML fragments and translation strings are trusted application content and must be sanitized if they contain untrusted input.
