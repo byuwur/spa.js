@@ -177,7 +177,7 @@
     }
     // === /spa.js/ only: language support can adjust GET before localStorage is written ===
     if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { uri, url, route });
-    const routePost = { ...post, ...(is_object(route.POST) ? route.POST : {}) };
+    const routePost = { ...post, ...(is_object(route.POST) ? route.POST : {}), ...(is_object(route.DATA) ? route.DATA : {}) };
 
     byStorage.removeItem("ROUTER_ERROR");
 

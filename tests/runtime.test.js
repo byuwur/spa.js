@@ -16,6 +16,18 @@ test("route data precedence is query then path then route", () => {
   assert.deepEqual({ ...query, ...params, ...route }, { lang: "es", page: "1" });
 });
 
+test("initial and later routing give DATA precedence over legacy POST", () => {
+  const router = fs.readFileSync(path.join(__dirname, "..", "_router.js"), "utf8");
+  const runtime = fs.readFileSync(path.join(__dirname, "..", "_spa.js"), "utf8");
+  const stored = { stored: "value" };
+  const route = { POST: { legacy: true, shared: "post" }, DATA: { current: true, shared: "data" } };
+  const expected = { stored: "value", legacy: true, current: true, shared: "data" };
+
+  assert.deepEqual({ ...stored, ...route.POST, ...route.DATA }, expected);
+  assert.match(router, /const routePost = \{ \.\.\.post, \.\.\.\(is_object\(route\.POST\).*\.\.\.\(is_object\(route\.DATA\)/);
+  assert.match(runtime, /const post = \{ \.\.\.\(route\?\.POST \?\? \{\}\), \.\.\.\(route\?\.DATA \?\? \{\}\) \}/);
+});
+
 test("runtime exposes and logs one framework version without replacing APP_VERSION", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "_spa.js"), "utf8");
   const versions = [...source.matchAll(/bySPA\.VERSION\s*=\s*"([^"]+)";/g)];

@@ -8,7 +8,7 @@ jQuery and the core framework scripts are hard runtime dependencies. Bootstrap a
 
 `bySPA.VERSION` is the framework/runtime version and can be read with `console.log(bySPA.VERSION)`. `bySPA.APP_VERSION` remains the consuming application's version.
 
-Route data precedence is fixed: route-defined values override `/$/` path parameters, which override ordinary query parameters. Use `DATA` for static route request data. `POST` remains a compatible legacy alias, but static fragment requests are GET requests and do not have PHP-style POST semantics.
+Route data precedence is fixed: route-defined values override `/$/` path parameters, which override ordinary query parameters. Use `DATA` for static route request data from the initial route onward. `POST` remains a compatible legacy alias, `DATA` overrides duplicate `POST` keys, and static fragment requests are GET requests without PHP-style POST semantics.
 
 Route state is namespaced per application path and falls back to memory when browser storage is unavailable; legacy values are migrated automatically.
 
