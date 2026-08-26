@@ -15,7 +15,7 @@
 (function (global) {
   global.bySPA = global.bySPA || {};
   const bySPA = global.bySPA;
-  bySPA.VERSION = "16";
+  bySPA.VERSION = "17";
   // Initializes values retrieved from localStorage and sets up environment variables.
   bySPA.URI = byStorage.getItem("URI") ?? "/";
   bySPA.URL = byStorage.getItem("URL") ?? bySPA.URI;
@@ -34,8 +34,6 @@
   bySPA.REQUEST_TIMEOUT = bySPA.REQUEST_TIMEOUT || 30000;
   // These properties can be previously initialized to be overriden
   byCommon.GLOBAL_TRANSITION_DURATION = byCommon.GLOBAL_TRANSITION_DURATION || 199;
-  // Prevent stale error-render cleanup from clearing state owned by a newer error.
-  let errorStateOwner = null;
 
   /*
    * === /spa.js/ only: static routing mode ===
@@ -232,39 +230,28 @@
    */
   bySPA.errorPage = function (status, custom_error_message = "", navigationId = bySPA.NAVIGATION_ID) {
     // === /spa.js/ only: static error fragment instead of PHP _error.php ===
-    const paths = [bySPA.ERROR_PATH, `${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`].filter(Boolean);
+    const paths = [`${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`, `${bySPA.HOME_PATH}/../_error.html`];
     const render = async function (data) {
       // A late error must not replace content belonging to a newer route.
       if (navigationId !== bySPA.NAVIGATION_ID) return null;
-
-      const owner = {};
-      errorStateOwner = owner;
-      // Temporarily expose bySPA variables to the error page
+      // Temporarily expose bySPA variables to the error page.
       bySPA.ERROR_STATUS = status;
       bySPA.ERROR_MESSAGE = custom_error_message;
-
-      const clearErrorState = function () {
-        if (errorStateOwner !== owner) return;
-        delete bySPA.ERROR_STATUS;
-        delete bySPA.ERROR_MESSAGE;
-        errorStateOwner = null;
-      };
-      const reloadOnPopstate = function (event) {
-        // Only the error document that still owns navigation may force a clean reload.
-        if (navigationId !== bySPA.NAVIGATION_ID) return;
-        event.stopImmediatePropagation();
-        window.location.reload();
-      };
-      // Reload protection must exist while ordered error-page scripts are still pending.
-      window.addEventListener("popstate", reloadOnPopstate, { once: true, capture: true });
-      // Full-document replacement is intentional; only the ordered script runner is shared with fragments.
+      // Full-document replacement is intentional.
       const inserted = await setHTML(document.documentElement, data, navigationId, true);
-      if (inserted === null || navigationId !== bySPA.NAVIGATION_ID) {
-        window.removeEventListener("popstate", reloadOnPopstate, true);
-        clearErrorState();
-        return null;
-      }
-      clearErrorState();
+      // A newer navigation took ownership while error scripts were loading.
+      if (inserted === null || navigationId !== bySPA.NAVIGATION_ID) return null;
+      // Preserve the original clean-reload behavior when leaving an error page.
+      window.addEventListener(
+        "popstate",
+        function () {
+          window.location.reload();
+        },
+        { once: true }
+      );
+      delete bySPA.ERROR_STATUS;
+      delete bySPA.ERROR_MESSAGE;
+
       return inserted;
     };
     const requestError = function (path) {
@@ -277,17 +264,18 @@
         timeout: bySPA.REQUEST_TIMEOUT
       })
         .then(render)
-        .catch(function (xhr, ajaxStatus, error) {
+        .catch(function () {
           if (navigationId !== bySPA.NAVIGATION_ID) return null;
-          if (xhr?.responseText) return render(xhr.responseText);
-          console.error(`Error (errorPage): ${xhr?.status} ${ajaxStatus} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
+          // === /spa.js/ only: A missing candidate is not the error page; try the next one ===
+          //if (xhr?.responseText) return render(xhr.responseText);
+          //console.error(`Error (errorPage): ${xhr?.status} ${ajaxStatus} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
           return null;
         });
     };
     const loadError = function (paths, index = 0) {
-      return requestError(paths[index]).then(function (data) {
+      return requestError(`${paths[index]}`).then(function (data) {
         if (navigationId !== bySPA.NAVIGATION_ID) return null;
-        if (data !== null || index + 1 >= paths.length) return data;
+        if (data || index + 1 >= paths.length) return data;
         return loadError(paths, index + 1);
       });
     };
@@ -590,12 +578,13 @@
       try {
         const absolute = new URL(this.href);
         if (absolute.origin != window.location.origin) return;
-        const home = new URL(`${bySPA.HOME_PATH.replace(/\/$/, "")}/`, document.baseURI);
+        // This whole block fucks up non-existing routes when a[custom-folder] already takes care of it
+        /* const home = new URL(`${bySPA.HOME_PATH.replace(/\/$/, "")}/`, document.baseURI);
         const insideHome = absolute.pathname === home.pathname.replace(/\/$/, "") || absolute.pathname.startsWith(home.pathname);
         const candidate = bySPA.parseURL(`${absolute.pathname}${absolute.search}`).path;
         // Preserve normal navigation to sibling applications. Root-relative
         // virtual routes remain routable when they are explicitly configured.
-        if (!insideHome && !Object.prototype.hasOwnProperty.call(bySPA.ROUTES, candidate)) return;
+        if (!insideHome && !Object.prototype.hasOwnProperty.call(bySPA.ROUTES, candidate)) return; */
         // === /spa.js/ only: unwrap hash URLs before routing ===
         nextURL = hashToURL(absolute.hash) ?? (bySPA.HOME_PATH && absolute.href.startsWith(bySPA.HOME_PATH) ? absolute.href.slice(bySPA.HOME_PATH.length) || "/" : `${absolute.pathname}${absolute.search}`);
       } catch (error) {
