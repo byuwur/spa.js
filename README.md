@@ -115,6 +115,14 @@ The root `img/icon-back.png`, `img/icon-fore.png`, and `img/byuwur.png` remain b
 1. Clone the repository to your local machine.
 2. That'd be it!
 
+## Maintaining a submodule integration
+
+Keep shared framework changes in this framework repository, then update the consuming application's recorded submodule commit after reviewing and validating the change. A consumer pins a specific framework commit; updating this repository does not update its consumers automatically.
+
+Keep application-owned initialization, routes, and configuration in the application root as described in the [application layout](./README.md#how-is-it-done). A submodule update does not update those files: review the application's `_init.js` and `_routes.js` against the framework's documented migration and runtime contracts while preserving application-specific settings.
+
+Run the framework checks defined in the [CI workflow](./.github/workflows/ci.yml) from the framework checkout, then validate the affected integration in the consuming application. Record the consumer's submodule update separately from the framework change, with any required application adjustments.
+
 ## Usage
 
 1. Copy `_init.js` into the application root and keep that application-specific initialization there.
