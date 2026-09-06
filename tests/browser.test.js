@@ -84,3 +84,20 @@ test("bootstrap, navigation and URL helper preserve complete query values", asyn
   assert.equal(await page.evaluate(() => bySPA._GET.q), "a?b");
   await page.close();
 });
+
+test("request helper rebind preserves consumer handlers and supports multiple events and elements", async () => {
+  const page = await openApp();
+  const result = await page.evaluate(async () => {
+    document.body.insertAdjacentHTML("beforeend", '<form id="one"><button type="submit"></button></form><form id="two"><button type="submit"></button></form>');
+    let plain = 0, named = 0;
+    $("#one").on("submit", () => plain++).on("submit.consumer", () => named++);
+    for (const id of ["one", "one", "two"])
+      element_make_http_request({ $elementId: `#${id}`, $url: "/request", $trigger: "submit change", loudFail: false });
+    requests.length = 0;
+    for (const [id, type] of [["one", "submit"], ["one", "change"], ["two", "submit"]])
+      document.getElementById(id).dispatchEvent(new Event(type, { bubbles: true, cancelable: true }));
+    return { plain, named, count: requests.length };
+  });
+  assert.deepEqual(result, { plain: 1, named: 1, count: 3 });
+  await page.close();
+});
