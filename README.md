@@ -14,7 +14,7 @@ An explicit invalid initial URL follows the existing route-failure path and cann
 
 Only the first `?` separates a route path from its query. Literal and encoded question marks inside values survive bootstrap, later routing, and `get_url_param`. Duplicate-key behavior is unchanged: route objects keep the last value; `get_url_param` returns the first, preferring the document query over the hash query.
 
-Route state is namespaced from the finalized application root and falls back to memory when browser storage is unavailable; successfully migrated legacy values are removed so they cannot reappear later.
+Route state is namespaced from the finalized application root and falls back to memory when browser storage is unavailable; successfully migrated legacy values are removed so they cannot reappear later. Consent initialization reads `APP_THEME` and `APP_LANG` through `byStorage`, retaining the `dark` and `es` defaults when preferences are absent.
 
 Navigation emits `bySPA:before-unload`, then `bySPA:load` on success or `bySPA:error` on failure. Older slow responses are ignored. `bySPA.REQUEST_TIMEOUT` defaults to 30 seconds. Same-origin links are intercepted only when they belong to the application path or identify a configured route; `custom-folder="true"` remains the explicit opt-out.
 

@@ -172,3 +172,45 @@ test("bootstrap consumes an explicit missing route instead of the saved route", 
     await page.close();
   }
 });
+
+test("consent initialization uses migrated namespaced preferences and existing fallback", async () => {
+  const page = await openApp();
+  const result = await page.evaluate(async () => {
+    window.consent = [];
+    window.cookieconsent = { run: config => consent.push(config) };
+    const run = async () => {
+      consent.length = 0;
+      byCommon.COOKIE_CONSENT_READY = false;
+      byCommon.init();
+      await new Promise(resolve => $(resolve));
+      return consent[0] && { palette: consent[0].palette, language: consent[0].language };
+    };
+    const defaults = await run();
+    localStorage.setItem("bySPA:/other:APP_THEME", "other");
+    localStorage.setItem("bySPA:/other:APP_LANG", "other");
+    const isolated = await run();
+    localStorage.setItem("APP_THEME", "light");
+    localStorage.setItem("APP_LANG", "en");
+    byStorage.getItem("APP_THEME");
+    byStorage.getItem("APP_LANG");
+    const migrated = await run();
+    const removedLegacy = localStorage.getItem("APP_THEME") === null && localStorage.getItem("APP_LANG") === null;
+    const getItem = Storage.prototype.getItem;
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.getItem = Storage.prototype.setItem = () => { throw Error("storage denied"); };
+    byStorage.setItem("APP_THEME", "dark");
+    byStorage.setItem("APP_LANG", "fr");
+    const fallback = await run();
+    const storedFallback = { palette: byStorage.getItem("APP_THEME"), language: byStorage.getItem("APP_LANG") };
+    Storage.prototype.getItem = getItem;
+    Storage.prototype.setItem = setItem;
+    return { defaults, isolated, migrated, removedLegacy, fallback, storedFallback };
+  });
+  assert.deepEqual(result.defaults, { palette: "dark", language: "es" });
+  assert.deepEqual(result.isolated, result.defaults);
+  assert.deepEqual(result.migrated, { palette: "light", language: "en" });
+  assert.equal(result.removedLegacy, true);
+  assert.deepEqual(result.fallback, { palette: "dark", language: "fr" });
+  assert.deepEqual(result.fallback, result.storedFallback);
+  await page.close();
+});
