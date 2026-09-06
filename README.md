@@ -22,7 +22,7 @@ Scripts in trusted route and component fragments execute as real browser `<scrip
 
 Error pages intentionally replace the full document rather than rendering inside the SPA shell. Their scripts use the same ordered execution rules; history navigation away triggers a full reload so the application starts with a clean runtime.
 
-`ERROR_PATH` is retained as an optional override for deployments, including the repository demo, whose error fragment is outside the application root. Without it, conventional application and framework error-fragment paths are tried.
+`bySPA.ERROR_PATH` is an optional error-fragment URL configured before `_spa.js` loads. It is tried first; failure falls through to `HOME_PATH/_error.html`, `HOME_PATH/spa.js/_error.html`, and `HOME_PATH/../_error.html` in that order. When all candidates fail, loading terminates without recursive error handling. Without an override, the demo uses the parent-directory fallback.
 
 HTML fragments and translation strings are trusted application content and must be sanitized if they contain untrusted input.
 

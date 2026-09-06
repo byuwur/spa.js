@@ -229,7 +229,7 @@
    */
   bySPA.errorPage = function (status, custom_error_message = "", navigationId = bySPA.NAVIGATION_ID) {
     // === /spa.js/ only: static error fragment instead of PHP _error.php ===
-    const paths = [`${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`, `${bySPA.HOME_PATH}/../_error.html`];
+    const paths = [bySPA.ERROR_PATH, `${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`, `${bySPA.HOME_PATH}/../_error.html`].filter(Boolean);
     const render = async function (data) {
       // A late error must not replace content belonging to a newer route.
       if (navigationId !== bySPA.NAVIGATION_ID) return null;
@@ -255,7 +255,7 @@
     };
     const requestError = function (path) {
       return $.ajax({
-        url: `${path}?e=${status}`,
+        url: `${path}${path.includes("?") ? "&" : "?"}e=${status}`,
         // === /spa.js/ only: GET by default for static nature ===
         type: "GET",
         data: { custom_error_message },

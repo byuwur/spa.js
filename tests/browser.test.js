@@ -101,3 +101,39 @@ test("request helper rebind preserves consumer handlers and supports multiple ev
   assert.deepEqual(result, { plain: 1, named: 1, count: 3 });
   await page.close();
 });
+
+test("error-page overrides precede bounded default fallbacks", async () => {
+  for (const options of [
+    { custom: "/custom.html", failures: 0 },
+    { custom: "/custom.html?theme=dark", failures: 0 },
+    { custom: "/custom.html", failures: 1 },
+    { custom: "", failures: 0 },
+    { custom: "/custom.html", failures: 4 },
+    { failures: 3 }
+  ]) {
+    const page = await openApp();
+    const result = await page.evaluate(async options => {
+      bySPA.ERROR_PATH = options.custom;
+      requests.length = 0;
+      $.ajax = config => {
+        requests.push(config.url);
+        const request = $.Deferred();
+        if (requests.length <= options.failures) request.reject({ status: 404 });
+        else request.resolve('<p id="error-rendered">Error page</p>');
+        return request.promise();
+      };
+      const html = await bySPA.errorPage(404, "Missing");
+      return { requests, html, rendered: document.getElementById("error-rendered")?.textContent };
+    }, options);
+    const paths = [
+      options.custom && `${options.custom}${options.custom.includes("?") ? "&" : "?"}e=404`,
+      `${origin}/app/_error.html?e=404`,
+      `${origin}/app/spa.js/_error.html?e=404`,
+      `${origin}/app/../_error.html?e=404`
+    ].filter(Boolean);
+    assert.deepEqual(result.requests, paths.slice(0, options.failures + 1));
+    if (options.failures >= paths.length) assert.equal(result.html, null);
+    else assert.equal(result.rendered, "Error page");
+    await page.close();
+  }
+});
