@@ -16,7 +16,9 @@ Only the first `?` separates a route path from its query. Literal and encoded qu
 
 Route state is namespaced from the finalized application root and falls back to memory when browser storage is unavailable; successfully migrated legacy values are removed so they cannot reappear later. Consent initialization reads `APP_THEME` and `APP_LANG` through `byStorage`, retaining the `dark` and `es` defaults when preferences are absent.
 
-Navigation emits `bySPA:before-unload`, then `bySPA:load` on success or `bySPA:error` on failure. Older slow responses are ignored. `bySPA.REQUEST_TIMEOUT` defaults to 30 seconds. Same-origin links are intercepted only when they belong to the application path or identify a configured route; `custom-folder="true"` remains the explicit opt-out.
+Navigation emits `bySPA:before-unload`, then `bySPA:load` on success or `bySPA:error` on failure. Older slow responses are ignored. `bySPA.REQUEST_TIMEOUT` defaults to 30 seconds. `HOME_PATH` defines the application's origin and path boundary; `/app-two` does not belong to `/app`. Ordinary same-origin links inside that boundary, or configured route paths outside it without a fragment, are SPA-owned. The static runtime derives this boundary from the application-owned `_init.js`; it has no separate `ROUTE_BASE_PATH` setting.
+
+`_spa.js` owns route clicks. `byCommon` only scrolls existing same-document element IDs. Other ordinary fragments retain browser navigation, including external and sibling-document anchors. Modified/middle clicks, downloads, non-`_self` targets, previously prevented events, and `custom-folder="true"` are not intercepted.
 
 `byCommon` initialization is quiet by default. Set `byCommon.INIT_WARNINGS = true` to enable optional sidebar, Bootstrap, captcha, cookie-consent, and particles diagnostics, or pass `{ showWarn: true }` for one call. Required-runtime errors and warnings outside that initialization chain remain visible.
 

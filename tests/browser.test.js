@@ -20,7 +20,7 @@ test.before(async () => {
       }
     }
     res.setHeader("Content-Type", "text/html");
-    res.end('<!doctype html><html><head></head><body><main id="spa-content"></main><div id="spa-loader"></div></body></html>');
+    res.end('<!doctype html><html><head></head><body><main id="spa-content"></main><div id="spa-loader"></div><div id="section">Section</div></body></html>');
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   origin = `http://127.0.0.1:${server.address().port}`;
@@ -34,8 +34,9 @@ test.after(async () => {
 
 async function openApp(route = "/known", options = {}) {
   const page = await browser.newPage();
-  await page.goto(`${origin}/app/${route === null ? "" : "#" + route}`);
-  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", "app/_init.js"])
+  const appPath = options.appPath || "/app/";
+  await page.goto(`${origin}${appPath}${route === null ? "" : "#" + route}`);
+  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", `${appPath.slice(1)}_init.js`])
     await page.addScriptTag({ url: `${origin}/${file}` });
   await page.evaluate(options => {
     $.fx.off = true;
@@ -212,5 +213,116 @@ test("consent initialization uses migrated namespaced preferences and existing f
   assert.equal(result.removedLegacy, true);
   assert.deepEqual(result.fallback, { palette: "dark", language: "fr" });
   assert.deepEqual(result.fallback, result.storedFallback);
+  await page.close();
+});
+
+test("both click handlers preserve browser ownership and intercept owned ordinary links once", async () => {
+  const page = await openApp();
+  const results = await page.evaluate(async origin => {
+    // Let common's ready callback bind links before dispatching actual DOM events.
+    const cases = [
+      [origin + "/app/#section", {}, true], [origin + "/app/#absent", {}, false],
+      ["https://example.org/#section", {}, false], [origin + "/sibling/#section", {}, false],
+      [origin + "/app/#/known", {}, true], [origin + "/app-two/unknown", {}, false],
+      [origin + "/app/known", {}, true], [origin + "/app/#/known", { ctrlKey: true }, false],
+      [origin + "/app/#/known", { button: 1 }, false], [origin + "/app/#/known", { target: "frame" }, false],
+      [origin + "/app/#/known", { download: true }, false],
+      [origin + "/app/#/known", { shiftKey: true }, false],
+      [origin + "/app/#/known", { altKey: true }, false],
+      [origin + "/app/#/known", { metaKey: true }, false],
+      [origin + "/app/#/known", { target: "_blank" }, false],
+      [origin + "/app/#/known", { customFolder: true }, false],
+      [origin + "/known", {}, true]
+    ];
+    const results = [];
+    for (const [href, props, expected] of cases) {
+      const anchor = document.createElement("a"); anchor.href = href;
+      if (props.target) anchor.target = props.target;
+      if (props.download) anchor.setAttribute("download", "");
+      if (props.customFolder) anchor.setAttribute("custom-folder", "true");
+      document.body.append(anchor);
+      byCommon.init();
+      await new Promise(resolve => $(resolve));
+      let prevented;
+      const observe = event => { prevented = event.defaultPrevented; event.preventDefault(); };
+      window.addEventListener("click", observe, { once: true });
+      const before = events.length;
+      anchor.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...props }));
+      results.push({ href, expected, prevented, navigations: events.slice(before).filter(e => e.type === "bySPA:before-unload").length });
+      anchor.remove();
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    return results;
+  }, origin);
+  for (const result of results) { assert.equal(result.prevented, result.expected, result.href); assert.ok(result.navigations <= 1); }
+  await page.close();
+});
+
+test("root-hosted routes and sibling-document fragments keep their navigation owners", async () => {
+  const page = await openApp("/known", { appPath: "/" });
+  await page.evaluate(() => {
+    document.body.insertAdjacentHTML("beforeend", '<a id="route-link" href="/configured">Route</a><a id="sibling-link" href="/sibling/#section">Sibling</a>');
+  });
+  await page.click("#route-link");
+  await page.waitForURL("**/#/configured");
+  assert.equal(await page.evaluate(() => events.filter(event => event.type === "bySPA:before-unload").length), 2);
+  await page.evaluate(async () => {
+    byCommon.init();
+    await new Promise(resolve => $(resolve));
+  });
+  await page.click("#sibling-link");
+  await page.waitForURL("**/sibling/#section");
+  assert.equal(await page.evaluate(() => typeof bySPA), "undefined");
+  await page.close();
+});
+
+test("existing targets scroll while missing targets retain native hash navigation", async () => {
+  const page = await openApp();
+  await page.evaluate(async () => {
+    document.body.insertAdjacentHTML("beforeend", '<a id="existing-link" href="#section">Existing</a><a id="missing-link" href="#absent">Missing</a>');
+    byCommon.init();
+    await new Promise(resolve => $(resolve));
+  });
+  await page.click("#existing-link");
+  assert.equal(new URL(page.url()).hash, "#/known");
+  await page.click("#missing-link");
+  await page.waitForURL("**/#absent");
+  assert.equal(await page.evaluate(() => events.filter(event => event.type === "bySPA:before-unload").length), 1);
+  await page.close();
+});
+
+test("navigation journey preserves error recovery and FILE history", async () => {
+  const page = await openApp();
+  await page.evaluate(async () => {
+    bySPA.ROUTES["/slow"] = { URI: "slow.html" };
+    const ajax = $.ajax;
+    let finish;
+    $.ajax = config => {
+      if (!config.url.includes("slow.html")) return ajax(config);
+      const request = $.Deferred();
+      finish = () => request.resolve('<p id="stale">Old route</p>');
+      return request.promise();
+    };
+    const slow = bySPA.load("/slow");
+    await bySPA.load("/known");
+    finish();
+    await slow;
+    if (document.getElementById("stale")) throw Error("Stale navigation replaced the current route");
+    await bySPA.load("/missing");
+  });
+  // Unknown routes retain the existing history policy; Back leaves the last successful URL.
+  await Promise.all([page.waitForEvent("load"), page.goBack()]);
+  await page.waitForURL("**/#/slow");
+  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", "app/_init.js"])
+    await page.addScriptTag({ url: `${origin}/${file}` });
+  await page.evaluate(() => {
+    bySPA.ROUTES = { "/slow": { URI: "known.html" }, "/file": { FILE: "asset.html" } };
+  });
+  await page.addScriptTag({ url: `${origin}/_router.js` });
+  await page.addScriptTag({ url: `${origin}/_spa.js` });
+  await page.evaluate(() => { bySPA.load("/file"); });
+  await page.waitForURL("**/app/asset.html");
+  await page.goBack();
+  await page.waitForURL("**/#/slow");
   await page.close();
 });

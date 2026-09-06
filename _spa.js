@@ -574,8 +574,8 @@
     });
     // Attaches click event handlers to links for SPA navigation.
     $(document).on("click", "a[href]", function (e) {
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      if (this.target === "_blank" || this.hasAttribute("download") || this.getAttribute("custom-folder") == "true") return;
+      if (e.defaultPrevented || e.isDefaultPrevented?.() || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if ((this.target && this.target !== "_self") || this.hasAttribute("download") || this.getAttribute("custom-folder") == "true") return;
       const href = this.getAttribute("href");
       if (!href || href.startsWith("javascript:")) return;
       if (href.startsWith("#") && !href.startsWith("#/")) return;
@@ -583,15 +583,14 @@
       try {
         const absolute = new URL(this.href);
         if (absolute.origin != window.location.origin) return;
-        // This whole block fucks up non-existing routes when a[custom-folder] already takes care of it
-        /* const home = new URL(`${bySPA.HOME_PATH.replace(/\/$/, "")}/`, document.baseURI);
-        const insideHome = absolute.pathname === home.pathname.replace(/\/$/, "") || absolute.pathname.startsWith(home.pathname);
+        const home = new URL(`${bySPA.HOME_PATH.replace(/\/$/, "")}/`, document.baseURI);
+        const basePath = home.pathname.replace(/\/$/, "");
+        const insideHome = absolute.pathname === basePath || absolute.pathname.startsWith(home.pathname);
+        // Ordinary fragments belong to browser navigation or byCommon scrolling.
+        if (absolute.hash && !absolute.hash.startsWith("#/")) return;
         const candidate = bySPA.parseURL(`${absolute.pathname}${absolute.search}`).path;
-        // Preserve normal navigation to sibling applications. Root-relative
-        // virtual routes remain routable when they are explicitly configured.
-        if (!insideHome && !Object.prototype.hasOwnProperty.call(bySPA.ROUTES, candidate)) return; */
-        // === /spa.js/ only: unwrap hash URLs before routing ===
-        nextURL = hashToURL(absolute.hash) ?? (bySPA.HOME_PATH && absolute.href.startsWith(bySPA.HOME_PATH) ? absolute.href.slice(bySPA.HOME_PATH.length) || "/" : `${absolute.pathname}${absolute.search}`);
+        if (!insideHome && (absolute.hash || !Object.prototype.hasOwnProperty.call(bySPA.ROUTES, candidate))) return;
+        nextURL = hashToURL(absolute.hash) ?? `${insideHome ? absolute.pathname.slice(basePath.length) || "/" : absolute.pathname}${absolute.search}`;
       } catch (error) {
         return;
       }
