@@ -4,9 +4,13 @@
 
 ## Before changing code
 
-Read `README.md`, the coding standards, and relevant project documentation. Inspect the nearby implementation and tests, including existing helpers and the paths that call the behavior. Understand the requested outcome and current contract before proposing architectural changes.
+Read [README.md](./README.md), the coding standards, and relevant project documentation. Inspect the nearby implementation and tests, including existing helpers and the paths that call the behavior. Understand the requested outcome and current contract before proposing architectural changes.
 
 Check repository-specific requirements and preserve unrelated work. If the implementation differs intentionally from a general convention, understand the reason before changing it.
+
+## Repository workflow
+
+See the README for [installation](./README.md#installation), [usage](./README.md#usage), and [runtime contracts](./README.md#runtime-contracts). The [CI workflow](./.github/workflows/ci.yml) defines the JavaScript syntax checks and runtime tests; run its commands from the repository root.
 
 ## Make a focused change
 

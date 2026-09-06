@@ -142,6 +142,11 @@ The root `img/icon-back.png`, `img/icon-fore.png`, and `img/byuwur.png` remain b
 - [easy-http-error](https://github.com/byuwur/easy-http-error) - Custom error page with server configurations.
 - [easy-sidebar-bootstrap](https://github.com/byuwur/easy-sidebar-bootstrap) - Sidebar component using Bootstrap and jQuery.
 
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the contribution workflow and
+[CODING_STANDARDS.md](./CODING_STANDARDS.md) for this project's engineering standards.
+
 ## License
 
 MIT (c) Andrés Trujillo [Mateus] byUwUr
