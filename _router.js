@@ -60,7 +60,7 @@
 
   function routeQueryToObject(route) {
     if (typeof route?.URI !== "string" || !route.URI.includes("?")) return {};
-    return queryToObject(new URLSearchParams(route.URI.split("?", 2)[1]));
+    return queryToObject(new URLSearchParams(route.URI.slice(route.URI.indexOf("?") + 1)));
   }
 
   function getRoutes() {
