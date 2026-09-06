@@ -135,12 +135,11 @@
     return { uri: normalizeURI(uri), url, get };
   }
 
-  function routerError(status, message) {
-    const error = { status, message };
+  function routerError(status, message, url) {
+    const error = { status, message, url };
     bySPA.ROUTER_ERROR = error;
     byStorage.setItem("ROUTER_ERROR", JSON.stringify(error));
     console.error(`Error ${status}: ${message}`);
-    if (typeof bySPA.errorPage === "function") bySPA.errorPage(status, message);
     return null;
   }
   /* === end /spa.js/ only === */
@@ -164,7 +163,7 @@
     const route = routes[uri];
 
     // Check if the URI exists in the routes object; if not, return a 404 error.
-    if (!route || (!Object.prototype.hasOwnProperty.call(route, "URI") && !Object.prototype.hasOwnProperty.call(route, "FILE"))) return routerError(404, `Route "${uri}" does not exist.`);
+    if (!route || (!Object.prototype.hasOwnProperty.call(route, "URI") && !Object.prototype.hasOwnProperty.call(route, "FILE"))) return routerError(404, `Route "${uri}" does not exist.`, url);
 
     // Merge additional GET and POST parameters from the routes object.
     // Initial routing uses the same authority as client navigation:
@@ -179,6 +178,7 @@
     if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { uri, url, route });
     const routePost = { ...post, ...(is_object(route.POST) ? route.POST : {}), ...(is_object(route.DATA) ? route.DATA : {}) };
 
+    delete bySPA.ROUTER_ERROR;
     byStorage.removeItem("ROUTER_ERROR");
 
     bySPA.APP_ENV = appEnv;

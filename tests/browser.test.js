@@ -32,12 +32,12 @@ test.after(async () => {
   if (server) await new Promise(resolve => server.close(resolve));
 });
 
-async function openApp(route = "/known") {
+async function openApp(route = "/known", options = {}) {
   const page = await browser.newPage();
-  await page.goto(`${origin}/app/#${route}`);
+  await page.goto(`${origin}/app/${route === null ? "" : "#" + route}`);
   for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", "app/_init.js"])
     await page.addScriptTag({ url: `${origin}/${file}` });
-  await page.evaluate(() => {
+  await page.evaluate(options => {
     $.fx.off = true;
     window.events = [];
     window.requests = [];
@@ -54,10 +54,17 @@ async function openApp(route = "/known") {
       "/known": { URI: "known.html" },
       "/configured": { URI: "known.html?q=a?b" }
     };
-  });
+    if (options.storedURL) {
+      byStorage.setItem("URI", "/known");
+      byStorage.setItem("URL", options.storedURL);
+      const storedRoutes = { ...bySPA.ROUTES };
+      if (options.staleRoutes) storedRoutes["/missing"] = { URI: "known.html" };
+      byStorage.setItem("ROUTES", JSON.stringify(storedRoutes));
+    }
+  }, options);
   await page.addScriptTag({ url: `${origin}/_router.js` });
   await page.addScriptTag({ url: `${origin}/_spa.js` });
-  await page.waitForFunction(() => events.some(event => event.type === "bySPA:load"));
+  await page.waitForSelector("#rendered");
   return page;
 }
 
@@ -134,6 +141,34 @@ test("error-page overrides precede bounded default fallbacks", async () => {
     assert.deepEqual(result.requests, paths.slice(0, options.failures + 1));
     if (options.failures >= paths.length) assert.equal(result.html, null);
     else assert.equal(result.rendered, "Error page");
+    await page.close();
+  }
+});
+
+
+test("bootstrap consumes an explicit missing route instead of the saved route", async () => {
+  for (const staleRoutes of [false, true]) {
+    const page = await openApp("/missing", { storedURL: "/known", staleRoutes });
+    const result = await page.evaluate(() => ({
+      requests,
+      navigations: events.filter(event => event.type === "bySPA:before-unload").length,
+      error: bySPA.ROUTER_ERROR,
+      storedError: byStorage.getItem("ROUTER_ERROR")
+    }));
+    assert.deepEqual(result.requests, [`${origin}/app/_error.html?e=404`]);
+    assert.equal(result.navigations, 1);
+    assert.equal(result.error, undefined);
+    assert.equal(result.storedError, null);
+    await page.close();
+  }
+  for (const [route, fragment] of [["/known", "known.html"], [null, "home.html"]]) {
+    const page = await openApp(route, { storedURL: "/configured" });
+    assert.ok(await page.evaluate(fragment => requests[0].includes(fragment), fragment));
+    await page.evaluate(async () => {
+      requests.length = 0;
+      await bySPA.load("/missing");
+    });
+    assert.deepEqual(await page.evaluate(() => requests), [`${origin}/app/_error.html?e=404`]);
     await page.close();
   }
 });

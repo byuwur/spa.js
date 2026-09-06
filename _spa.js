@@ -24,7 +24,8 @@
   bySPA.HISTORY_INDEX = -1;
   bySPA.APP_ENV = byStorage.getItem("APP_ENV") ?? "PROD";
   bySPA.APP_VERSION = byStorage.getItem("APP_VERSION") ?? "0.1by";
-  bySPA.ROUTES = parse_json(byStorage.getItem("ROUTES")) ?? {};
+  // Bootstrap can fail before persisting the current application route table.
+  bySPA.ROUTES = bySPA.ROUTES ?? parse_json(byStorage.getItem("ROUTES")) ?? {};
   bySPA.TO_HOME = byStorage.getItem("TO_HOME");
   bySPA.HOME_PATH = byStorage.getItem("HOME_PATH");
   bySPA.HISTORY_PATH = [];
@@ -603,8 +604,11 @@
       fileNavigation = false;
       window.location.reload();
     });
-    // Initial load of SPA content based on the stored URL.
-    bySPA.load(`${bySPA.URL}`, { replace: true });
+    // Consume bootstrap failure once, before considering any saved route.
+    const initialError = bySPA.ROUTER_ERROR;
+    delete bySPA.ROUTER_ERROR;
+    byStorage.removeItem("ROUTER_ERROR");
+    bySPA.load(initialError ? initialError.url : `${bySPA.URL}`, { replace: true });
     // === /spa.js/ only: hash routes do not emit popstate consistently ===
     window.addEventListener("hashchange", function () {
       if (bySPA.ROUTER_MODE === "path") return;

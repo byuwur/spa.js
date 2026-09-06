@@ -10,6 +10,8 @@ jQuery and the core framework scripts are hard runtime dependencies. Bootstrap a
 
 Route data precedence is fixed: route-defined values override `/$/` path parameters, which override ordinary query parameters. Use `DATA` for static route request data from the initial route onward. `POST` remains a compatible legacy alias, `DATA` overrides duplicate `POST` keys, and static fragment requests are GET requests without PHP-style POST semantics.
 
+An explicit invalid initial URL follows the existing route-failure path and cannot be masked by a saved route or cached route table. An absent route still resolves to `/`.
+
 Only the first `?` separates a route path from its query. Literal and encoded question marks inside values survive bootstrap, later routing, and `get_url_param`. Duplicate-key behavior is unchanged: route objects keep the last value; `get_url_param` returns the first, preferring the document query over the hash query.
 
 Route state is namespaced from the finalized application root and falls back to memory when browser storage is unavailable; successfully migrated legacy values are removed so they cannot reappear later.
