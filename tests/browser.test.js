@@ -42,8 +42,10 @@ async function openApp(route = "/known", options = {}) {
     $.fx.off = true;
     window.events = [];
     window.requests = [];
+    window.requestEvents = [];
     $.ajax = config => {
       requests.push(config.url);
+      requestEvents.push(events.map(event => event.type));
       const result = $.Deferred();
       setTimeout(() => result.resolve('<p id="rendered">Loaded</p>'), 0);
       return result.promise();
@@ -68,6 +70,133 @@ async function openApp(route = "/known", options = {}) {
   await page.waitForSelector("#rendered");
   return page;
 }
+
+test("known navigation ends in load and missing routes notify before error rendering", async () => {
+  const success = await openApp();
+  await success.waitForFunction(() => events.some(event => event.type === "bySPA:load"));
+  assert.deepEqual(await success.evaluate(() => events.map(event => event.type)), ["bySPA:before-unload", "bySPA:load"]);
+  await success.close();
+
+  for (const initial of [false, true]) {
+    const page = await openApp(initial ? "/missing" : "/known");
+    if (!initial) await page.evaluate(async () => {
+      events.length = requests.length = requestEvents.length = 0;
+      await bySPA.load("/missing");
+    });
+    const result = await page.evaluate(() => ({ events, requests, requestEvents }));
+    assert.deepEqual(result.events.map(event => event.type), ["bySPA:before-unload", "bySPA:error"]);
+    const error = result.events[1];
+    assert.deepEqual(error, {
+      type: "bySPA:error", navigationId: result.events[0].navigationId,
+      url: "/missing", status: 404, error: 'Route "/missing" does not exist.'
+    });
+    assert.deepEqual(result.requests, [`${origin}/app/_error.html?e=404`]);
+    assert.deepEqual(result.requestEvents, [["bySPA:before-unload", "bySPA:error"]]);
+    await page.close();
+  }
+});
+
+test("page transport failures preserve the underlying error and never emit load", async () => {
+  for (const status of [503, undefined]) {
+    const page = await openApp();
+    const result = await page.evaluate(async status => {
+      events.length = 0;
+      $.ajax = () => $.Deferred().reject({ status }, "error", "connection failed").promise();
+      const value = await bySPA.load("/known");
+      return { events, value };
+    }, status);
+    assert.equal(result.value, null);
+    assert.deepEqual(result.events.map(event => event.type), ["bySPA:before-unload", "bySPA:error"]);
+    assert.deepEqual(result.events[1], {
+      type: "bySPA:error", navigationId: result.events[0].navigationId,
+      url: "/known", status: status || 0, error: "connection failed"
+    });
+    await page.close();
+  }
+});
+
+test("exhausted error rendering settles without a second terminal event", async () => {
+  const page = await openApp();
+  const result = await page.evaluate(async () => {
+    events.length = requests.length = 0;
+    bySPA.ERROR_PATH = "/custom-error.html";
+    $.ajax = config => {
+      requests.push(config.url);
+      return $.Deferred().reject({ status: 503 }, "error", "unavailable").promise();
+    };
+    const value = await bySPA.load("/missing");
+    return { value, events, requests, loaderHidden: $("#spa-loader").css("display") === "none" };
+  });
+  assert.equal(result.value, null);
+  assert.equal(result.loaderHidden, true);
+  assert.deepEqual(result.events.map(event => event.type), ["bySPA:before-unload", "bySPA:error"]);
+  assert.equal(result.events[1].status, 404);
+  assert.deepEqual(result.requests, [
+    "/custom-error.html?e=404", `${origin}/app/_error.html?e=404`,
+    `${origin}/app/spa.js/_error.html?e=404`, `${origin}/app/../_error.html?e=404`
+  ]);
+  await page.close();
+});
+
+test("stale failures cannot notify, replace content, or hide a newer loader", async () => {
+  for (const completeNewerFirst of [true, false]) {
+    const page = await openApp();
+    const result = await page.evaluate(async completeNewerFirst => {
+      events.length = 0;
+      const pending = [];
+      $.ajax = () => {
+        const request = $.Deferred();
+        pending.push(request);
+        return request.promise();
+      };
+      const older = bySPA.load("/known");
+      const newer = bySPA.load("/configured");
+      if (completeNewerFirst) {
+        pending[1].resolve('<p id="current">Current route</p>');
+        await newer;
+      }
+      const before = { html: $("#spa-content").html(), loader: $("#spa-loader").css("display") };
+      pending[0].reject({ status: 500, responseText: "Stale error" }, "error", "old failure");
+      await older;
+      const after = { html: $("#spa-content").html(), loader: $("#spa-loader").css("display") };
+      if (!completeNewerFirst) {
+        pending[1].resolve('<p id="current">Current route</p>');
+        await newer;
+      }
+      return { before, after, events, current: document.getElementById("current")?.textContent };
+    }, completeNewerFirst);
+    assert.deepEqual(result.after, result.before);
+    assert.equal(result.current, "Current route");
+    assert.deepEqual(result.events.map(event => event.type), ["bySPA:before-unload", "bySPA:before-unload", "bySPA:load"]);
+    assert.equal(result.events[2].navigationId, result.events[1].navigationId);
+    await page.close();
+  }
+});
+
+test("navigation started by a lifecycle listener owns subsequent side effects", async () => {
+  for (const stage of ["before-unload", "error", "transport-error"]) {
+    const page = await openApp();
+    const result = await page.evaluate(async stage => {
+      events.length = requests.length = 0;
+      let recovery;
+      const eventType = stage === "before-unload" ? "bySPA:before-unload" : "bySPA:error";
+      document.addEventListener(eventType, () => { recovery = bySPA.load("/configured"); }, { once: true });
+      if (stage === "transport-error") {
+        const ajax = $.ajax;
+        $.ajax = config => config.url.includes("q=") ? ajax(config) : $.Deferred().reject({ status: 503, responseText: "Old error" }, "error", "unavailable").promise();
+      }
+      await bySPA.load(stage === "transport-error" ? "/known" : "/missing");
+      await recovery;
+      return { events, requests, current: document.getElementById("rendered")?.textContent };
+    }, stage);
+    assert.equal(result.current, "Loaded");
+    assert.ok(result.requests.every(url => !url.includes("_error.html")));
+    assert.deepEqual(result.events.map(event => event.type), stage === "before-unload"
+      ? ["bySPA:before-unload", "bySPA:before-unload", "bySPA:load"]
+      : ["bySPA:before-unload", "bySPA:error", "bySPA:before-unload", "bySPA:load"]);
+    await page.close();
+  }
+});
 
 test("bootstrap, navigation and URL helper preserve complete query values", async () => {
   for (const [suffix, expected, helper] of [

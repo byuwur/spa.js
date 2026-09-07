@@ -464,15 +464,21 @@
     const navigationId = ++bySPA.NAVIGATION_ID;
     const historyMode = typeof mode === "object" ? mode : {};
     document.dispatchEvent(new CustomEvent("bySPA:before-unload", { detail: { navigationId, url } }));
+    // Public listeners can synchronously hand ownership to a newer navigation.
+    if (navigationId !== bySPA.NAVIGATION_ID) return Promise.resolve(null);
     // Log debug information if in development mode
     if (bySPA.APP_ENV === "DEV") console.log(`loadSPA("${url}", ${parse_json(mode)})`);
     $("#spa-loader").fadeIn(1);
     const routing = routeURL(`${url}`);
     // If routing fails, return early
-    if (!routing)
-      return bySPA.errorPage(404, `Route "${url}" does not exist.`, navigationId).always(function () {
+    if (!routing) {
+      const error = `Route "${url}" does not exist.`;
+      document.dispatchEvent(new CustomEvent("bySPA:error", { detail: { navigationId, url, status: 404, error } }));
+      if (navigationId !== bySPA.NAVIGATION_ID) return Promise.resolve(null);
+      return bySPA.errorPage(404, error, navigationId).always(function () {
         if (navigationId === bySPA.NAVIGATION_ID) $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
       });
+    }
     const { path, uri, file, get, post, component } = routing;
     // If a file is specified in the route, navigate to it directly
     // === /spa.js/ only: static-safe file route URL ===
@@ -530,6 +536,7 @@
         console.error(`Error (SPA): ${xhr?.status} ${status} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
         // === /spa.js/ only: XHR can fail before responseText exists in static mode ===
         document.dispatchEvent(new CustomEvent("bySPA:error", { detail: { navigationId, url, status: xhr?.status || 0, error } }));
+        if (navigationId !== bySPA.NAVIGATION_ID) return null;
         $("#spa-content").html(xhr?.responseText || `<pre>Error (SPA): ${xhr?.status || 0} ${status || ""} ${error || ""}</pre>`);
         return null;
       })
