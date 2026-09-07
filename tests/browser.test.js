@@ -327,6 +327,11 @@ test("consent initialization uses migrated namespaced preferences and existing f
     const removedLegacy = localStorage.getItem("APP_THEME") === null && localStorage.getItem("APP_LANG") === null;
     const getItem = Storage.prototype.getItem;
     const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw Error("write denied"); };
+    byStorage.setItem("APP_THEME", "dark");
+    byStorage.setItem("APP_LANG", "fr");
+    const partialFallback = await run();
+    const persistedTheme = localStorage.getItem(byStorage.prefix + "APP_THEME");
     Storage.prototype.getItem = Storage.prototype.setItem = () => { throw Error("storage denied"); };
     byStorage.setItem("APP_THEME", "dark");
     byStorage.setItem("APP_LANG", "fr");
@@ -334,12 +339,14 @@ test("consent initialization uses migrated namespaced preferences and existing f
     const storedFallback = { palette: byStorage.getItem("APP_THEME"), language: byStorage.getItem("APP_LANG") };
     Storage.prototype.getItem = getItem;
     Storage.prototype.setItem = setItem;
-    return { defaults, isolated, migrated, removedLegacy, fallback, storedFallback };
+    return { defaults, isolated, migrated, removedLegacy, partialFallback, persistedTheme, fallback, storedFallback };
   });
   assert.deepEqual(result.defaults, { palette: "dark", language: "es" });
   assert.deepEqual(result.isolated, result.defaults);
   assert.deepEqual(result.migrated, { palette: "light", language: "en" });
   assert.equal(result.removedLegacy, true);
+  assert.deepEqual(result.partialFallback, { palette: "dark", language: "fr" });
+  assert.equal(result.persistedTheme, "light");
   assert.deepEqual(result.fallback, { palette: "dark", language: "fr" });
   assert.deepEqual(result.fallback, result.storedFallback);
   await page.close();
