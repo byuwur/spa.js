@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
 const { chromium } = require("playwright");
+const { source } = require("./parity-source");
 
 let server, browser, origin;
 const root = path.join(__dirname, "..");
@@ -12,11 +13,11 @@ test.before(async () => {
   server = http.createServer((req, res) => {
     const pathname = new URL(req.url, "http://localhost").pathname;
     if (pathname.endsWith(".js")) {
-      const file = pathname.endsWith("/_init.js") ? "_init.js" : pathname.slice(1);
+      const file = pathname.endsWith("/_init.js") && pathname !== "/demo/_init.js" ? "_init.js" : pathname.slice(1);
       const target = path.resolve(root, file);
       if (target.startsWith(root + path.sep) && fs.existsSync(target)) {
         res.setHeader("Content-Type", "text/javascript");
-        return res.end(fs.readFileSync(target));
+        return res.end(source(file));
       }
     }
     res.setHeader("Content-Type", "text/html");
@@ -70,6 +71,26 @@ async function openApp(route = "/known", options = {}) {
   await page.waitForSelector("#rendered");
   return page;
 }
+
+test("demo copy initializes its own namespace and works with the framework runtime", async () => {
+  const page = await openApp("/known", { appPath: "/demo/" });
+  const result = await page.evaluate(() => {
+    byStorage.setItem("CUSTOM", "persisted");
+    const persisted = localStorage.getItem(byStorage.prefix + "CUSTOM");
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw Error("write denied"); };
+    byStorage.setItem("CUSTOM", "local");
+    const current = byStorage.getItem("CUSTOM");
+    Storage.prototype.setItem = setItem;
+    return { prefix: byStorage.prefix, home: bySPA.HOME_PATH, persisted, current, requests };
+  });
+  assert.equal(result.prefix, "bySPA:/demo:");
+  assert.equal(result.home, `${origin}/demo`);
+  assert.equal(result.persisted, "persisted");
+  assert.equal(result.current, "local");
+  assert.ok(result.requests[0].startsWith(`${origin}/demo/known.html?`));
+  await page.close();
+});
 
 test("known navigation ends in load and missing routes notify before error rendering", async () => {
   const success = await openApp();

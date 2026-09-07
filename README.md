@@ -133,6 +133,38 @@ Keep application-owned initialization, routes, and configuration in the applicat
 
 Run the framework checks defined in the [CI workflow](./.github/workflows/ci.yml) from the framework checkout, then validate the affected integration in the consuming application. Record the consumer's submodule update separately from the framework change, with any required application adjustments.
 
+### Shared contracts and copied initializers
+
+The framework changing a shared contract owns its implementation and records the matching repository follow-up. Neither repository automatically synchronizes the other; whole runtime files are not required to be byte-identical.
+
+| Files | Upgrade responsibility |
+| --- | --- |
+| `_functions.js` | Behavioral mirror of spa.php's query parsing and request-listener ownership; comments and local names may differ. |
+| `_common.js` | Shared consent namespace and ordinary-click intent. Static SPA accepts explicit `_self` anchors; spa.php leaves all explicit targets native. |
+| `_spa.js`, `_router.js` | Preserve query, failure, and stale-navigation contracts while retaining static GET fragments, hash/path routing, bounded HTML error candidates, and static history. PHP routing and POST fragments remain host-specific. |
+| `_init.js` | Application-owned copy template, including storage behavior. Reconcile every consumer copy, including the demo, while preserving each application's paths and configuration. PHP-emitted bootstrap is a separate implementation. |
+
+For each upgrade:
+
+1. Review and record the old and new immutable framework commit pins and affected shared contracts.
+2. Review changes to the `_init.js` copy template against each application's copy; a submodule pin update does not update copied initialization. Preserve application configuration while adopting storage authority, tombstone, migration, and recovery changes.
+3. Run the framework's CI checks at the new pinned revision, including its browser tests.
+4. Compare shared helper behavior against a reviewed spa.php revision and record intentional host differences.
+5. Run the consumer's integration tests, including initial routing, error/Back/FILE navigation, and storage failure/recovery, before recording the consumer upgrade.
+
+The comparison reference is spa.php `e899d4fec55e8a596120118f4d83344983f3d368`; the reviewed spa.js behavior baseline is `55c2ecb1f4b3b7e25df69ccef6f4f1179a8527a9`. These are comparison references, not automatic dependency updates. `tests/parity.test.js` checks a shared helper contract and detects a deliberately broken helper. The existing browser suite covers query, event ownership, consent, and click behavior, and executes the demo's actual initializer with this checkout's runtime.
+
+CI runs locally against this checkout, without fetching another repository. To compare the same tests with the pinned spa.php helpers, optionally set `SPA_PHP_TREE` to a local spa.php Git object store and run:
+
+```sh
+node --test tests/parity.test.js
+node --test tests/browser.test.js
+```
+
+Only `_functions.js` and `_common.js` come from the immutable reference; static routing, storage, and the remaining runtime stay local. For PowerShell, use `$env:SPA_PHP_TREE = 'C:/path/to/spa.php'` and remove it afterward with `Remove-Item Env:SPA_PHP_TREE`. Use the existing CI Playwright installation; `PLAYWRIGHT_CHANNEL=msedge` may select an installed Edge for local runs. The reference's working tree and moving HEAD are ignored. Changing the comparison revision requires reviewing `SPA_PHP_REVISION` in `tests/parity-source.js` and this record together. Passing selected helper vectors does not establish complete runtime equivalence.
+
+Follow-ups: spa.php's comparison still names spa.js `8a3df8aca9e92b5dcfa32f495f9ce005ccbbfb69`; update that reference and rerun its shared checks against the reviewed closure commit. Review the synchronous lifecycle-listener ownership guards separately in its runtime. stream.fgc must review its new framework pin, reconcile `frontend/_init.js` with this template, preserve its configuration, and run its own integration tests. Neither repository is modified by this process.
+
 ## Usage
 
 1. Copy `_init.js` into the application root and keep that application-specific initialization there.

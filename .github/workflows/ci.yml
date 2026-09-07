@@ -11,7 +11,7 @@ jobs:
         with:
           node-version: "22"
       - run: node --check _functions.js && node --check _init.js && node --check _router.js && node --check _spa.js && node --check _lang.js
-      - run: node --test tests/runtime.test.js tests/common.test.js tests/fragment_scripts.test.js
+      - run: node --test tests/runtime.test.js tests/common.test.js tests/fragment_scripts.test.js tests/parity.test.js
       - run: npm install --no-save --package-lock=false playwright@1.62.1
       - run: npx playwright install --with-deps chromium
       - run: node --test tests/browser.test.js
