@@ -100,11 +100,12 @@
     $("a[href*='#']:not([href='#'])")
       .off("click.byCommon")
       .on("click.byCommon", function (event) {
-        if (event.defaultPrevented || event.isDefaultPrevented?.() || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        if ((this.target && this.target !== "_self") || this.hasAttribute("download") || this.getAttribute("custom-folder") === "true") return;
-        const targetURL = new URL(this.href);
+        if (event.defaultPrevented || event.isDefaultPrevented() || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (this.target || this.hasAttribute("download") || this.getAttribute("custom-folder") === "true") return;
+        const targetURL = new URL(this.href, document.baseURI);
         const currentURL = new URL(window.location.href);
-        if (!targetURL.hash || targetURL.hash.startsWith("#/") || targetURL.origin !== currentURL.origin || targetURL.pathname !== currentURL.pathname || targetURL.search !== currentURL.search) return;
+        if (targetURL.origin !== currentURL.origin || targetURL.pathname !== currentURL.pathname || targetURL.search !== currentURL.search) return;
+        if (!targetURL.hash || targetURL.hash.startsWith("#/")) return;
         let target;
         try {
           target = document.getElementById(decodeURIComponent(targetURL.hash.slice(1)));
@@ -113,7 +114,7 @@
         }
         if (!target) return;
         event.preventDefault();
-        // Only an existing same-document target belongs to smooth scrolling.
+        // Scroll to the target element if it exists on the same page
         $(`html, body, ${byCommon.APP_CONTAINER_SELECTOR}`)
           .stop()
           .animate({ scrollTop: $(target).offset().top - byCommon.SECTION_TOP_OVERHEAD }, byCommon.GLOBAL_TRANSITION_DURATION, "swing");
@@ -440,5 +441,63 @@
     $("html").removeClass("invertchropia");
     $("html").removeClass("high-contrast");
     $("html").addClass(mode);
+  };
+
+  /**
+   * * --- THEME --- *
+   */
+
+  /**
+   * Applies a light/dark theme; omitting theme toggles the first target's current theme.
+   * @param {string|Element} target Selector (all matches) or element.
+   * @param {"light"|"dark"} [options.theme] Explicit theme.
+   * @param {string|Element} [options.button] Toggle button selector or element.
+   * @param {object} [options.properties] CSS property maps keyed by light/dark.
+   * @param {string|HTMLLinkElement} [options.stylesheet] Existing stylesheet link.
+   * @param {{light:string,dark:string}} [options.stylesheets] Full or relative theme URLs; omitted URLs are inferred from .light.css/.dark.css.
+   * @returns {"light"|"dark"|null} Applied theme, or null if no target matches.
+   * Event binding and persistence belong to the caller; stylesheet loading is asynchronous.
+   */
+  byCommon.toggleTheme = function (target, { theme, button, properties, stylesheet, stylesheets } = {}) {
+    const elements = typeof target === "string" ? [...document.querySelectorAll(target)] : target ? [target] : [];
+    if (!elements.length) return null;
+    const link = typeof stylesheet === "string" ? document.querySelector(stylesheet) : stylesheet;
+    if ((stylesheet || stylesheets) && (!link || link.tagName !== "LINK")) throw new TypeError("Provide an existing stylesheet link.");
+    const href = link?.getAttribute("href") || "";
+    const themeSuffix = /\.(light|dark)\.css(?=[?#]|$)/i;
+    if (link && !stylesheets && themeSuffix.test(href)) {
+      stylesheets = {
+        light: href.replace(themeSuffix, ".light.css"),
+        dark: href.replace(themeSuffix, ".dark.css")
+      };
+    }
+    if (link && (!stylesheets?.light || !stylesheets?.dark)) throw new TypeError("Provide both light/dark URLs or a .light.css/.dark.css stylesheet.");
+    // The selected stylesheet owns the current theme when its URL matches a configured variant.
+    const current = link
+      ? ["light", "dark"].find((name) => {
+          const candidate = document.createElement("a");
+          candidate.href = stylesheets[name];
+          return candidate.href === link.href;
+        })
+      : null;
+    const next = theme ?? ((current || elements[0].getAttribute("data-bs-theme")) === "dark" ? "light" : "dark");
+    if (next !== "light" && next !== "dark") throw new TypeError("Theme must be light or dark.");
+    const buttons = typeof button === "string" ? [...document.querySelectorAll(button)] : button ? [button] : [];
+    const keys = new Set([...Object.keys(properties?.light || {}), ...Object.keys(properties?.dark || {})]);
+    for (const element of elements) {
+      element.setAttribute("data-bs-theme", next);
+      for (const key of keys) {
+        const value = properties?.[next]?.[key];
+        if (value == null) element.style.removeProperty(key);
+        else element.style.setProperty(key, value);
+      }
+    }
+    if (link) link.setAttribute("href", stylesheets[next]);
+    for (const toggle of buttons) {
+      toggle.title = `Switch to ${next === "dark" ? "light" : "dark"} theme`;
+      toggle.setAttribute("aria-label", toggle.title);
+      toggle.setAttribute("aria-pressed", String(next === "dark"));
+    }
+    return next;
   };
 })(typeof window !== "undefined" ? window : this);
