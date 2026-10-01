@@ -24,6 +24,7 @@
   const ROUTE_MD = "md";
   const ROUTE_WEBSOCKET = "socket";
   const ROUTE_PDF = "pdf";
+  const ROUTE_KIT = "kit";
 
   let ROUTE_HOME = "inicio";
   let ROUTE_PAGE = "pagina";
@@ -73,6 +74,7 @@
     [`/${ROUTE_VIDEO}`]: { URI: `/video.example.html`, ...ROOT_COMPONENTS },
     [`/${ROUTE_JSON}`]: { URI: `/json.example.html`, ...ROOT_COMPONENTS },
     [`/${ROUTE_MD}`]: { URI: `/md.example.html`, ...ROOT_COMPONENTS },
+    [`/${ROUTE_KIT}`]: { URI: "/kit.example.html", ...ROOT_COMPONENTS },
     [`/${ROUTE_PDF}`]: { FILE: `/img/pdf/sample.pdf` }
   };
 
