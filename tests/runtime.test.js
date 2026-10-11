@@ -61,7 +61,7 @@ test("application init keeps nested paths and early state application-relative",
     vm.runInNewContext(source, { URL, console: { log() {} }, document, window });
     assert.equal(window.bySPA.HOME_PATH, homePath);
     assert.equal(window.byStorage.prefix, prefix);
-    assert.equal(values.get(prefix + "HOME_PATH"), window.bySPA.HOME_PATH);
+    assert.equal(values.get(`${prefix}HOME_PATH`), window.bySPA.HOME_PATH);
   }
 });
 
@@ -132,9 +132,9 @@ function storageHarness(values = new Map()) {
 
 test("partial storage failure gives only failed keys local authority until explicit recovery", () => {
   const { storage, values, failure } = storageHarness();
-  const diskX = storage.prefix + "X";
-  const diskY = storage.prefix + "Y";
-  const diskZ = storage.prefix + "Z";
+  const diskX = `${storage.prefix}X`;
+  const diskY = `${storage.prefix}Y`;
+  const diskZ = `${storage.prefix}Z`;
   storage.setItem("X", "old");
   storage.setItem("Z", "original");
   assert.equal(storage.getItem("X"), "old");
@@ -180,7 +180,7 @@ test("partial storage failure gives only failed keys local authority until expli
 
 test("failed migration keeps legacy data safe and removals cannot remigrate it", () => {
   const { storage, values, failure } = storageHarness(new Map([["CUSTOM", "legacy"]]));
-  const diskKey = storage.prefix + "CUSTOM";
+  const diskKey = `${storage.prefix}CUSTOM`;
   failure.write = true;
   assert.equal(storage.getItem("CUSTOM"), "legacy");
   assert.equal(values.has(diskKey), false);

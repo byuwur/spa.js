@@ -21,6 +21,7 @@ test("shared helper satisfies the same query contract at the selected revision",
 });
 
 test("mirror contract detects a deliberately mismatched helper", () => {
-  const broken = source("_functions.js") + "\nget_url_param = () => null;";
+  const broken = `${source("_functions.js")}
+get_url_param = () => null;`;
   assert.throws(() => queryContract(broken), assert.AssertionError);
 });
