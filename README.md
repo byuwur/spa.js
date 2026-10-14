@@ -64,6 +64,7 @@ Each independently routed SPA needs its own initializer and route table. Hash ro
 | --------------------- | ---------------------------------------------------------------------------------------------------- |
 | `_functions.js`       | JSON, URL, request, WebSocket, cookie, modal, and form helpers.                                      |
 | `_common.js`          | Shared UI, sidebar, accessibility, Bootstrap, tooltip, consent, particles, and video initialization. |
+| `_fonts.js`           | Optional Google Fonts loading and searchable font pickers. |
 | `_init.js`            | Template for the application's paths, environment, routing, storage, and runtime setup.              |
 | `_lang.js`            | Optional language selection, JSON dictionaries, `data-i18n`, and Google Translate callback.          |
 | `_router.js`          | Initial hash/path routing, route data, and direct file routes.                                       |
@@ -112,6 +113,12 @@ Storage keys use the finalized application root as a namespace. Successful migra
 A failed write keeps only that key's local value until a successful explicit write or removal. A failed removal keeps a local null marker, including when legacy cleanup fails. Unaffected keys still read persistent storage. There is no background replay or cross-tab reconciliation; memory fallback lasts for the current runtime only. Update application-owned initializer copies to adopt changes to this behavior.
 
 `_spa.js` calls `byCommon.init()` after content changes. Keep shared UI setup there instead of duplicating route hooks. Optional initialization diagnostics are off by default; enable `byCommon.INIT_WARNINGS` or pass `{ showWarn: true }`. Required-runtime errors still appear.
+
+### Optional Google Fonts
+
+Load `_fonts.js` after jQuery. The optional module exposes `byFont` independently of the SPA runtime.
+
+`byFont.family(value, fallback)` requests a selected Google family and returns its CSS stack. The bundled catalog contains 350 families; only selected families and visible dropdown samples load, with `display=swap`, cached requests, and offline fallbacks. Applications retain ownership of font values and persistence.
 
 ### Fragment scripts and error pages
 
