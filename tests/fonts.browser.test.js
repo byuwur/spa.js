@@ -222,6 +222,33 @@ test("video initialization enhances only the player's shortcut controls", async 
   assert.deepEqual(errors, []);
 });
 
+test("modal dismissal cleans fonts and preserves a replacement with the same ID", async t => {
+  const { page, errors } = await fontPage(t, /* HTML */ `
+    <div id="dismiss" class="modal"><input id="retired-font" data-font-picker value="Arial"></div>`);
+  await page.addScriptTag({ path: path.join(root, "_functions.js") });
+  await page.evaluate(() => {
+    byFont.init();
+    window.retiredFont = document.getElementById("retired-font");
+    // Modal cleanup uses the optional font module without requiring common UI.
+    delete window.byCommon;
+    destroy_modal_front("dismiss");
+    const replacement = document.createElement("div");
+    replacement.id = "dismiss";
+    replacement.className = "modal";
+    replacement.innerHTML = /* HTML */ `<input id="replacement-font" data-font-picker value="Georgia">`;
+    document.body.append(replacement);
+    byFont.init(replacement);
+    window.replacementWidget = $("#replacement-font").data("select2");
+  });
+  await page.waitForFunction(() => document.querySelectorAll("#dismiss").length === 1);
+  assert.equal(await page.locator("#replacement-font").count(), 1);
+  assert.equal(await page.evaluate(() => $("#replacement-font").data("select2") === replacementWidget), true);
+  assert.equal(await page.evaluate(() => retiredFont.classList.contains("select2-hidden-accessible")), false);
+  assert.equal(await page.locator(".font-preview").count(), 1);
+  assert.deepEqual(errors, []);
+});
+
+
 test("translation refreshes titles through their UI owner without rerunning modal setup", async t => {
   const { page, errors } = await fontPage(t, /* HTML */ `
     <button id="translated" data-i18n-title="play" data-bs-toggle="tooltip" title="Before">Play</button>
