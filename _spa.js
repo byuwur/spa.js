@@ -91,17 +91,15 @@
   }
 
   function renderFileProtocolNotice() {
-    if (!$("#spa-content").length) $("body").append($(/* HTML */ `<main>`, { id: "spa-content" }));
+    if (!$("#spa-content").length) $("body").append($(/* HTML */ `<main></main>`, { id: "spa-content" }));
     $("#spa-content").html(
-      [
-        /* HTML */ `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:#0007;color:#fee;">`,
-        /* HTML */ `<div style="max-width:42rem;">`,
-        /* HTML */ `<h1>SPA.js needs HTTP</h1>`,
-        /* HTML */ `<p>This shell opened from <code>file://</code>, so the browser blocked the HTML fragments and components that SPA.js loads with AJAX.</p>`,
-        /* HTML */ `<p>Serve this folder from WAMP, Apache, or any small static server and open it through <code>http://localhost/...</code>.</p>`,
-        /* HTML */ `</div>`,
-        /* HTML */ `</div>`
-      ].join("")
+      /* HTML */ `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:#0007;color:#fee;">
+        <div style="max-width:42rem;">
+          <h1>SPA.js needs HTTP</h1>
+          <p>This shell opened from <code>file://</code>, so the browser blocked the HTML fragments and components that SPA.js loads with AJAX.</p>
+          <p>Serve this folder from WAMP, Apache, or any small static server and open it through <code>http://localhost/...</code>.</p>
+        </div>
+      </div>`
     );
     $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
   }
@@ -499,7 +497,7 @@
       if (!bySPA.reloadComponent) return window.location.reload();
       console.warn("Main Component (main#spa-content) missing. Creating and appending to the body...");
       $("body").append(
-        $(/* HTML */ `<main>`, {
+        $(/* HTML */ `<main></main>`, {
           id: "spa-content"
         })
       );

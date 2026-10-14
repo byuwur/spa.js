@@ -485,6 +485,24 @@ test("navigation journey preserves error recovery and FILE history", async () =>
   await page.close();
 });
 
+test("file protocol guidance keeps its heading and text inside the notice panel", async () => {
+  const page = await browser.newPage();
+  await page.goto(pathToFileURL(path.join(root, "img/index.html")).href + "#/");
+  await page.setContent('<main id="spa-content"></main><div id="spa-loader"></div>');
+  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", "_init.js"])
+    await page.addScriptTag({ content: source(file) });
+  await page.evaluate(() => {
+    $.fx.off = true;
+    bySPA.ROUTES = { "/": { URI: "home.html" } };
+  });
+  await page.addScriptTag({ content: source("_router.js") });
+  await page.addScriptTag({ content: source("_spa.js") });
+  await page.waitForSelector("#spa-content > div > div > h1");
+  assert.equal(await page.locator("#spa-content > div > div > p").count(), 2);
+  await page.close();
+});
+
+
 test("component failures settle independently and navigation retains jQuery promise methods", async t => {
   const page = await openApp();
   t.after(() => page.close());
