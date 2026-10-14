@@ -87,9 +87,15 @@ test("storage migration removes legacy values and memory fallback remains usable
   const fallbackWindow = {
     location,
     localStorage: {
-      getItem() { throw new Error("unavailable"); },
-      setItem() { throw new Error("unavailable"); },
-      removeItem() { throw new Error("unavailable"); }
+      getItem() {
+        throw new Error("unavailable");
+      },
+      setItem() {
+        throw new Error("unavailable");
+      },
+      removeItem() {
+        throw new Error("unavailable");
+      }
     }
   };
   vm.runInNewContext(source, { URL, console: { log() {} }, document, window: fallbackWindow });
@@ -125,7 +131,10 @@ function storageHarness(values = new Map()) {
     }
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "_init.js"), "utf8"), {
-    window, URL, document: { currentScript: { getAttribute: () => "/app/_init.js" } }, console: { log() {} }
+    window,
+    URL,
+    document: { currentScript: { getAttribute: () => "/app/_init.js" } },
+    console: { log() {} }
   });
   return { storage: window.byStorage, values, failure };
 }
