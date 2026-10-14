@@ -84,23 +84,20 @@
     return value ?? fallback;
   };
 
-  function loadLanguage(lang) {
+  async function loadLanguage(lang) {
     lang = byCommon.setLanguage(lang);
-    if (byCommon.LANG_CACHE[lang]) return Promise.resolve(byCommon.LANG_CACHE[lang]);
+    if (byCommon.LANG_CACHE[lang]) return byCommon.LANG_CACHE[lang];
     const path = `${byCommon.LANG_PATH}/${lang}.json`;
     const url = typeof bySPA.buildRequestURL === "function" ? bySPA.buildRequestURL(path) : `${String(bySPA.HOME_PATH || "").replace(/\/$/, "")}${path}`;
-    return Promise.resolve(
-      $.ajax({
-        url,
-        type: "GET",
-        dataType: "json",
-        cache: true,
-        timeout: bySPA.REQUEST_TIMEOUT
-      })
-    ).then(function (strings) {
-      byCommon.LANG_CACHE[lang] = strings || {};
-      return byCommon.LANG_CACHE[lang];
+    const strings = await $.ajax({
+      url,
+      type: "GET",
+      dataType: "json",
+      cache: true,
+      timeout: bySPA.REQUEST_TIMEOUT
     });
+    byCommon.LANG_CACHE[lang] = strings || {};
+    return byCommon.LANG_CACHE[lang];
   }
 
   function applyLanguage(root = document, strings = byCommon.LANG_STRINGS) {
@@ -145,20 +142,19 @@
    * @param {Object} [routing={}] Route detail, including optional `navigationId` and GET data.
    * @return {Promise<Object|null>} Applied dictionary, or null after failure/staleness.
    */
-  function initLanguage(routing = {}) {
+  async function initLanguage(routing = {}) {
     const lang = getLanguage(routing);
     const navigationId = routing.navigationId ?? bySPA.NAVIGATION_ID;
-    return loadLanguage(lang)
-      .then(function (strings) {
-        // Language is route-owned; do not translate newer content with an old response.
-        if (navigationId !== bySPA.NAVIGATION_ID) return null;
-        applyLanguage(document, strings);
-        return strings;
-      })
-      .catch(function (xhr, status, error) {
-        console.warn(`initLanguage(): ${lang}`, xhr?.status || status || error || xhr);
-        return null;
-      });
+    try {
+      const strings = await loadLanguage(lang);
+      // Language is route-owned; do not translate newer content with an old response.
+      if (navigationId !== bySPA.NAVIGATION_ID) return null;
+      applyLanguage(document, strings);
+      return strings;
+    } catch (xhr) {
+      console.warn(`initLanguage(): ${lang}`, xhr?.status || xhr?.statusText || xhr);
+      return null;
+    }
   }
 
   bySPA.setLanguage(get_url_param("lang") || get_cookie("lang") || byStorage.getItem("APP_LANG") || global.navigator?.language);
