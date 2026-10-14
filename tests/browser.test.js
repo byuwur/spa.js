@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
+const { pathToFileURL } = require("node:url");
 const { chromium } = require("playwright");
 const { source } = require("./parity-source");
 
@@ -482,4 +483,30 @@ test("navigation journey preserves error recovery and FILE history", async () =>
   await page.goBack();
   await page.waitForURL("**/#/slow");
   await page.close();
+});
+
+test("component failures settle independently and navigation retains jQuery promise methods", async t => {
+  const page = await openApp();
+  t.after(() => page.close());
+  const result = await page.evaluate(async () => {
+    const unhandled = [];
+    window.addEventListener("unhandledrejection", event => unhandled.push(event.reason?.message));
+    events = [];
+    bySPA.ROUTES["/known"].COMPONENT = { "#component": "/broken" };
+    bySPA.reloadComponent = () => Promise.reject(new Error("Component fixture failure"));
+    $.ajax = () => {
+      const response = $.Deferred();
+      setTimeout(() => response.resolve(/* HTML */ `<p>Page survives</p>`), 25);
+      return response.promise();
+    };
+    const request = bySPA.load("/known", { push: false });
+    const jqueryMethods = ["done", "fail", "always"].every(method => typeof request[method] === "function");
+    const html = await request;
+    await new Promise(resolve => setTimeout(resolve, 0));
+    return { unhandled, jqueryMethods, html, events: events.map(event => event.type) };
+  });
+  assert.deepEqual(result, {
+    unhandled: [], jqueryMethods: true, html: "<p>Page survives</p>",
+    events: ["bySPA:before-unload", "bySPA:load"]
+  });
 });
