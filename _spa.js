@@ -224,7 +224,7 @@
    * @param {number} status HTTP status code.
    * @param {string} custom_error_message A custom error message to display.
    * @param {number} navigationId Navigation generation that owns the error.
-   * @return {Promise<string|null>} Error-fragment request result.
+   * @return {jQuery.Promise<string|null>} Error-fragment request result.
    */
   bySPA.errorPage = function (status, custom_error_message = "", navigationId = bySPA.NAVIGATION_ID) {
     // === /spa.js/ only: static error fragment instead of PHP _error.php ===
@@ -252,32 +252,32 @@
 
       return inserted;
     };
-    const requestError = function (path) {
-      return $.ajax({
-        url: `${path}${path.includes("?") ? "&" : "?"}e=${status}`,
-        // === /spa.js/ only: GET by default for static nature ===
-        type: "GET",
-        data: { custom_error_message },
-        dataType: "text",
-        timeout: bySPA.REQUEST_TIMEOUT
-      })
-        .then(render)
-        .catch(function () {
-          if (navigationId !== bySPA.NAVIGATION_ID) return null;
-          // === /spa.js/ only: A missing candidate is not the error page; try the next one ===
-          //if (xhr?.responseText) return render(xhr.responseText);
-          //console.error(`Error (errorPage): ${xhr?.status} ${ajaxStatus} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
-          return null;
+    const requestError = async function (path) {
+      try {
+        const data = await $.ajax({
+          url: `${path}${path.includes("?") ? "&" : "?"}e=${status}`,
+          // Static error pages use GET, including their fallback candidates.
+          type: "GET",
+          data: { custom_error_message },
+          dataType: "text",
+          timeout: bySPA.REQUEST_TIMEOUT
         });
+        return await render(data);
+      } catch {
+        // A missing candidate is not the error page; the loop tries the next one.
+        return null;
+      }
     };
-    const loadError = function (paths, index = 0) {
-      return requestError(`${paths[index]}`).then(function (data) {
+    const loadError = async function () {
+      let data = null;
+      for (const path of paths) {
+        data = await requestError(path);
         if (navigationId !== bySPA.NAVIGATION_ID) return null;
-        if (data || index + 1 >= paths.length) return data;
-        return loadError(paths, index + 1);
-      });
+        if (data) return data;
+      }
+      return data;
     };
-    return loadError(paths);
+    return $.when(loadError());
   };
 
   /**
@@ -463,7 +463,7 @@
     const historyMode = typeof mode === "object" ? mode : {};
     document.dispatchEvent(new CustomEvent("bySPA:before-unload", { detail: { navigationId, url } }));
     // Public listeners can synchronously hand ownership to a newer navigation.
-    if (navigationId !== bySPA.NAVIGATION_ID) return Promise.resolve(null);
+    if (navigationId !== bySPA.NAVIGATION_ID) return $.when(null);
     // Log debug information if in development mode
     if (bySPA.APP_ENV === "DEV") console.log(`loadSPA("${url}", ${parse_json(mode)})`);
     $("#spa-loader").fadeIn(1);
@@ -472,7 +472,7 @@
     if (!routing) {
       const error = `Route "${url}" does not exist.`;
       document.dispatchEvent(new CustomEvent("bySPA:error", { detail: { navigationId, url, status: 404, error } }));
-      if (navigationId !== bySPA.NAVIGATION_ID) return Promise.resolve(null);
+      if (navigationId !== bySPA.NAVIGATION_ID) return $.when(null);
       return bySPA.errorPage(404, error, navigationId).always(function () {
         if (navigationId === bySPA.NAVIGATION_ID) $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
       });
@@ -490,7 +490,7 @@
     // === /spa.js/ only: browsers block AJAX fragment loading from file:// ===
     if (window.location.protocol === "file:") {
       renderFileProtocolNotice();
-      return Promise.resolve(null);
+      return $.when(null);
     }
     if (bySPA.APP_ENV === "DEV") console.log("routeURL(): PATH=", path, "; URI=", uri, "; FILE=", file, "; _GET=", get, "; _POST=", post, "; COMPONENT=", component);
     // If the SPA container is missing, create the element
