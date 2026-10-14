@@ -173,11 +173,11 @@ Whole runtime files do not need to be byte-identical.
 ### Checks
 
 ```bash
-node --test tests/runtime.test.js tests/common.test.js tests/fragment_scripts.test.js tests/parity.test.js
-node --test tests/browser.test.js
+node --test tests/runtime.test.js tests/common.test.js tests/fragment_scripts.test.js tests/parity.test.js tests/fonts.test.js
+node --test tests/browser.test.js tests/fonts.browser.test.js
 ```
 
-Browser checks need Playwright and its browser; use the installation in the [CI workflow](.github/workflows/ci.yml). `PLAYWRIGHT_CHANNEL=msedge` can select a local Edge installation.
+Browser checks need Playwright and its browser; use the installation in the [CI workflow](.github/workflows/ci.yml). `PLAYWRIGHT_CHANNEL=msedge` can select a local Edge installation; font checks use `BROWSER_CHANNEL`.
 
 <details>
 <summary>Comparison revisions and upgrade follow-ups</summary>
