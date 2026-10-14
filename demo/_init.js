@@ -14,7 +14,8 @@
  */
 (function (global) {
   const currentScript = document.currentScript;
-  const scriptURL = new URL(currentScript?.getAttribute("src") || "_init.js", global.location.href);
+  const scriptSource = currentScript && typeof currentScript.getAttribute === "function" ? currentScript.getAttribute("src") : "";
+  const scriptURL = new URL(scriptSource || "_init.js", global.location.href);
   const applicationURL = new URL("./", scriptURL);
 
   /*

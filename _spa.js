@@ -578,7 +578,7 @@
     });
     // Attaches click event handlers to links for SPA navigation.
     $(document).on("click", "a[href]", function (e) {
-      if (e.defaultPrevented || e.isDefaultPrevented?.() || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (e.defaultPrevented || (typeof e.isDefaultPrevented === "function" && e.isDefaultPrevented()) || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       if ((this.target && this.target !== "_self") || this.hasAttribute("download") || this.getAttribute("custom-folder") == "true") return;
       const href = this.getAttribute("href");
       if (!href || href.startsWith("javascript:")) return;

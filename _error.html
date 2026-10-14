@@ -343,15 +343,15 @@
     };
 
     const params = new URLSearchParams(window.location.search);
-    const cookieLang = document.cookie
-      .split("; ")
-      .find((item) => item.startsWith("lang="))
-      ?.slice(5);
+    const langCookie = document.cookie.split("; ").find((item) => item.startsWith("lang="));
+    const cookieLang = langCookie && typeof langCookie.slice === "function" ? langCookie.slice(5) : "";
 
     const requestedLang = params.get("lang") || cookieLang || "es";
     const lang = requestedLang === "en" ? "en" : "es";
 
-    const requestedError = window.bySPA?.ERROR_STATUS?.toString() || params.get("e");
+    const errorStatus = window.bySPA ? window.bySPA.ERROR_STATUS : null;
+    const statusText = errorStatus != null && typeof errorStatus.toString === "function" ? errorStatus.toString() : "";
+    const requestedError = statusText || params.get("e");
     const err = Object.hasOwn(errors, requestedError) ? requestedError : "500";
     const error = errors[err];
 
