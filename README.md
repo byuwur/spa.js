@@ -118,7 +118,7 @@ A failed write keeps only that key's local value until a successful explicit wri
 
 Load `_fonts.js` after jQuery. The optional module exposes `byFont` independently of the SPA runtime.
 
-`byFont.family(value, fallback)` requests a selected Google family and returns its CSS stack. The bundled catalog contains 350 families; only selected families and visible dropdown samples load, with `display=swap`, cached requests, and offline fallbacks. Applications retain ownership of font values and persistence.
+`byFont.family(value, fallback)` requests a selected Google family and returns its CSS stack. Use `await byFont.ready(value, weight, text)` before measuring animated text; it returns a native `Promise<boolean>`. The bundled catalog contains 350 families; only selected families and visible dropdown samples load, with `display=swap`, cached requests, and offline fallbacks. Applications retain ownership of font values and persistence.
 
 ### Fragment scripts and error pages
 
