@@ -13,6 +13,10 @@
  * @param {Object} global - The global object, usually `window` in a browser.
  */
 (function (global) {
+  if (typeof jQuery === "undefined" && !global.jQuery) return console.error("Init _lang.js FAILED. No jQuery found.");
+  const $ = global.jQuery;
+
+
   global.byCommon = global.byCommon || {};
   global.bySPA = global.bySPA || {};
   const byCommon = global.byCommon;
