@@ -5,12 +5,6 @@ const path = require("node:path");
 const vm = require("node:vm");
 const source = fs.readFileSync(path.join(__dirname, "..", "_fonts.js"), "utf8");
 
-function jqueryFixture() {
-  const jquery = function () {};
-  jquery.fn = {};
-  return jquery;
-}
-
 function loadFonts(namespace = {}) {
   const links = [], timers = new Map(), fontCalls = [];
   const document = {
@@ -19,7 +13,7 @@ function loadFonts(namespace = {}) {
     fonts: { load: async (...args) => { fontCalls.push(args); return [{}]; } }
   };
   const context = vm.createContext({
-    window: { byFont: namespace, jQuery: jqueryFixture() }, document, Promise,
+    window: { byFont: namespace }, document, Promise,
     CSS: { supports: (_, value) => !value.includes(";") },
     setTimeout(callback, delay) { const timer = {}; timers.set(timer, { callback, delay }); return timer; },
     clearTimeout: timer => timers.delete(timer)
@@ -32,7 +26,7 @@ function loadFonts(namespace = {}) {
   };
 }
 
-test("font namespace preserves host properties and works without picker libraries or eager downloads", () => {
+test("font namespace preserves host properties and works without jQuery or eager downloads", () => {
   const namespace = { hostFont: "Arial" };
   const { fonts, links } = loadFonts(namespace);
   assert.equal(fonts, namespace);
@@ -43,6 +37,7 @@ test("font namespace preserves host properties and works without picker librarie
   const field = {};
   assert.equal(fonts.picker(field), field);
   fonts.init();
+  fonts.destroy();
   assert.equal(links.length, 0);
 });
 
