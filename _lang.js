@@ -34,8 +34,7 @@
 
   function eachMatching(root, selector, callback) {
     root = root && root.nodeType ? root : document;
-    if (root.matches?.(selector)) callback(root);
-    root.querySelectorAll?.(selector).forEach(callback);
+    $(root).find(selector).addBack(selector).each((_, element) => callback(element));
   }
 
   function normalizeLanguage(lang) {
@@ -158,7 +157,8 @@
   }
 
   bySPA.setLanguage(get_url_param("lang") || get_cookie("lang") || byStorage.getItem("APP_LANG") || global.navigator?.language);
-  document.addEventListener("bySPA:load", function (event) {
-    initLanguage(event.detail);
+  $(document).on("bySPA:load.byLanguage", function (event) {
+    const e = event.originalEvent || event;
+    initLanguage(e.detail);
   });
 })(typeof window !== "undefined" ? window : this);

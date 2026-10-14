@@ -362,7 +362,7 @@
       .then(function (data) {
         // Ignore a slow component after the user has moved to another route.
         if (navigationId !== bySPA.NAVIGATION_ID) return null;
-        return setHTML(document.querySelector(componentId), data, navigationId);
+        return setHTML($(componentId)[0], data, navigationId);
       })
       .catch(function (xhr, status, error) {
         if (navigationId !== bySPA.NAVIGATION_ID) return null;
@@ -569,7 +569,8 @@
       console.log("ROUTER_MODE=", bySPA.ROUTER_MODE);
     }
     // Handles the popstate event for navigating through browser history.
-    window.addEventListener("popstate", function (e) {
+    $(window).on("popstate.bySPA", function (event) {
+      const e = event.originalEvent || event;
       if (!e.state) return;
       bySPA.HISTORY_INDEX = e.state.index;
       bySPA.load(e.state.url ?? bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX], { push: false });
@@ -601,7 +602,8 @@
       bySPA.load(nextURL);
     });
     // Reload the SPA when returning from a full FILE navigation via the browser cache.
-    window.addEventListener("pageshow", function (e) {
+    $(window).on("pageshow.bySPA", function (event) {
+      const e = event.originalEvent || event;
       if (!e.persisted || !fileNavigation) return;
       fileNavigation = false;
       window.location.reload();
@@ -612,7 +614,7 @@
     byStorage.removeItem("ROUTER_ERROR");
     bySPA.load(initialError ? initialError.url : `${bySPA.URL}`, { replace: true });
     // === /spa.js/ only: hash routes do not emit popstate consistently ===
-    window.addEventListener("hashchange", function () {
+    $(window).on("hashchange.bySPA", function () {
       if (bySPA.ROUTER_MODE === "path") return;
       const nextURL = hashToURL(window.location.hash);
       if (!nextURL || nextURL === bySPA.URL) return;

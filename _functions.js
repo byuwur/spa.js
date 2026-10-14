@@ -505,7 +505,7 @@ function element_make_http_request(options) {
         .then(function (response) {
           if (appIsDEV) console.log(`Response (${elementId}):`, response);
           if (loudFail && ![200, 201, 202].includes(response?.status))
-            return show_modal_front("modal_front", "danger", "ERROR", /* HTML */ `Ocurrió un error.<br>Disculpe las molestias, intente nuevamente.<br><code>(${escape_html(response?.message)})</code>`, true);
+            return show_modal_front("modal_front", "danger", "ERROR", /* HTML */ `Ocurrió un error.<br />Disculpe las molestias, intente nuevamente.<br /><code>(${escape_html(response?.message)})</code>`, true);
           doneFn(response?.data ?? response);
           return response?.data ?? response;
         })
