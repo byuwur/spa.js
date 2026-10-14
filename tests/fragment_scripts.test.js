@@ -305,3 +305,10 @@ test("implementation-only common, router, and language functions stay private", 
   assert.match(language, /bySPA\.setLanguage\s*=/);
   assert.match(router, /function initRouter\(\)/);
 });
+
+test("the final ordered script cannot report success after navigation ownership changes", async () => {
+  const harness = createHarness({ "last.js": { delay: 25 } });
+  const pending = harness.bySPA.__setHTMLForTest(harness.target, /* HTML */ `<script src="last.js"></script>`, 1);
+  harness.bySPA.NAVIGATION_ID = 2;
+  assert.equal(await pending, null);
+});
