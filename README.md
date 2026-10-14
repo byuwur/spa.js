@@ -114,6 +114,8 @@ A failed write keeps only that key's local value until a successful explicit wri
 
 `_spa.js` calls `byCommon.init()` after content changes. Keep shared UI setup there instead of duplicating route hooks. Optional initialization diagnostics are off by default; enable `byCommon.INIT_WARNINGS` or pass `{ showWarn: true }`. Required-runtime errors still appear.
 
+`byCommon.initBootstrap()` owns Bootstrap components and tooltip dismissal handlers. Video shortcut labels and SPA.js translations use `{ tooltipsOnly: true, root }` to initialize tooltips within a subtree, including its root, without rerunning modal or other component setup. Add `refreshTooltips: true` to preserve updated titles while recreating tooltip instances.
+
 ### Optional Google Fonts
 
 Load `_fonts.js` after jQuery and before the SPA runtime, and mark font inputs or selects with `data-font-picker`. The loader uses native Promises; optional pickers also use Select2 and `_common.css`.

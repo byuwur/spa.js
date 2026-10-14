@@ -34,10 +34,6 @@
     root.querySelectorAll?.(selector).forEach(callback);
   }
 
-  function refreshBootstrapWidgets() {
-    if (typeof byCommon.initBootstrap === "function") byCommon.initBootstrap();
-  }
-
   function normalizeLanguage(lang) {
     lang = String(lang || "")
       .trim()
@@ -118,7 +114,7 @@
       const value = byCommon.getLangString(key, element.getAttribute("title") || "");
       element.setAttribute("title", value);
       if (element.hasAttribute("data-bs-toggle")) element.setAttribute("data-bs-title", value);
-      if (typeof bootstrap !== "undefined" && bootstrap.Tooltip) bootstrap.Tooltip.getInstance(element)?.dispose();
+      if (typeof byCommon.initBootstrap === "function") byCommon.initBootstrap({ showWarn: false, tooltipsOnly: true, root: element, refreshTooltips: true });
     });
     eachMatching(root, "[data-i18n-label]", function (element) {
       const key = element.getAttribute("data-i18n-label");
@@ -135,7 +131,7 @@
       const route = byCommon.getLangString(key, "").replace(/^\/+/, "");
       if (route) element.setAttribute("href", `#/${route}`);
     });
-    refreshBootstrapWidgets();
+    if (typeof byCommon.initBootstrap === "function") byCommon.initBootstrap({ showWarn: false, tooltipsOnly: true, root });
     document.dispatchEvent(new CustomEvent("byCommon:language", { detail: { lang: byStorage.getItem("APP_LANG"), strings: byCommon.LANG_STRINGS } }));
   }
 
