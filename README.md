@@ -1,5 +1,7 @@
 # byuwur/spa.js
 
+![SPA.js demo preview](prev.jpg)
+
 A small framework for static single-page applications. Plain JavaScript and jQuery load HTML pages and shared components without a full refresh.
 
 Try it at [byuwur.github.io/spa.js](https://byuwur.github.io/spa.js). Need PHP routes and server-side helpers? Use [spa.php](https://github.com/byuwur/spa.php).
@@ -64,7 +66,7 @@ Each independently routed SPA needs its own initializer and route table. Hash ro
 | --------------------- | ---------------------------------------------------------------------------------------------------- |
 | `_functions.js`       | JSON, URL, request, WebSocket, cookie, modal, and form helpers.                                      |
 | `_common.js`          | Shared UI, sidebar, accessibility, Bootstrap, tooltip, consent, particles, and video initialization. |
-| `_fonts.js`           | Optional Google Fonts loading and searchable font pickers. |
+| `_fonts.js`           | Optional Google Fonts loading and searchable font pickers.                                           |
 | `_init.js`            | Template for the application's paths, environment, routing, storage, and runtime setup.              |
 | `_lang.js`            | Optional language selection, JSON dictionaries, `data-i18n`, and Google Translate callback.          |
 | `_router.js`          | Initial hash/path routing, route data, and direct file routes.                                       |

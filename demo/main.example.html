@@ -1,21 +1,35 @@
-<div class="video-foreground app-container">
-  <div class="container vh-100 d-flex flex-column align-items-center justify-content-center">
-    <div class="text-white text-dark-shadow">
-      <p data-i18n="demo.description">The following is a test for this home-handmade SPA framework and router. Enjoy yourselves.</p>
-      <p>
-        <span data-i18n="demo.this_is">This is</span>
-        <span data-i18n="nav.home">Home</span>
-      </p>
-      <p>
-        <span data-i18n="nav.home">Home:</span>
-        <b>
-          <i>
-            <span data-i18n="demo.home.description">"Welcome to our website. Explore our services and products."</span>
-          </i>
-        </b>
-      </p>
-      <hr class="w-100" />
-      <a href="#/kit" class="link" data-i18n="nav.kit" data-i18n-route="route.kit">UI Kit</a> | <a href="#/video" class="link" data-i18n="nav.video" data-i18n-route="route.video">Subbed Video Demo</a>
-    </div>
+<div class="spa-demo-home video-foreground app-container d-flex">
+  <div class="d-flex align-items-center flex-grow-1 p-4 p-lg-5">
+    <section class="home-copy fs-5 text-white text-dark-shadow" aria-labelledby="home-title">
+      <p class="small fw-bold mb-0">SIMPLE IS COMPLICATED ENOUGH.</p>
+      <h1 id="home-title" class="display-2 fw-bold lh-1 my-3">
+        <span data-i18n="demo.home.heading">Your pages.</span>
+        <span data-i18n="demo.home.subheading">One application.</span>
+      </h1>
+      <p class="home-text fs-4 lh-base" data-i18n="demo.home.description">SPA made easy, with love and JavaScript.</p>
+      <ul class="list-unstyled d-flex flex-wrap gap-3 my-4 small">
+        <li><i class="fas fa-route me-1" aria-hidden="true"></i> <span data-i18n="demo.home.routes">Routes &amp; components</span></li>
+        <li><i class="fas fa-language me-1" aria-hidden="true"></i> <span data-i18n="demo.home.languages">Multiple languages</span></li>
+        <li><i class="fas fa-code me-1" aria-hidden="true"></i> <span data-i18n="demo.home.setup">No build step</span></li>
+      </ul>
+      <div class="d-flex flex-wrap gap-2 text-no-shadow">
+        <a class="btn btn-primary btn-lg" href="#/kit">
+          <i class="fas fa-layer-group me-1" aria-hidden="true"></i> <span data-i18n="demo.home.explore">Explore the UI kit</span>
+        </a>
+        <a class="btn btn-outline-light btn-lg" href="https://github.com/byuwur/spa.js" target="_blank" rel="noopener">
+          <i class="fab fa-github me-1" aria-hidden="true"></i> GitHub
+        </a>
+        <a class="btn btn-outline-light btn-lg" href="https://github.com/byuwur/spa.js#usage" target="_blank" rel="noopener">
+          <i class="fas fa-book-open me-1" aria-hidden="true"></i> <span data-i18n="demo.home.docs">Read the docs</span>
+        </a>
+      </div>
+      <nav class="d-flex flex-wrap align-items-center gap-3 mt-4" aria-label="More demos" data-i18n-label="demo.home.demos">
+        <span class="small" data-i18n="demo.home.try">Try it with</span>
+        <a class="link" href="#/json"><i class="fas fa-code me-1" aria-hidden="true"></i> JSON</a>
+        <a class="link" href="#/md"><i class="fab fa-markdown me-1" aria-hidden="true"></i> Markdown</a>
+        <a class="link" href="#/video" data-i18n-route="route.video"><i class="fas fa-video me-1" aria-hidden="true"></i> <span data-i18n="demo.home.video">Video</span></a>
+      </nav>
+      <p class="small mt-4 mb-0" data-i18n="demo.home.continuity">Watch the background video as you navigate. The content changes; the page stays.</p>
+    </section>
   </div>
 </div>
