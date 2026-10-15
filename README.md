@@ -156,7 +156,7 @@ Fragment sequencing uses `async`/`await`; public AJAX/navigation results retain 
 
 External script failures are logged without failing navigation or stopping later scripts. Superseded fragments stop processing. `bySPA:load` waits for the current page and components' ordered scripts.
 
-Error pages replace the full document and use the same script rules. History navigation away reloads the application with a clean runtime.
+Error pages replace the full document and use the same script rules. Back reloads a clean runtime, including while error-page scripts load.
 
 Set `bySPA.ERROR_PATH` before `_spa.js` to try a custom error fragment first. Fallback order is `HOME_PATH/_error.html`, `HOME_PATH/spa.js/_error.html`, then `HOME_PATH/../_error.html`. Exhausting the list stops loading without recursive error handling. The demo uses the parent fallback.
 
@@ -198,7 +198,7 @@ CI uses this checkout without fetching another repository. Set `SPA_PHP_TREE` to
 
 Only `_functions.js` and `_common.js` come from that immutable reference; routing, storage, and other runtime files stay local. Changing it requires reviewing `SPA_PHP_REVISION` in `tests/parity-source.js` and this record. The working tree and moving HEAD are ignored. Helper tests do not prove full runtime equivalence; browser tests also cover the demo's actual initializer.
 
-SPA.php's comparison still names SPA.js `8a3df8aca9e92b5dcfa32f495f9ce005ccbbfb69`; review that pin and rerun shared checks against the closure revision. Review synchronous lifecycle-listener guards separately. Stream.FGC must review its own framework pin, reconcile `frontend/_init.js`, preserve its settings, and run integration tests.
+Stream.FGC must review its own framework pin, reconcile `frontend/_init.js`, preserve its settings, and run integration tests.
 
 </details>
 

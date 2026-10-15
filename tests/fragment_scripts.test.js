@@ -264,7 +264,6 @@ test("route and component insertion share the private helper and lifecycle waits
   assert.match(source, /setHTML\(\$\(componentId\)\[0\], data, navigationId\)/);
   assert.match(source, /await setHTML\(\$\("#spa-content"\)\[0\], data, navigationId\)/);
   assert.match(source, /setHTML\(document\.documentElement, data, navigationId, true\)/);
-  assert.match(source, /window\.location\.reload\(\);[\s\S]*\{ once: true \}/);
   assert.ok(source.indexOf("await componentsReady") < source.indexOf("afterLoad({ ...routing, navigationId })"));
 });
 

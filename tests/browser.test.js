@@ -599,11 +599,17 @@ test("navigation journey preserves error recovery and FILE history", async () =>
     finish();
     await slow;
     if (document.getElementById("stale")) throw Error("Stale navigation replaced the current route");
+    sessionStorage.setItem("errorNavigations", "[]");
+    document.addEventListener("bySPA:before-unload", (event) => {
+      const attempts = JSON.parse(sessionStorage.getItem("errorNavigations"));
+      sessionStorage.setItem("errorNavigations", JSON.stringify([...attempts, event.detail.url]));
+    });
     await bySPA.load("/missing");
   });
   // Unknown routes retain the existing history policy; Back leaves the last successful URL.
   await Promise.all([page.waitForEvent("load"), page.goBack()]);
   await page.waitForURL("**/#/slow");
+  assert.deepEqual(await page.evaluate(() => JSON.parse(sessionStorage.getItem("errorNavigations"))), ["/missing"]);
   for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", "app/_init.js"]) await page.addScriptTag({ url: `${origin}/${file}` });
   await page.evaluate(() => {
     bySPA.ROUTES = { "/slow": { URI: "known.html" }, "/file": { FILE: "asset.html" } };
@@ -617,6 +623,33 @@ test("navigation journey preserves error recovery and FILE history", async () =>
   await page.goBack();
   await page.waitForURL("**/#/slow");
   await page.close();
+});
+
+test("Back during error-page script loading reloads before any stale SPA navigation", async (t) => {
+  const page = await openApp();
+  t.after(() => page.close());
+  await page.evaluate(() => bySPA.load("/configured"));
+  let release;
+  const held = new Promise((resolve) => { release = resolve; });
+  t.after(release);
+  await page.route("**/pending-error.js", async (route) => {
+    await held;
+    await route.fulfill({ contentType: "text/javascript", body: "" }).catch(() => {});
+  });
+  const pending = page.waitForRequest("**/pending-error.js");
+  await page.evaluate(() => {
+    sessionStorage.setItem("errorNavigations", "[]");
+    document.addEventListener("bySPA:before-unload", (event) => {
+      const attempts = JSON.parse(sessionStorage.getItem("errorNavigations"));
+      sessionStorage.setItem("errorNavigations", JSON.stringify([...attempts, event.detail.url]));
+    });
+    $.ajax = () => $.Deferred().resolve('<html><body>Error<script src="/pending-error.js"></script></body></html>').promise();
+    bySPA.load("/missing");
+  });
+  await pending;
+  await Promise.all([page.waitForEvent("load"), page.goBack()]);
+  assert.deepEqual(await page.evaluate(() => JSON.parse(sessionStorage.getItem("errorNavigations"))), ["/missing"]);
+  assert.equal(await page.evaluate(() => typeof bySPA), "undefined");
 });
 
 test("file protocol guidance keeps its heading and text inside the notice panel", async () => {

@@ -36,6 +36,7 @@
   // These properties can be previously initialized to be overriden
   bySPA.REQUEST_TIMEOUT = bySPA.REQUEST_TIMEOUT || 30000;
   let fileNavigation = false; // Flags if you come from a FILE route
+  let errorNavigation = false; // A replaced document needs a clean runtime on Back.
 
   /*
    * === /spa.js/ only: static routing mode ===
@@ -233,18 +234,11 @@
       // Temporarily expose bySPA variables to the error page.
       bySPA.ERROR_STATUS = status;
       bySPA.ERROR_MESSAGE = custom_error_message;
+      errorNavigation = true;
       // Full-document replacement is intentional.
       const inserted = await setHTML(document.documentElement, data, navigationId, true);
       // A newer navigation took ownership while error scripts were loading.
       if (inserted === null || navigationId !== bySPA.NAVIGATION_ID) return null;
-      // Preserve the original clean-reload behavior when leaving an error page.
-      window.addEventListener(
-        "popstate",
-        function () {
-          window.location.reload();
-        },
-        { once: true }
-      );
       delete bySPA.ERROR_STATUS;
       delete bySPA.ERROR_MESSAGE;
 
@@ -569,6 +563,7 @@
     // Handles the popstate event for navigating through browser history.
     $(window).on("popstate.bySPA", function (event) {
       const e = event.originalEvent || event;
+      if (errorNavigation) return window.location.reload();
       if (!e.state) return;
       bySPA.HISTORY_INDEX = e.state.index;
       bySPA.load(e.state.url ?? bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX], { push: false });
@@ -613,6 +608,7 @@
     bySPA.load(initialError ? initialError.url : `${bySPA.URL}`, { replace: true });
     // === /spa.js/ only: hash routes do not emit popstate consistently ===
     $(window).on("hashchange.bySPA", function () {
+      if (errorNavigation) return;
       if (bySPA.ROUTER_MODE === "path") return;
       const nextURL = hashToURL(window.location.hash);
       if (!nextURL || nextURL === bySPA.URL) return;
