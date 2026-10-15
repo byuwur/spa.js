@@ -2,123 +2,75 @@
 
 ![SPA.js demo preview](prev.jpg)
 
-A small framework for static single-page applications. Plain JavaScript and jQuery load HTML pages and shared components without a full refresh.
+A static single-page application framework with jQuery page/component loading, hash or path routing, translations, shared UI, and utility helpers.
 
-Try it at [byuwur.github.io/spa.js](https://byuwur.github.io/spa.js). Need PHP routes and server-side helpers? Use [spa.php](https://github.com/byuwur/spa.php).
-
-## What does it do?
-
-- Loads pages and components from a JavaScript route table.
-- Uses hash routes by default, without server rewrites.
-- Provides request, storage, modal, and error-page helpers.
-- Loads JSON translations for text, trusted HTML, tooltips, labels, images, and localized routes.
-- Reinitializes optional Bootstrap UI after navigation.
+[Demo](https://byuwur.github.io/spa.js) · [PHP version: SPA.php](https://github.com/byuwur/spa.php)
 
 ## Installation
 
-You need jQuery, the core framework scripts, and an HTTP(S) server. Current evergreen browsers are supported. Bootstrap and other libraries are needed only for the features you use.
+Requires jQuery, an HTTP(S) server, and a current browser. Optional features need their bundled libraries; no frontend install or build is required.
 
 ```bash
 git clone https://github.com/byuwur/spa.js.git
 ```
 
-Serve the checkout and open `demo/`. The repository root redirects there. Opening `demo/index.html` as `file://` shows a fallback notice: browsers cannot reliably load fragments that way.
-
-## Usage
-
-1. Start with the demo shell and copy `_init.js` into your application's root.
-2. Define routes in the application's `_routes.js`.
-3. Load helpers, application initialization, optional language support, routes, router, then SPA runtime, in that order.
-4. Add HTML pages and point routes and components at them.
-5. Serve the folder with a static server. No frontend package install or build step is required.
-
-Static fragments use GET. `DATA` supplies route request data; `POST` remains a legacy alias, with `DATA` winning duplicate keys.
-
-### Migration [v14]
-
-`_var.js` became `_init.js`. Rename the application's copy and update script references. There is no compatibility alias.
-
-### Languages
-
-`_lang.js` chooses the language from `?lang=`, route queries, the `lang` cookie, `localStorage.APP_LANG`, browser language, then `es`. It persists the choice and updates `<html lang>`.
-
-Set `byCommon.LANG_PATH` if dictionaries are elsewhere. The demo uses `/lang` relative to its own `HOME_PATH`. Use dotted keys such as `nav.home` or `accessibility.open_panel`.
+Serve the checkout and open `demo/`; the root redirects there. `file://` cannot reliably load AJAX fragments and displays a fallback notice.
 
 ## How is it done?
 
-The **application root** owns the shell, initialization, routes, and configuration. The **framework root** holds reusable code, normally as a `spa.js/` submodule.
+The application owns its shell, initializer, routes, pages, components, dictionaries, and assets. The framework normally lives in a submodule:
 
 ```text
 application-root/
-|-- index.html      # Application shell
-|-- _init.js        # Application initialization
-|-- _routes.js      # Application route table
-`-- spa.js/         # Framework checkout or submodule
+|-- index.html      # Shell
+|-- _init.js        # Application initializer
+|-- _routes.js      # Route table
+`-- spa.js/         # Framework
 ```
 
-These are required by the default setup. Copy `_init.js` into the application root: its script URL and document determine paths, environment, routing mode, and storage. Loading the framework copy directly uses the wrong application context. Define routes before `_router.js` runs.
+1. Copy the demo shell and framework `_init.js` into your application. Each SPA needs its own initializer and routes.
+2. Define routes/components in `_routes.js` and add their HTML files.
+3. Load jQuery, helpers, application initialization, optional language support, routes, `_router.js`, then `_spa.js`, as the demo does.
 
-Each independently routed SPA needs its own initializer and route table. Hash routing needs no rewrites; path routing needs the host to serve `index.html` for non-file routes. The demo uses its parent directory as the framework root; regular consumers keep the full checkout at `spa.js/`.
+The initializer's script URL determines application paths and storage; loading the framework copy directly uses the wrong context. Hash routing needs no rewrites; path routing must serve `index.html` for non-file routes. The demo uses its parent as the framework root.
 
-### Framework files
+| Files                       | Purpose                                                         |
+| --------------------------- | --------------------------------------------------------------- |
+| `_init.js`, `_router.js`    | Application bootstrap and initial route resolution.             |
+| `_spa.js`                   | AJAX navigation, history, components, and lifecycle.            |
+| `_functions.js`             | Data, URL, cookie, request, WebSocket, modal, and form helpers. |
+| `_common.js`, `_common.css` | Shared UI initialization and styles.                            |
+| `_fonts.js`                 | Optional Google Fonts loading and pickers.                      |
+| `_lang.js`                  | Optional language selection and `data-i18n` translations.       |
+| `_error.html`               | Standalone error page.                                          |
+| `css/`, `js/`, `img/`       | Bundled libraries and assets.                                   |
 
-| File                  | Purpose                                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------------- |
-| `_functions.js`       | JSON, URL, request, WebSocket, cookie, modal, and form helpers.                                      |
-| `_common.js`          | Shared UI, sidebar, accessibility, Bootstrap, tooltip, consent, particles, and video initialization. |
-| `_fonts.js`           | Optional Google Fonts loading and searchable font pickers.                                           |
-| `_init.js`            | Template for the application's paths, environment, routing, storage, and runtime setup.              |
-| `_lang.js`            | Optional language selection, JSON dictionaries, `data-i18n`, and Google Translate callback.          |
-| `_router.js`          | Initial hash/path routing, route data, and direct file routes.                                       |
-| `_spa.js`             | Navigation, history, fragment/component requests, and page lifecycle.                                |
-| `_common.css`         | Shared loader, sidebar, accessibility, and interface styles.                                         |
-| `_error.html`         | Standalone static error page.                                                                        |
-| `css/`, `js/`, `img/` | Bundled libraries and shared interface assets.                                                       |
+Load only the libraries you use; remote integrations still require their services. Shared CSS images stay in the framework's `img/`. `.nojekyll` supports GitHub Pages publishing.
 
-Pages, components, `lang/`, and application assets belong to the consuming application. `demo/` includes its own shell, initializer, routes, sidebar, dictionaries, flags, sample PDF, and video. Images used by shared CSS stay in the framework's `img/` directory.
+Since v14, `_var.js` is `_init.js`; update old imports. No compatibility alias exists.
 
-Root `index.html` is a redirect, not the application shell. `.nojekyll` is only needed for GitHub Pages publishing.
+### Languages
 
-### Bundled libraries
-
-Libraries are included in `css/` and `js/` and loaded from local paths. The intention is to avoid depending on CDNs or external resources for these assets. Load only the libraries your application uses.
-
-- **Interface:** Bootstrap, Popper, jQuery, jQuery UI, and Shards UI.
-- **Forms:** Select2, Pickr, and Dropzone.
-- **Media:** Swiper and Video.js.
-- **Animation:** Animate.css, Typed.js, particles.js, GSAP, and MorphSVGPlugin.
-- **Consent:** Cookie Consent (`js/cookies.min.js`).
-- **Icons and fonts:** Font Awesome with local webfonts, Archivo, Bahnschrift, and OpenDyslexic in `css/webfonts/`.
-
-Keeping these files local gives you control over updates and availability. Update the bundled copies when needed; optional integrations that call external services still need those services.
+`_lang.js` chooses language from document `?lang=`, route queries, cookie, `localStorage.APP_LANG`, browser language, then `es`; it persists the choice and updates `<html lang>`. Dictionaries use dotted keys such as `nav.home`. Set `byCommon.LANG_PATH` to override their location; the demo uses application-relative `/lang`.
 
 ## Runtime contracts
 
 ### Routes and navigation
 
-- `bySPA.VERSION` identifies the framework; `bySPA.APP_VERSION` identifies your application.
-- Route-defined values override `/$/` path parameters, which override query parameters. `DATA` overrides duplicate legacy `POST` keys from the initial route onward.
-- Invalid explicit initial URLs fail normally; saved routes or cached tables cannot replace them. An absent route resolves to `/`.
-- Only the first `?` separates path and query. Literal and encoded question marks survive initial and later routing. Route objects keep the last duplicate value; `get_url_param` returns the first and prefers document queries over hash queries.
-- Navigation emits `bySPA:before-unload`, then `bySPA:load` on success or `bySPA:error` on failure. The timeout is 30 seconds (`bySPA.REQUEST_TIMEOUT`).
-- Unknown routes emit one status-404 error before the standalone error page; exhausted fallbacks add no second terminal event. Details are `{ navigationId, url, status, error }`; status `0` means no transport status.
-- Superseded requests cannot change the newer DOM or loader or emit terminal events. Initial routing follows the same rules. FILE routes leave without a success event; unknown routes do not create a history entry.
-
-`HOME_PATH` defines the application's origin and path boundary: `/app-two` is outside `/app`. Ordinary same-origin links inside it, or configured route paths outside it without a fragment, are SPA links. `_init.js` defines this boundary; there is no separate `ROUTE_BASE_PATH` setting.
-
-`_spa.js` handles route clicks. `byCommon` scrolls only existing same-document IDs. Other fragments stay native, including external and sibling-document anchors. Modified/middle clicks, downloads, non-`_self` targets, prevented events, and `custom-folder="true"` are not intercepted.
+- Fragments use GET. Route values override `/$/` parameters, which override queries; `DATA` overrides the legacy `POST` alias from initial routing onward.
+- Missing explicit initial routes fail normally; saved routes cannot replace them. An absent route resolves to `/`. Only the first `?` separates path/query. Route objects keep the last duplicate value; `get_url_param()` keeps the first and prefers document queries over hash queries.
+- Navigation emits `bySPA:before-unload`, then one `bySPA:load` or `bySPA:error`. Error details are `{ navigationId, url, status, error }`; status `0` means no transport status. `bySPA.REQUEST_TIMEOUT` defaults to 30 seconds.
+- Superseded work cannot update the newer DOM/loader or emit a terminal event, including when lifecycle listeners start another navigation. Unknown routes report one 404 without adding history; exhausted error fallbacks add no second error. FILE routes leave without a load event.
+- `HOME_PATH` owns the origin/path boundary. Ordinary same-origin links inside it, or configured fragment-free paths outside it, route through `_spa.js`. Modified/middle clicks, downloads, non-`_self` targets, prevented events, and `custom-folder="true"` stay native. `byCommon` scrolls existing same-document IDs; other ordinary fragments remain native.
+- `bySPA.VERSION` identifies the framework; `bySPA.APP_VERSION` identifies the application.
 
 ### Storage and shared UI
 
-Storage keys use the finalized application root as a namespace. Successful migration removes legacy keys. Consent reads `APP_THEME` and `APP_LANG` through `byStorage`, defaulting to `dark` and `es`.
+`byStorage` namespaces keys by application root and removes legacy keys after migration. Failed writes/removals give only that key a local value/null marker until a successful explicit change; other keys keep reading persistent storage. Memory fallback lasts for this runtime, without automatic replay or cross-tab synchronization. Consent reads namespaced `APP_THEME`/`APP_LANG`, defaulting to `dark`/`es`.
 
-A failed write keeps only that key's local value until a successful explicit write or removal. A failed removal keeps a local null marker, including when legacy cleanup fails. Unaffected keys still read persistent storage. There is no background replay or cross-tab reconciliation; memory fallback lasts for the current runtime only. Update application-owned initializer copies to adopt changes to this behavior.
+`_spa.js` calls `byCommon.init()` after content changes. Optional warnings are off; enable `byCommon.INIT_WARNINGS` or `{ showWarn: true }`. `byCommon.initBootstrap({ tooltipsOnly: true, root, refreshTooltips: true })` refreshes scoped tooltips without rerunning other components.
 
-`_spa.js` calls `byCommon.init()` after content changes. Keep shared UI setup there instead of duplicating route hooks. Optional initialization diagnostics are off by default; enable `byCommon.INIT_WARNINGS` or pass `{ showWarn: true }`. Required-runtime errors still appear.
-
-`byCommon.initBootstrap()` owns Bootstrap components and tooltip dismissal handlers. Video shortcut labels and SPA.js translations use `{ tooltipsOnly: true, root }` to initialize tooltips within a subtree, including its root, without rerunning modal or other component setup. Add `refreshTooltips: true` to preserve updated titles while recreating tooltip instances.
-
-Modal cleanup calls the optional `byFont.destroy(element)` before removing the captured element. Delayed dismissal keeps that element reference so it cannot remove a newer modal with the same ID.
+Modal cleanup destroys optional font controls and removes the captured element, preserving replacements with the same ID. `byCommon.accessibilityText(mode)` adjusts root size by `0.25rem` for `"plus"`/`"minus"`, within `0.5rem`–`3rem`; no argument resets `1rem`.
 
 Data, HTML-text escaping, and CSRF utilities are native. UI and HTTP/form helpers use jQuery; modals also need Bootstrap. WebSocket transport is native, with jQuery DOM logging.
 
@@ -135,50 +87,28 @@ Requires native `CompressionStream`/`DecompressionStream` support for `deflate-r
 
 ### Optional Google Fonts
 
-`_fonts.js` loads fonts with native browser APIs and Promises, so standalone pages can use it without jQuery or the SPA runtime. Optional pickers require jQuery, Select2, and `_common.css`; load those before calling `byFont.init()` and mark font inputs or selects with `data-font-picker`. The font helper may load before its UI libraries; picker methods leave controls unchanged until those libraries are available.
+`_fonts.js` loads fonts natively with caching and offline fallbacks. Optional pickers need jQuery, Select2, `_common.css`, and `data-font-picker` controls:
 
 ```html
 <script src="./spa.js/_fonts.js" defer></script>
 <input name="fontFamily" data-font-picker value="Inter" />
 ```
 
-`byCommon.init()` calls `byFont.init()` to enhance marked font controls. `_fonts.js` cleans routed controls on `bySPA:before-unload`; modal removal calls `byFont.destroy(modal)` directly. Bootstrap setup preserves already enhanced selects. Repeated initialization preserves existing widgets; without the optional module or Select2, ordinary controls remain usable.
+`byFont.family(value, fallback)` returns a CSS stack; `await byFont.ready(value, weight, text)` returns readiness before measurement. Use `byFont.init(container)` / `byFont.destroy(container)` for dynamic fields, or `byFont.picker(field, { weight, previewText, fallback })` for one control; `weight` can be a control.
 
-`byFont.family(value, fallback)` requests a selected Google family and returns its CSS stack. Use `await byFont.ready(value, weight, text)` before measuring animated text; it returns a native `Promise<boolean>`. The bundled catalog contains 350 families; only selected families and visible dropdown samples load, with `display=swap`, cached requests, and offline fallbacks. Applications retain ownership of font values and persistence.
-
-For dynamic controls, call `byFont.init(container)` after insertion and `byFont.destroy(container)` before removal. `byFont.picker(field, { weight, previewText, fallback })` returns the enhanced select; `weight` can be a form control. The shared source is SPA.php's `_fonts.js`; keep this implementation in sync. Other projects can load `spa.js/_fonts.js` directly without loading the SPA runtime or maintaining another copy.
+`byCommon.init()` enhances marked fields; navigation/modal cleanup disposes them. Repeated initialization preserves widgets; absent optional libraries leave ordinary controls usable. Applications own font values and persistence.
 
 ### Fragment scripts and error pages
 
-Trusted page/component scripts execute as real script elements. Inline and non-async external scripts keep their order; `defer` fragments and non-async modules are awaited too. External `async` scripts run independently. Attributes, including CSP/SRI and data attributes, are preserved.
+Fragments and translations are trusted application content; sanitize untrusted input. Ordered external/inline scripts, `defer`, and modules preserve source order and attributes; explicit external `async` scripts run independently. Failures log and continue; stale fragments stop. `bySPA:load` waits for ordered page/component scripts. Sequencing uses `async`/`await`; public requests retain jQuery promises.
 
-Fragment sequencing uses `async`/`await`; public AJAX/navigation results retain their jQuery promise interface.
-
-External script failures are logged without failing navigation or stopping later scripts. Superseded fragments stop processing. `bySPA:load` waits for the current page and components' ordered scripts.
-
-Error pages replace the full document and use the same script rules. Back reloads a clean runtime, including while error-page scripts load.
-
-Set `bySPA.ERROR_PATH` before `_spa.js` to try a custom error fragment first. Fallback order is `HOME_PATH/_error.html`, `HOME_PATH/spa.js/_error.html`, then `HOME_PATH/../_error.html`. Exhausting the list stops loading without recursive error handling. The demo uses the parent fallback.
-
-HTML fragments and translation strings are trusted application content. Sanitize untrusted input before it reaches them.
-
-`byCommon.accessibilityText("plus")` and `byCommon.accessibilityText("minus")` change the `html` font size by `0.25rem`, within `0.5rem` to `3rem`. Calling it without a mode resets the root to `1rem`. Body text, headings, Bootstrap font-size utilities, and other `rem` dimensions follow the root scale; `body` remains `1rem` to avoid compounding it.
+Error pages replace the full document; Back reloads a clean runtime, including while their scripts load. Set `bySPA.ERROR_PATH` before `_spa.js` to override the first candidate. Defaults try `HOME_PATH/_error.html`, `HOME_PATH/spa.js/_error.html`, then `HOME_PATH/../_error.html`; exhaustion stops without recursion.
 
 ## Maintaining a submodule integration
 
-Framework changes belong here. Consumers pin a commit and record their upgrades separately. Neither SPA repository automatically updates the other.
-
-1. Review the old and new immutable framework commits and affected shared behavior.
-2. Reconcile application-owned `_init.js` and `_routes.js`, preserving settings. A submodule update does not update copied initialization.
-3. Run the framework's [CI checks](.github/workflows/ci.yml), including browser tests.
-4. Compare shared helpers against a reviewed SPA.php revision and record intentional differences.
-5. Test initial routing, error/Back/FILE navigation, and storage failure/recovery in the consumer.
-
-### Shared contracts and copied initializers
-
 Keep `_fonts.js`, `_functions.js`, `_common.js`, and `_common.css` identical across both SPAs; SPA.php owns the shared source. `_spa.js`, routing, transport, history, and application bootstrap retain host-specific behavior.
 
-Neither repository synchronizes the other automatically. Compare reviewed immutable commits, preserve application-owned initializer settings, and test affected consumers.
+For upgrades, review changes, reconcile application-owned `_init.js`/`_routes.js` without losing settings, run checks, and test the consumer. Submodule updates do not update copied initializers. Neither repository synchronizes the other automatically.
 
 ### Checks
 
@@ -187,32 +117,18 @@ node --test tests/runtime.test.js tests/common.test.js tests/fragment_scripts.te
 node --test tests/browser.test.js tests/fonts.browser.test.js
 ```
 
-Browser checks need Playwright and its browser; use the installation in the [CI workflow](.github/workflows/ci.yml). `PLAYWRIGHT_CHANNEL=msedge` can select a local Edge installation; font checks use `BROWSER_CHANNEL`.
+Browser tests require Playwright and Chromium; see [CI](.github/workflows/ci.yml). Use `PLAYWRIGHT_CHANNEL=chrome` for runtime tests and `BROWSER_CHANNEL=chrome` for font tests.
 
-<details>
-<summary>Comparison revisions and upgrade follow-ups</summary>
-
-The SPA.php reference is `e899d4fec55e8a596120118f4d83344983f3d368`; the reviewed SPA.js behavior baseline is `55c2ecb1f4b3b7e25df69ccef6f4f1179a8527a9`. These are comparison references, not automatic dependency updates.
-
-CI uses this checkout without fetching another repository. Set `SPA_PHP_TREE` to a local SPA.php Git object store to run parity and browser checks against the pinned helpers. In PowerShell, use `$env:SPA_PHP_TREE = 'C:/path/to/spa.php'`, then `Remove-Item Env:SPA_PHP_TREE` afterward.
-
-Only `_functions.js` and `_common.js` come from that immutable reference; routing, storage, and other runtime files stay local. Changing it requires reviewing `SPA_PHP_REVISION` in `tests/parity-source.js` and this record. The working tree and moving HEAD are ignored. Helper tests do not prove full runtime equivalence; browser tests also cover the demo's actual initializer.
-
-Stream.FGC must review its own framework pin, reconcile `frontend/_init.js`, preserve its settings, and run integration tests.
-
-</details>
+`SPA_PHP_TREE` selects a Git object store for pinned `_functions.js`/`_common.js` comparisons; other runtime files stay local. [parity-source.js](tests/parity-source.js) defines the reviewed revision, ignoring that checkout's working tree and HEAD. Selected parity checks do not establish complete runtime equivalence.
 
 ## Related tools
 
-- [easy-md-viewer](https://github.com/byuwur/easy-md-viewer): Readable, themed Markdown with rich formatting and zero dependencies.
-- [easy-json-viewer](https://github.com/byuwur/easy-json-viewer): Explore large JSON documents with collapsible trees and responsive rendering.
-- [easy-http-error](https://github.com/byuwur/easy-http-error): Friendly bilingual error pages that work even when PHP fails.
-- [easy-sidebar-bootstrap](https://github.com/byuwur/easy-sidebar-bootstrap): Responsive Bootstrap navigation that remembers your sidebar preferences.
+[easy-md-viewer](https://github.com/byuwur/easy-md-viewer) · [easy-json-viewer](https://github.com/byuwur/easy-json-viewer) · [easy-http-error](https://github.com/byuwur/easy-http-error) · [easy-sidebar-bootstrap](https://github.com/byuwur/easy-sidebar-bootstrap)
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [CODING_STANDARDS.md](CODING_STANDARDS.md) for engineering standards.
+Follow [CODING_STANDARDS.md](CODING_STANDARDS.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT (c) Andrés Trujillo [Mateus] byUwUr
+[MIT](LICENSE.md) · Copyright (c) Andrés Trujillo [Mateus] byUwUr
