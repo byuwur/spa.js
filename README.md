@@ -120,6 +120,8 @@ A failed write keeps only that key's local value until a successful explicit wri
 
 Modal cleanup calls the optional `byFont.destroy(element)` before removing the captured element. Delayed dismissal keeps that element reference so it cannot remove a newer modal with the same ID.
 
+Data, HTML-text escaping, and CSRF utilities are native. UI and HTTP/form helpers use jQuery; modals also need Bootstrap. WebSocket transport is native, with jQuery DOM logging.
+
 ### Compressed URL data
 
 `compress_url_data(text)` and `decompress_url_data(token, maxBytes = 1048576)` use native raw DEFLATE, unpadded Base64url, and Promises without jQuery or SPA initialization.
@@ -174,14 +176,9 @@ Framework changes belong here. Consumers pin a commit and record their upgrades 
 
 ### Shared contracts and copied initializers
 
-| Files                   | Shared behavior / difference                                                                                                                                                 |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `_functions.js`         | SPA.php query parsing and request-listener behavior; comments and local names may differ.                                                                                    |
-| `_common.js`            | Consent and ordinary-click handling. SPA.js accepts explicit `_self`; SPA.php leaves all explicit targets native.                                                            |
-| `_spa.js`, `_router.js` | Query, failure, and superseded-request rules; static GET, hash/path routing, error candidates, and history remain host-specific.                                             |
-| `_init.js`              | Application-owned copy template. Reconcile consumer and demo copies for storage fallback, failed removals, migration, and explicit recovery. PHP bootstrap remains separate. |
+Keep `_fonts.js`, `_functions.js`, `_common.js`, and `_common.css` identical across both SPAs; SPA.php owns the shared source. `_spa.js`, routing, transport, history, and application bootstrap retain host-specific behavior.
 
-Whole runtime files do not need to be byte-identical.
+Neither repository synchronizes the other automatically. Compare reviewed immutable commits, preserve application-owned initializer settings, and test affected consumers.
 
 ### Checks
 
