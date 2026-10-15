@@ -149,7 +149,7 @@ Set `bySPA.ERROR_PATH` before `_spa.js` to try a custom error fragment first. Fa
 
 HTML fragments and translation strings are trusted application content. Sanitize untrusted input before it reaches them.
 
-`byCommon.accessibilityText("plus")` and `byCommon.accessibilityText("minus")` change body text size by `0.25rem`, within `0.5rem` to `3rem`. Calling it without a mode resets text to `1rem`.
+`byCommon.accessibilityText("plus")` and `byCommon.accessibilityText("minus")` change the `html` font size by `0.25rem`, within `0.5rem` to `3rem`. Calling it without a mode resets the root to `1rem`. Body text, headings, Bootstrap font-size utilities, and other `rem` dimensions follow the root scale; `body` remains `1rem` to avoid compounding it.
 
 ## Maintaining a submodule integration
 

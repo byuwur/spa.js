@@ -22,38 +22,44 @@ test.before(async () => {
       }
     }
     res.setHeader("Content-Type", "text/html");
-    res.end(/* HTML */ `<!doctype html><html><head></head><body><main id="spa-content"></main><div id="spa-loader"></div><div id="section">Section</div></body></html>`);
+    res.end(
+      /* HTML */ `<!doctype html>
+        <html
+          ><head></head
+          ><body
+            ><main id="spa-content"></main><div id="spa-loader"></div><div id="section">Section</div></body
+          ></html
+        >`
+    );
   });
-  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   origin = `http://127.0.0.1:${server.address().port}`;
   browser = await chromium.launch(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {});
 });
 
 test.after(async () => {
   await browser?.close();
-  if (server) await new Promise(resolve => server.close(resolve));
+  if (server) await new Promise((resolve) => server.close(resolve));
 });
 
 async function openApp(route = "/known", options = {}) {
   const page = await browser.newPage();
   const appPath = options.appPath || "/app/";
   await page.goto(`${origin}${appPath}${route === null ? "" : `#${route}`}`);
-  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", `${appPath.slice(1)}_init.js`])
-    await page.addScriptTag({ url: `${origin}/${file}` });
-  await page.evaluate(options => {
+  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", `${appPath.slice(1)}_init.js`]) await page.addScriptTag({ url: `${origin}/${file}` });
+  await page.evaluate((options) => {
     $.fx.off = true;
     window.events = [];
     window.requests = [];
     window.requestEvents = [];
-    $.ajax = config => {
+    $.ajax = (config) => {
       requests.push(config.url);
-      requestEvents.push(events.map(event => event.type));
+      requestEvents.push(events.map((event) => event.type));
       const result = $.Deferred();
       setTimeout(() => result.resolve(/* HTML */ `<p id="rendered">Loaded</p>`), 0);
       return result.promise();
     };
-    for (const type of ["bySPA:before-unload", "bySPA:load", "bySPA:error"])
-      document.addEventListener(type, event => events.push({ type, ...event.detail }));
+    for (const type of ["bySPA:before-unload", "bySPA:load", "bySPA:error"]) document.addEventListener(type, (event) => events.push({ type, ...event.detail }));
     bySPA.ROUTES = {
       "/": { URI: "home.html" },
       "/known": { URI: "known.html" },
@@ -73,13 +79,41 @@ async function openApp(route = "/known", options = {}) {
   return page;
 }
 
+test("accessibility text scales inherited text, headings, and Bootstrap utilities together", async (t) => {
+  const page = await openApp();
+  t.after(() => page.close());
+  await page.addStyleTag({ path: path.join(root, "css/bootstrap.min.css") });
+  await page.addStyleTag({ path: path.join(root, "_common.css") });
+  await page.evaluate(() => {
+    document.getElementById("spa-content").innerHTML = `<p>Inherited text</p>${[1, 2, 3, 4, 5, 6].map((level) => `<h${level}>Heading</h${level}><span class="fs-${level}">Utility</span>`).join("")}`;
+  });
+  const sizes = () => page.locator("#spa-content > *").evaluateAll((elements) => elements.map((element) => parseFloat(getComputedStyle(element).fontSize)));
+  const baseline = await sizes();
+  assert.equal(baseline[0], 16);
+  for (const [mode, scale] of [
+    ["plus", 1.25],
+    ["plus", 1.5],
+    ["minus", 1.25],
+    ["", 1],
+    ["minus", 0.75],
+    ["", 1]
+  ]) {
+    await page.evaluate((mode) => byCommon.accessibilityText(mode), mode);
+    const actual = await sizes();
+    actual.forEach((size, index) => assert.ok(Math.abs(size - baseline[index] * scale) < 0.01, `Element ${index}: ${mode} scales text once`));
+  }
+  assert.equal(await page.evaluate(() => document.body.style.fontSize), "");
+});
+
 test("demo copy initializes its own namespace and works with the framework runtime", async () => {
   const page = await openApp("/known", { appPath: "/demo/" });
   const result = await page.evaluate(() => {
     byStorage.setItem("CUSTOM", "persisted");
     const persisted = localStorage.getItem(`${byStorage.prefix}CUSTOM`);
     const setItem = Storage.prototype.setItem;
-    Storage.prototype.setItem = () => { throw Error("write denied"); };
+    Storage.prototype.setItem = () => {
+      throw Error("write denied");
+    };
     byStorage.setItem("CUSTOM", "local");
     const current = byStorage.getItem("CUSTOM");
     Storage.prototype.setItem = setItem;
@@ -95,22 +129,29 @@ test("demo copy initializes its own namespace and works with the framework runti
 
 test("known navigation ends in load and missing routes notify before error rendering", async () => {
   const success = await openApp();
-  await success.waitForFunction(() => events.some(event => event.type === "bySPA:load"));
-  assert.deepEqual(await success.evaluate(() => events.map(event => event.type)), ["bySPA:before-unload", "bySPA:load"]);
+  await success.waitForFunction(() => events.some((event) => event.type === "bySPA:load"));
+  assert.deepEqual(await success.evaluate(() => events.map((event) => event.type)), ["bySPA:before-unload", "bySPA:load"]);
   await success.close();
 
   for (const initial of [false, true]) {
     const page = await openApp(initial ? "/missing" : "/known");
-    if (!initial) await page.evaluate(async () => {
-      events.length = requests.length = requestEvents.length = 0;
-      await bySPA.load("/missing");
-    });
+    if (!initial)
+      await page.evaluate(async () => {
+        events.length = requests.length = requestEvents.length = 0;
+        await bySPA.load("/missing");
+      });
     const result = await page.evaluate(() => ({ events, requests, requestEvents }));
-    assert.deepEqual(result.events.map(event => event.type), ["bySPA:before-unload", "bySPA:error"]);
+    assert.deepEqual(
+      result.events.map((event) => event.type),
+      ["bySPA:before-unload", "bySPA:error"]
+    );
     const error = result.events[1];
     assert.deepEqual(error, {
-      type: "bySPA:error", navigationId: result.events[0].navigationId,
-      url: "/missing", status: 404, error: 'Route "/missing" does not exist.'
+      type: "bySPA:error",
+      navigationId: result.events[0].navigationId,
+      url: "/missing",
+      status: 404,
+      error: 'Route "/missing" does not exist.'
     });
     assert.deepEqual(result.requests, [`${origin}/app/_error.html?e=404`]);
     assert.deepEqual(result.requestEvents, [["bySPA:before-unload", "bySPA:error"]]);
@@ -121,17 +162,23 @@ test("known navigation ends in load and missing routes notify before error rende
 test("page transport failures preserve the underlying error and never emit load", async () => {
   for (const status of [503, undefined]) {
     const page = await openApp();
-    const result = await page.evaluate(async status => {
+    const result = await page.evaluate(async (status) => {
       events.length = 0;
       $.ajax = () => $.Deferred().reject({ status }, "error", "connection failed").promise();
       const value = await bySPA.load("/known");
       return { events, value };
     }, status);
     assert.equal(result.value, null);
-    assert.deepEqual(result.events.map(event => event.type), ["bySPA:before-unload", "bySPA:error"]);
+    assert.deepEqual(
+      result.events.map((event) => event.type),
+      ["bySPA:before-unload", "bySPA:error"]
+    );
     assert.deepEqual(result.events[1], {
-      type: "bySPA:error", navigationId: result.events[0].navigationId,
-      url: "/known", status: status || 0, error: "connection failed"
+      type: "bySPA:error",
+      navigationId: result.events[0].navigationId,
+      url: "/known",
+      status: status || 0,
+      error: "connection failed"
     });
     await page.close();
   }
@@ -142,7 +189,7 @@ test("exhausted error rendering settles without a second terminal event", async 
   const result = await page.evaluate(async () => {
     events.length = requests.length = 0;
     bySPA.ERROR_PATH = "/custom-error.html";
-    $.ajax = config => {
+    $.ajax = (config) => {
       requests.push(config.url);
       return $.Deferred().reject({ status: 503 }, "error", "unavailable").promise();
     };
@@ -151,19 +198,19 @@ test("exhausted error rendering settles without a second terminal event", async 
   });
   assert.equal(result.value, null);
   assert.equal(result.loaderHidden, true);
-  assert.deepEqual(result.events.map(event => event.type), ["bySPA:before-unload", "bySPA:error"]);
+  assert.deepEqual(
+    result.events.map((event) => event.type),
+    ["bySPA:before-unload", "bySPA:error"]
+  );
   assert.equal(result.events[1].status, 404);
-  assert.deepEqual(result.requests, [
-    "/custom-error.html?e=404", `${origin}/app/_error.html?e=404`,
-    `${origin}/app/spa.js/_error.html?e=404`, `${origin}/app/../_error.html?e=404`
-  ]);
+  assert.deepEqual(result.requests, ["/custom-error.html?e=404", `${origin}/app/_error.html?e=404`, `${origin}/app/spa.js/_error.html?e=404`, `${origin}/app/../_error.html?e=404`]);
   await page.close();
 });
 
 test("stale failures cannot notify, replace content, or hide a newer loader", async () => {
   for (const completeNewerFirst of [true, false]) {
     const page = await openApp();
-    const result = await page.evaluate(async completeNewerFirst => {
+    const result = await page.evaluate(async (completeNewerFirst) => {
       events.length = 0;
       const pending = [];
       $.ajax = () => {
@@ -189,7 +236,10 @@ test("stale failures cannot notify, replace content, or hide a newer loader", as
     }, completeNewerFirst);
     assert.deepEqual(result.after, result.before);
     assert.equal(result.current, "Current route");
-    assert.deepEqual(result.events.map(event => event.type), ["bySPA:before-unload", "bySPA:before-unload", "bySPA:load"]);
+    assert.deepEqual(
+      result.events.map((event) => event.type),
+      ["bySPA:before-unload", "bySPA:before-unload", "bySPA:load"]
+    );
     assert.equal(result.events[2].navigationId, result.events[1].navigationId);
     await page.close();
   }
@@ -198,24 +248,31 @@ test("stale failures cannot notify, replace content, or hide a newer loader", as
 test("navigation started by a lifecycle listener owns subsequent side effects", async () => {
   for (const stage of ["before-unload", "error", "transport-error"]) {
     const page = await openApp();
-    const result = await page.evaluate(async stage => {
+    const result = await page.evaluate(async (stage) => {
       events.length = requests.length = 0;
       let recovery;
       const eventType = stage === "before-unload" ? "bySPA:before-unload" : "bySPA:error";
-      document.addEventListener(eventType, () => { recovery = bySPA.load("/configured"); }, { once: true });
+      document.addEventListener(
+        eventType,
+        () => {
+          recovery = bySPA.load("/configured");
+        },
+        { once: true }
+      );
       if (stage === "transport-error") {
         const ajax = $.ajax;
-        $.ajax = config => config.url.includes("q=") ? ajax(config) : $.Deferred().reject({ status: 503, responseText: "Old error" }, "error", "unavailable").promise();
+        $.ajax = (config) => (config.url.includes("q=") ? ajax(config) : $.Deferred().reject({ status: 503, responseText: "Old error" }, "error", "unavailable").promise());
       }
       await bySPA.load(stage === "transport-error" ? "/known" : "/missing");
       await recovery;
       return { events, requests, current: document.getElementById("rendered")?.textContent };
     }, stage);
     assert.equal(result.current, "Loaded");
-    assert.ok(result.requests.every(url => !url.includes("_error.html")));
-    assert.deepEqual(result.events.map(event => event.type), stage === "before-unload"
-      ? ["bySPA:before-unload", "bySPA:before-unload", "bySPA:load"]
-      : ["bySPA:before-unload", "bySPA:error", "bySPA:before-unload", "bySPA:load"]);
+    assert.ok(result.requests.every((url) => !url.includes("_error.html")));
+    assert.deepEqual(
+      result.events.map((event) => event.type),
+      stage === "before-unload" ? ["bySPA:before-unload", "bySPA:before-unload", "bySPA:load"] : ["bySPA:before-unload", "bySPA:error", "bySPA:before-unload", "bySPA:load"]
+    );
     await page.close();
   }
 });
@@ -232,7 +289,7 @@ test("bootstrap, navigation and URL helper preserve complete query values", asyn
     const page = await openApp(`/known${suffix}`);
     assert.equal(await page.evaluate(() => JSON.parse(byStorage.getItem("_GET")).q ?? null), expected);
     assert.equal(await page.evaluate(() => get_url_param("q")), helper);
-    await page.evaluate(suffix => bySPA.load(`/known${suffix}`), suffix);
+    await page.evaluate((suffix) => bySPA.load(`/known${suffix}`), suffix);
     assert.equal(await page.evaluate(() => bySPA._GET.q ?? null), expected);
     assert.equal(await page.evaluate(() => get_url_param("q")), helper);
     await page.close();
@@ -248,12 +305,18 @@ test("request helper rebind preserves consumer handlers and supports multiple ev
   const page = await openApp();
   const result = await page.evaluate(async () => {
     document.body.insertAdjacentHTML("beforeend", /* HTML */ `<form id="one"><button type="submit"></button></form><form id="two"><button type="submit"></button></form>`);
-    let plain = 0, named = 0;
-    $("#one").on("submit", () => plain++).on("submit.consumer", () => named++);
-    for (const id of ["one", "one", "two"])
-      element_make_http_request({ $elementId: `#${id}`, $url: "/request", $trigger: "submit change", loudFail: false });
+    let plain = 0,
+      named = 0;
+    $("#one")
+      .on("submit", () => plain++)
+      .on("submit.consumer", () => named++);
+    for (const id of ["one", "one", "two"]) element_make_http_request({ $elementId: `#${id}`, $url: "/request", $trigger: "submit change", loudFail: false });
     requests.length = 0;
-    for (const [id, type] of [["one", "submit"], ["one", "change"], ["two", "submit"]])
+    for (const [id, type] of [
+      ["one", "submit"],
+      ["one", "change"],
+      ["two", "submit"]
+    ])
       document.getElementById(id).dispatchEvent(new Event(type, { bubbles: true, cancelable: true }));
     return { plain, named, count: requests.length };
   });
@@ -271,10 +334,10 @@ test("error-page overrides precede bounded default fallbacks", async () => {
     { failures: 3 }
   ]) {
     const page = await openApp();
-    const result = await page.evaluate(async options => {
+    const result = await page.evaluate(async (options) => {
       bySPA.ERROR_PATH = options.custom;
       requests.length = 0;
-      $.ajax = config => {
+      $.ajax = (config) => {
         requests.push(config.url);
         const request = $.Deferred();
         if (requests.length <= options.failures) request.reject({ status: 404 });
@@ -284,12 +347,7 @@ test("error-page overrides precede bounded default fallbacks", async () => {
       const html = await bySPA.errorPage(404, "Missing");
       return { requests, html, rendered: document.getElementById("error-rendered")?.textContent };
     }, options);
-    const paths = [
-      options.custom && `${options.custom}${options.custom.includes("?") ? "&" : "?"}e=404`,
-      `${origin}/app/_error.html?e=404`,
-      `${origin}/app/spa.js/_error.html?e=404`,
-      `${origin}/app/../_error.html?e=404`
-    ].filter(Boolean);
+    const paths = [options.custom && `${options.custom}${options.custom.includes("?") ? "&" : "?"}e=404`, `${origin}/app/_error.html?e=404`, `${origin}/app/spa.js/_error.html?e=404`, `${origin}/app/../_error.html?e=404`].filter(Boolean);
     assert.deepEqual(result.requests, paths.slice(0, options.failures + 1));
     if (options.failures >= paths.length) assert.equal(result.html, null);
     else assert.equal(result.rendered, "Error page");
@@ -297,13 +355,12 @@ test("error-page overrides precede bounded default fallbacks", async () => {
   }
 });
 
-
 test("bootstrap consumes an explicit missing route instead of the saved route", async () => {
   for (const staleRoutes of [false, true]) {
     const page = await openApp("/missing", { storedURL: "/known", staleRoutes });
     const result = await page.evaluate(() => ({
       requests,
-      navigations: events.filter(event => event.type === "bySPA:before-unload").length,
+      navigations: events.filter((event) => event.type === "bySPA:before-unload").length,
       error: bySPA.ROUTER_ERROR,
       storedError: byStorage.getItem("ROUTER_ERROR")
     }));
@@ -313,9 +370,12 @@ test("bootstrap consumes an explicit missing route instead of the saved route", 
     assert.equal(result.storedError, null);
     await page.close();
   }
-  for (const [route, fragment] of [["/known", "known.html"], [null, "home.html"]]) {
+  for (const [route, fragment] of [
+    ["/known", "known.html"],
+    [null, "home.html"]
+  ]) {
     const page = await openApp(route, { storedURL: "/configured" });
-    assert.ok(await page.evaluate(fragment => requests[0].includes(fragment), fragment));
+    assert.ok(await page.evaluate((fragment) => requests[0].includes(fragment), fragment));
     await page.evaluate(async () => {
       requests.length = 0;
       await bySPA.load("/missing");
@@ -329,12 +389,12 @@ test("consent initialization uses migrated namespaced preferences and existing f
   const page = await openApp();
   const result = await page.evaluate(async () => {
     window.consent = [];
-    window.cookieconsent = { run: config => consent.push(config) };
+    window.cookieconsent = { run: (config) => consent.push(config) };
     const run = async () => {
       consent.length = 0;
       byCommon.COOKIE_CONSENT_READY = false;
       byCommon.init();
-      await new Promise(resolve => $(resolve));
+      await new Promise((resolve) => $(resolve));
       return consent[0] && { palette: consent[0].palette, language: consent[0].language };
     };
     const defaults = await run();
@@ -349,12 +409,16 @@ test("consent initialization uses migrated namespaced preferences and existing f
     const removedLegacy = localStorage.getItem("APP_THEME") === null && localStorage.getItem("APP_LANG") === null;
     const getItem = Storage.prototype.getItem;
     const setItem = Storage.prototype.setItem;
-    Storage.prototype.setItem = () => { throw Error("write denied"); };
+    Storage.prototype.setItem = () => {
+      throw Error("write denied");
+    };
     byStorage.setItem("APP_THEME", "dark");
     byStorage.setItem("APP_LANG", "fr");
     const partialFallback = await run();
     const persistedTheme = localStorage.getItem(`${byStorage.prefix}APP_THEME`);
-    Storage.prototype.getItem = Storage.prototype.setItem = () => { throw Error("storage denied"); };
+    Storage.prototype.getItem = Storage.prototype.setItem = () => {
+      throw Error("storage denied");
+    };
     byStorage.setItem("APP_THEME", "dark");
     byStorage.setItem("APP_LANG", "fr");
     const fallback = await run();
@@ -376,14 +440,19 @@ test("consent initialization uses migrated namespaced preferences and existing f
 
 test("both click handlers preserve browser ownership and intercept owned ordinary links once", async () => {
   const page = await openApp();
-  const results = await page.evaluate(async origin => {
+  const results = await page.evaluate(async (origin) => {
     // Let common's ready callback bind links before dispatching actual DOM events.
     const cases = [
-      [`${origin}/app/#section`, {}, true], [`${origin}/app/#absent`, {}, false],
-      ["https://example.org/#section", {}, false], [`${origin}/sibling/#section`, {}, false],
-      [`${origin}/app/#/known`, {}, true], [`${origin}/app-two/unknown`, {}, false],
-      [`${origin}/app/known`, {}, true], [`${origin}/app/#/known`, { ctrlKey: true }, false],
-      [`${origin}/app/#/known`, { button: 1 }, false], [`${origin}/app/#/known`, { target: "frame" }, false],
+      [`${origin}/app/#section`, {}, true],
+      [`${origin}/app/#absent`, {}, false],
+      ["https://example.org/#section", {}, false],
+      [`${origin}/sibling/#section`, {}, false],
+      [`${origin}/app/#/known`, {}, true],
+      [`${origin}/app-two/unknown`, {}, false],
+      [`${origin}/app/known`, {}, true],
+      [`${origin}/app/#/known`, { ctrlKey: true }, false],
+      [`${origin}/app/#/known`, { button: 1 }, false],
+      [`${origin}/app/#/known`, { target: "frame" }, false],
       [`${origin}/app/#/known`, { download: true }, false],
       [`${origin}/app/#/known`, { shiftKey: true }, false],
       [`${origin}/app/#/known`, { altKey: true }, false],
@@ -394,25 +463,32 @@ test("both click handlers preserve browser ownership and intercept owned ordinar
     ];
     const results = [];
     for (const [href, props, expected] of cases) {
-      const anchor = document.createElement("a"); anchor.href = href;
+      const anchor = document.createElement("a");
+      anchor.href = href;
       if (props.target) anchor.target = props.target;
       if (props.download) anchor.setAttribute("download", "");
       if (props.customFolder) anchor.setAttribute("custom-folder", "true");
       document.body.append(anchor);
       byCommon.init();
-      await new Promise(resolve => $(resolve));
+      await new Promise((resolve) => $(resolve));
       let prevented;
-      const observe = event => { prevented = event.defaultPrevented; event.preventDefault(); };
+      const observe = (event) => {
+        prevented = event.defaultPrevented;
+        event.preventDefault();
+      };
       window.addEventListener("click", observe, { once: true });
       const before = events.length;
       anchor.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...props }));
-      results.push({ href, expected, prevented, navigations: events.slice(before).filter(e => e.type === "bySPA:before-unload").length });
+      results.push({ href, expected, prevented, navigations: events.slice(before).filter((e) => e.type === "bySPA:before-unload").length });
       anchor.remove();
-      await new Promise(resolve => setTimeout(resolve, 20));
+      await new Promise((resolve) => setTimeout(resolve, 20));
     }
     return results;
   }, origin);
-  for (const result of results) { assert.equal(result.prevented, result.expected, result.href); assert.ok(result.navigations <= 1); }
+  for (const result of results) {
+    assert.equal(result.prevented, result.expected, result.href);
+    assert.ok(result.navigations <= 1);
+  }
   await page.close();
 });
 
@@ -423,10 +499,10 @@ test("root-hosted routes and sibling-document fragments keep their navigation ow
   });
   await page.click("#route-link");
   await page.waitForURL("**/#/configured");
-  assert.equal(await page.evaluate(() => events.filter(event => event.type === "bySPA:before-unload").length), 2);
+  assert.equal(await page.evaluate(() => events.filter((event) => event.type === "bySPA:before-unload").length), 2);
   await page.evaluate(async () => {
     byCommon.init();
-    await new Promise(resolve => $(resolve));
+    await new Promise((resolve) => $(resolve));
   });
   await page.click("#sibling-link");
   await page.waitForURL("**/sibling/#section");
@@ -439,13 +515,13 @@ test("existing targets scroll while missing targets retain native hash navigatio
   await page.evaluate(async () => {
     document.body.insertAdjacentHTML("beforeend", /* HTML */ `<a id="existing-link" href="#section">Existing</a><a id="missing-link" href="#absent">Missing</a>`);
     byCommon.init();
-    await new Promise(resolve => $(resolve));
+    await new Promise((resolve) => $(resolve));
   });
   await page.click("#existing-link");
   assert.equal(new URL(page.url()).hash, "#/known");
   await page.click("#missing-link");
   await page.waitForURL("**/#absent");
-  assert.equal(await page.evaluate(() => events.filter(event => event.type === "bySPA:before-unload").length), 1);
+  assert.equal(await page.evaluate(() => events.filter((event) => event.type === "bySPA:before-unload").length), 1);
   await page.close();
 });
 
@@ -455,7 +531,7 @@ test("navigation journey preserves error recovery and FILE history", async () =>
     bySPA.ROUTES["/slow"] = { URI: "slow.html" };
     const ajax = $.ajax;
     let finish;
-    $.ajax = config => {
+    $.ajax = (config) => {
       if (!config.url.includes("slow.html")) return ajax(config);
       const request = $.Deferred();
       finish = () => request.resolve(/* HTML */ `<p id="stale">Old route</p>`);
@@ -471,14 +547,15 @@ test("navigation journey preserves error recovery and FILE history", async () =>
   // Unknown routes retain the existing history policy; Back leaves the last successful URL.
   await Promise.all([page.waitForEvent("load"), page.goBack()]);
   await page.waitForURL("**/#/slow");
-  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", "app/_init.js"])
-    await page.addScriptTag({ url: `${origin}/${file}` });
+  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", "app/_init.js"]) await page.addScriptTag({ url: `${origin}/${file}` });
   await page.evaluate(() => {
     bySPA.ROUTES = { "/slow": { URI: "known.html" }, "/file": { FILE: "asset.html" } };
   });
   await page.addScriptTag({ url: `${origin}/_router.js` });
   await page.addScriptTag({ url: `${origin}/_spa.js` });
-  await page.evaluate(() => { bySPA.load("/file"); });
+  await page.evaluate(() => {
+    bySPA.load("/file");
+  });
   await page.waitForURL("**/app/asset.html");
   await page.goBack();
   await page.waitForURL("**/#/slow");
@@ -489,8 +566,7 @@ test("file protocol guidance keeps its heading and text inside the notice panel"
   const page = await browser.newPage();
   await page.goto(pathToFileURL(path.join(root, "img/index.html")).href + "#/");
   await page.setContent('<main id="spa-content"></main><div id="spa-loader"></div>');
-  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", "_init.js"])
-    await page.addScriptTag({ content: source(file) });
+  for (const file of ["js/jquery.min.js", "_functions.js", "_common.js", "_init.js"]) await page.addScriptTag({ content: source(file) });
   await page.evaluate(() => {
     $.fx.off = true;
     bySPA.ROUTES = { "/": { URI: "home.html" } };
@@ -502,13 +578,12 @@ test("file protocol guidance keeps its heading and text inside the notice panel"
   await page.close();
 });
 
-
-test("component failures settle independently and navigation retains jQuery promise methods", async t => {
+test("component failures settle independently and navigation retains jQuery promise methods", async (t) => {
   const page = await openApp();
   t.after(() => page.close());
   const result = await page.evaluate(async () => {
     const unhandled = [];
-    window.addEventListener("unhandledrejection", event => unhandled.push(event.reason?.message));
+    window.addEventListener("unhandledrejection", (event) => unhandled.push(event.reason?.message));
     events = [];
     bySPA.ROUTES["/known"].COMPONENT = { "#component": "/broken" };
     bySPA.reloadComponent = () => Promise.reject(new Error("Component fixture failure"));
@@ -518,24 +593,31 @@ test("component failures settle independently and navigation retains jQuery prom
       return response.promise();
     };
     const request = bySPA.load("/known", { push: false });
-    const jqueryMethods = ["done", "fail", "always"].every(method => typeof request[method] === "function");
+    const jqueryMethods = ["done", "fail", "always"].every((method) => typeof request[method] === "function");
     const html = await request;
-    await new Promise(resolve => setTimeout(resolve, 0));
-    return { unhandled, jqueryMethods, html, events: events.map(event => event.type) };
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return { unhandled, jqueryMethods, html, events: events.map((event) => event.type) };
   });
   assert.deepEqual(result, {
-    unhandled: [], jqueryMethods: true, html: "<p>Page survives</p>",
+    unhandled: [],
+    jqueryMethods: true,
+    html: "<p>Page survives</p>",
     events: ["bySPA:before-unload", "bySPA:load"]
   });
 });
 
-test("resource probes preserve HEAD fallback and jQuery promise compatibility", async t => {
+test("resource probes preserve HEAD fallback and jQuery promise compatibility", async (t) => {
   const page = await openApp();
   t.after(() => page.close());
   await page.addScriptTag({ content: source("_functions.js") });
   const result = await page.evaluate(async () => {
     const results = [];
-    for (const [headStatus, getFails, expected] of [[200, false, true], [405, false, true], [501, true, false], [500, false, false]]) {
+    for (const [headStatus, getFails, expected] of [
+      [200, false, true],
+      [405, false, true],
+      [501, true, false],
+      [500, false, false]
+    ]) {
       const methods = [];
       $.ajax = ({ type }) => {
         methods.push(type);
@@ -547,14 +629,19 @@ test("resource probes preserve HEAD fallback and jQuery promise compatibility", 
       };
       const request = remote_file_exists("/asset");
       results.push({
-        actual: await request, expected, methods,
-        jqueryMethods: ["done", "fail", "always"].every(method => typeof request[method] === "function")
+        actual: await request,
+        expected,
+        methods,
+        jqueryMethods: ["done", "fail", "always"].every((method) => typeof request[method] === "function")
       });
     }
     const invalid = remote_file_exists("http://[");
     return { results, invalid: await invalid, invalidHasAlways: typeof invalid.always === "function" };
   });
-  assert.deepEqual(result.results.map(item => item.methods), [["HEAD"], ["HEAD", "GET"], ["HEAD", "GET"], ["HEAD"]]);
+  assert.deepEqual(
+    result.results.map((item) => item.methods),
+    [["HEAD"], ["HEAD", "GET"], ["HEAD", "GET"], ["HEAD"]]
+  );
   for (const item of result.results) {
     assert.equal(item.actual, item.expected);
     assert.equal(item.jqueryMethods, true);
