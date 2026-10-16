@@ -24,12 +24,14 @@ test.before(async () => {
     res.setHeader("Content-Type", "text/html");
     res.end(
       /* HTML */ `<!doctype html>
-        <html
-          ><head></head
-          ><body
-            ><main id="spa-content"></main><div id="spa-loader"></div><div id="section">Section</div></body
-          ></html
-        >`
+        <html>
+          <head></head>
+          <body>
+            <main id="spa-content"></main>
+            <div id="spa-loader"></div>
+            <div id="section">Section</div>
+          </body>
+        </html>`
     );
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -93,9 +95,17 @@ test("local HTML and CSRF utilities work without jQuery or SPA initialization", 
   });
   assert.deepEqual(result, {
     escaped: ['&lt;img src=x onerror="alert(1)"&gt;&amp;', "", "", "0", "false", "Caf\u00e9 \u{1f600}"],
-    preferred: "meta-token", fallback: "stored-token", missing: "",
-    payload: [{ name: "message", value: "Hello" }, { name: "_csrf", value: "meta-token" }],
-    explicit: [{ name: "_csrf", value: "explicit-token" }], readOnly: [], sameArray: true, standalone: true
+    preferred: "meta-token",
+    fallback: "stored-token",
+    missing: "",
+    payload: [
+      { name: "message", value: "Hello" },
+      { name: "_csrf", value: "meta-token" }
+    ],
+    explicit: [{ name: "_csrf", value: "explicit-token" }],
+    readOnly: [],
+    sameArray: true,
+    standalone: true
   });
 });
 
@@ -361,7 +371,11 @@ test("bootstrap, navigation and URL helper preserve complete query values", asyn
 test("request helper rebind preserves consumer handlers and supports multiple events and elements", async () => {
   const page = await openApp();
   const result = await page.evaluate(async () => {
-    document.body.insertAdjacentHTML("beforeend", /* HTML */ `<form id="one"><button type="submit"></button></form><form id="two"><button type="submit"></button></form>`);
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      /* HTML */ `<form id="one"><button type="submit"></button></form>
+        <form id="two"><button type="submit"></button></form>`
+    );
     let plain = 0,
       named = 0;
     $("#one")
@@ -630,7 +644,9 @@ test("Back during error-page script loading reloads before any stale SPA navigat
   t.after(() => page.close());
   await page.evaluate(() => bySPA.load("/configured"));
   let release;
-  const held = new Promise((resolve) => { release = resolve; });
+  const held = new Promise((resolve) => {
+    release = resolve;
+  });
   t.after(release);
   await page.route("**/pending-error.js", async (route) => {
     await held;
