@@ -229,3 +229,40 @@ test("demo loads init before routes, router, and runtime", () => {
   assert.ok(scripts.indexOf("./_routes.js") < scripts.indexOf("../_router.js"));
   assert.ok(scripts.indexOf("../_router.js") < scripts.indexOf("../_spa.js"));
 });
+
+test("duplicate environment setup preserves preconfigured namespaces and memory-only values", () => {
+  for (const file of ["_init.js", "demo/_init.js"]) {
+    const source = fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+    const window = {
+      bySPA: { REQUEST_TIMEOUT: 4321 },
+      byStorage: { custom: true },
+      location: new URL("https://example.test/app/"),
+      localStorage: {
+        getItem() {
+          throw Error("denied");
+        },
+        setItem() {
+          throw Error("denied");
+        },
+        removeItem() {
+          throw Error("denied");
+        }
+      }
+    };
+    const context = { window, URL, console: { log() {} }, document: { currentScript: { getAttribute: () => "/app/_init.js" } } };
+    vm.runInNewContext(source, context);
+    const storage = window.byStorage;
+    assert.equal(storage.initialized, true);
+    assert.equal(window.bySPA.initialized, undefined);
+    const getItem = storage.getItem;
+    storage.setItem("unsaved", "local");
+    window.bySPA.NAVIGATION_ID = 7;
+    vm.runInNewContext(source, context);
+    assert.equal(window.byStorage, storage);
+    assert.equal(storage.getItem, getItem);
+    assert.equal(storage.getItem("unsaved"), "local");
+    assert.equal(storage.custom, true);
+    assert.equal(window.bySPA.REQUEST_TIMEOUT, 4321);
+    assert.equal(window.bySPA.NAVIGATION_ID, 7);
+  }
+});

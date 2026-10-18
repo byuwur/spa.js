@@ -11,10 +11,12 @@
  * This IIFE (Immediately Invoked Function Expression) ensures bySPA object exists globally
  * (typically on `window` in a browser) to avoid pollution and conflicts in the global namespace.
  * @param {Object} global - The global object, usually `window` in a browser.
+ * @returns {void}
  */
 (function (global) {
   global.bySPA = global.bySPA || {};
   const bySPA = global.bySPA;
+  if (bySPA?.initialized) return;
 
   /*
    * === /spa.js/ only: browser helpers replacing PHP globals/rewrite rules ===
@@ -99,6 +101,11 @@
     return `${getHomePath()}${path.startsWith("/") ? path : `/${path}`}`;
   }
 
+  /**
+   * Resolve the initial requested route without allowing saved navigation to replace explicit input.
+   * @param {unknown} locationURL Location url.
+   * @returns {string}
+   */
   function getInitialURI(locationURL) {
     const queryURI = locationURL.searchParams.get("uri");
     if (typeof queryURI === "string" && queryURI !== "") return queryURI;
@@ -117,6 +124,12 @@
     return locationURL.pathname || "/";
   }
 
+  /**
+   * Resolve a URI and its query data against the declared application routes.
+   * @param {string} uri Application URI to resolve.
+   * @param {Object} get GET parameters for the request.
+   * @returns {Object}
+   */
   function parseURI(uri, get) {
     uri = typeof uri === "string" ? uri : "/";
     const queryIndex = uri.indexOf("?");
@@ -135,6 +148,13 @@
     return { uri: normalizeURI(uri), url, get };
   }
 
+  /**
+   * Publish the routing failure through the existing framework error path.
+   * @param {number} status Status code describing the result.
+   * @param {string} message Message to display or report.
+   * @param {string|URL} url URL to inspect, request, or display.
+   * @returns {null} Publishes the route failure and returns null for the caller's error branch.
+   */
   function routerError(status, message, url) {
     const error = { status, message, url };
     bySPA.ROUTER_ERROR = error;
@@ -144,6 +164,10 @@
   }
   /* === end /spa.js/ only === */
 
+  /**
+   * Resolve the initial route and publish the state consumed by SPA startup.
+   * @returns {null|undefined} Publishes initial route state, or returns the routing error sentinel when resolution fails.
+   */
   function initRouter() {
     // The PHP rewrite rule is replaced here by reading the current browser URL.
     const locationURL = new URL(global.location.href);
