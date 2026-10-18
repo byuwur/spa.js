@@ -11,11 +11,13 @@
  * This IIFE (Immediately Invoked Function Expression) ensures byCommon and bySPA objects exist globally
  * (typically on `window` in a browser) to avoid pollution and conflicts in the global namespace.
  * @param {Object} global - The global object, usually `window` in a browser.
+ * @returns {unknown}
  */
 (function (global) {
+  if (global.bySPA?.setLanguage?.initialized) return;
+
   if (typeof jQuery === "undefined" && !global.jQuery) return console.error("Init _lang.js FAILED. No jQuery found.");
   const $ = global.jQuery;
-
 
   global.byCommon = global.byCommon || {};
   global.bySPA = global.bySPA || {};
@@ -32,9 +34,19 @@
   bySPA.APP_LANGS = Array.isArray(bySPA.APP_LANGS) && bySPA.APP_LANGS.length ? bySPA.APP_LANGS : APP_LANGS;
   bySPA.DEFAULT_APP_LANG = bySPA.DEFAULT_APP_LANG || DEFAULT_APP_LANG;
 
+  /**
+   * Apply a callback to the matching root element and its matching descendants.
+   * @param {Document|HTMLElement} root Container whose descendants belong to this operation.
+   * @param {string} selector CSS selector identifying the target elements.
+   * @param {Function} callback Callback invoked by this operation.
+   * @returns {void}
+   */
   function eachMatching(root, selector, callback) {
     root = root && root.nodeType ? root : document;
-    $(root).find(selector).addBack(selector).each((_, element) => callback(element));
+    $(root)
+      .find(selector)
+      .addBack(selector)
+      .each((_, element) => callback(element));
   }
 
   function normalizeLanguage(lang) {
@@ -45,6 +57,11 @@
     return bySPA.APP_LANGS.includes(lang) ? lang : "";
   }
 
+  /**
+   * Set language.
+   * @param {string} lang Language identifier to normalize or load.
+   * @returns {unknown}
+   */
   bySPA.setLanguage = function (lang) {
     const normalized = normalizeLanguage(lang) || normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
     bySPA.APP_LANG = normalized;
@@ -57,6 +74,11 @@
 
   byCommon.setLanguage = bySPA.setLanguage;
 
+  /**
+   * Read the effective language using the framework's documented precedence.
+   * @param {Object} [routing={}] Resolved route state for this navigation.
+   * @returns {string}
+   */
   function getLanguage(routing = {}) {
     return (
       normalizeLanguage(routing?.get?.lang) ||
@@ -74,6 +96,12 @@
     return get;
   };
 
+  /**
+   * Return lang string.
+   * @param {string} key Stored property or lookup key.
+   * @param {string} [fallback=""] Value to use when the requested value is unavailable.
+   * @returns {unknown}
+   */
   byCommon.getLangString = function (key, fallback = "") {
     if (!key) return fallback;
     if (Object.prototype.hasOwnProperty.call(byCommon.LANG_STRINGS, key)) return byCommon.LANG_STRINGS[key];
@@ -83,6 +111,11 @@
     return value ?? fallback;
   };
 
+  /**
+   * Load and cache the selected dictionary before it is applied to the page.
+   * @param {string} lang Language identifier to normalize or load.
+   * @returns {Promise<unknown>} The resulting asynchronous value.
+   */
   async function loadLanguage(lang) {
     lang = byCommon.setLanguage(lang);
     if (byCommon.LANG_CACHE[lang]) return byCommon.LANG_CACHE[lang];
@@ -99,6 +132,12 @@
     return byCommon.LANG_CACHE[lang];
   }
 
+  /**
+   * Apply dictionary values to translation targets inside the supplied container.
+   * @param {Document} [root=document] Container whose descendants belong to this operation.
+   * @param {Object} [strings=byCommon.LANG_STRINGS] Translation dictionary.
+   * @returns {void}
+   */
   function applyLanguage(root = document, strings = byCommon.LANG_STRINGS) {
     byCommon.LANG_STRINGS = strings || {};
     eachMatching(root, "[data-i18n]", function (element) {
@@ -161,4 +200,6 @@
     const e = event.originalEvent || event;
     initLanguage(e.detail);
   });
+
+  bySPA.setLanguage.initialized = true;
 })(typeof window !== "undefined" ? window : this);

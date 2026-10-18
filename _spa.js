@@ -11,14 +11,17 @@
  * This IIFE (Immediately Invoked Function Expression) ensures bySPA object exists globally
  * (typically on `window` in a browser) to avoid pollution and conflicts in the global namespace.
  * @param {Object} global - The global object, usually `window` in a browser.
+ * @returns {unknown}
  */
 (function (global) {
+  global.bySPA = global.bySPA || {};
+  const bySPA = global.bySPA;
+  if (bySPA?.initialized) return;
+
   if (typeof jQuery === "undefined" && !global.jQuery) return console.error("Init _spa.js FAILED. No jQuery found.");
   const $ = global.jQuery;
 
-  global.bySPA = global.bySPA || {};
-  const bySPA = global.bySPA;
-  bySPA.VERSION = "20.5"; // 2026-10-16
+  bySPA.VERSION = "20.6"; // 2026-10-18
   // Initializes values retrieved from localStorage and sets up environment variables.
   bySPA.URI = byStorage.getItem("URI") ?? "/";
   bySPA.URL = byStorage.getItem("URL") ?? bySPA.URI;
@@ -48,6 +51,7 @@
   /**
    * Updates local route variables in memory.
    * @param {object} state The current route state.
+   * @returns {Object}
    */
   function setRouteState(state = {}) {
     bySPA.URI = state.path ?? bySPA.URI;
@@ -77,6 +81,12 @@
     return bySPA.ROUTER_MODE !== "path" ? `${base}/#${routeURL}` : `${base}${routeURL}`;
   }
 
+  /**
+   * Update file-protocol history using the requested push or replacement behavior.
+   * @param {string|URL} url URL to inspect, request, or display.
+   * @param {boolean} [replace=false] Replace.
+   * @returns {void}
+   */
   function fileHistory(url, replace = false) {
     const routeURL = bySPA.parseURL(url).url;
     const hash = `#${routeURL}`;
@@ -91,6 +101,10 @@
     }
   }
 
+  /**
+   * Show the standalone notice when AJAX fragment loading cannot run over file URLs.
+   * @returns {void}
+   */
   function renderFileProtocolNotice() {
     if (!$("#spa-content").length) $("body").append($(/* HTML */ `<main></main>`, { id: "spa-content" }));
     $("#spa-content").html(
@@ -195,6 +209,7 @@
   /**
    * Pushes the current state to the browser's history stack.
    * @param {string} url The URL to push to the history stack.
+   * @returns {unknown}
    */
   function historyPush(url) {
     bySPA.HISTORY_PATH = bySPA.HISTORY_PATH.slice(0, bySPA.HISTORY_INDEX + 1);
@@ -208,6 +223,7 @@
   /**
    * Replaces the current history state without creating a new entry.
    * @param {string} url The URL to store in the current history entry.
+   * @returns {unknown}
    */
   function historyReplace(url) {
     if (bySPA.HISTORY_INDEX < 0) bySPA.HISTORY_INDEX = 0;
@@ -228,6 +244,11 @@
   bySPA.errorPage = function (status, custom_error_message = "", navigationId = bySPA.NAVIGATION_ID) {
     // === /spa.js/ only: static error fragment instead of PHP _error.php ===
     const paths = [bySPA.ERROR_PATH, `${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`, `${bySPA.HOME_PATH}/../_error.html`].filter(Boolean);
+    /**
+     * Render the current accepted data into this component's owned DOM.
+     * @param {unknown} data Data delivered to this operation.
+     * @returns {Promise<unknown>} The resulting asynchronous value.
+     */
     const render = async function (data) {
       // A late error must not replace content belonging to a newer route.
       if (navigationId !== bySPA.NAVIGATION_ID) return null;
@@ -244,6 +265,11 @@
 
       return inserted;
     };
+    /**
+     * Request the configured error document for the failed resource.
+     * @param {string} path Path to normalize or resolve.
+     * @returns {Promise<unknown>} The resulting asynchronous value.
+     */
     const requestError = async function (path) {
       try {
         const data = await $.ajax({
@@ -260,6 +286,10 @@
         return null;
       }
     };
+    /**
+     * Complete navigation through the framework's existing error fallback.
+     * @returns {Promise<null>} The resulting asynchronous value.
+     */
     const loadError = async function () {
       let data = null;
       for (const path of paths) {
@@ -537,12 +567,17 @@
   /**
    * Runs page/component lifecycle hooks after dynamic content is swapped.
    * @param {object} routing The loaded route data, including its navigationId.
+   * @returns {void}
    */
   function afterLoad(routing) {
     if (typeof byCommon !== "undefined" && typeof byCommon.init === "function") byCommon.init();
     document.dispatchEvent(new CustomEvent("bySPA:load", { detail: routing }));
   }
 
+  /**
+   * Initialize this component once using its current state and available dependencies.
+   * @returns {void}
+   */
   function init() {
     // Log debug information if in development mode
     console.log("SPA_VERSION=", bySPA.VERSION);
@@ -616,5 +651,6 @@
     });
   }
 
+  bySPA.initialized = true;
   init();
 })(typeof window !== "undefined" ? window : this);

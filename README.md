@@ -66,6 +66,8 @@ Since v14, `_var.js` is `_init.js`; update old imports. No compatibility alias e
 
 ### Storage and shared UI
 
+Each installed API owns one boolean `initialized` flag. Bootstrap scripts can populate the shared namespace before `_spa.js` sets `bySPA.initialized = true`. Repeated imports preserve storage fallback values and active navigation; ordinary `byCommon.init()` calls still initialize new page content.
+
 `byStorage` namespaces keys by application root and removes legacy keys after migration. Failed writes/removals give only that key a local value/null marker until a successful explicit change; other keys keep reading persistent storage. Memory fallback lasts for this runtime, without automatic replay or cross-tab synchronization. Consent reads namespaced `APP_THEME`/`APP_LANG`, defaulting to `dark`/`es`.
 
 `_spa.js` calls `byCommon.init()` after content changes. Optional warnings are off; enable `byCommon.INIT_WARNINGS` or `{ showWarn: true }`. `byCommon.initBootstrap({ tooltipsOnly: true, root, refreshTooltips: true })` refreshes scoped tooltips without rerunning other components.
@@ -93,6 +95,8 @@ Requires native `CompressionStream`/`DecompressionStream` support for `deflate-r
 <script src="./spa.js/_fonts.js" defer></script>
 <input name="fontFamily" data-font-picker value="Inter" />
 ```
+
+Shared interface text uses the bundled Archivo font; explicit selections and accessibility fonts remain available. Reusable utility/API JSDoc records accepted parameters, defaults, return values, and lifecycle constraints; obvious callbacks do not need it.
 
 `byFont.family(value, fallback)` returns a CSS stack; `await byFont.ready(value, weight, text)` returns readiness before measurement. Use `byFont.init(container)` / `byFont.destroy(container)` for dynamic fields, or `byFont.picker(field, { weight, previewText, fallback })` for one control; `weight` can be a control.
 
