@@ -146,6 +146,28 @@ async function openApp(route = "/known", options = {}) {
   return page;
 }
 
+test("demo sidebar keeps its logo inside the header when collapsed and expanded", async (t) => {
+  const page = await browser.newPage({ viewport: { width: 400, height: 320 } });
+  t.after(() => page.close());
+  await page.setContent('<!doctype html><html class="no-motion"><body></body></html>');
+  await page.evaluate(
+    (markup) => {
+      document.body.innerHTML = markup;
+    },
+    fs.readFileSync(path.join(root, "demo/sidebar.html"), "utf8")
+  );
+  for (const file of ["css/bootstrap.min.css", "_common.css"]) await page.addStyleTag({ path: path.join(root, file) });
+  for (const width of [400, 1280]) {
+    await page.setViewportSize({ width, height: 320 });
+    for (const expanded of [false, true]) {
+      await page.locator("#bywr-sidebar").evaluate((element, expanded) => element.classList.toggle("bywr-sidebar-expanded", expanded), expanded);
+      const header = await page.locator(".bywr-sidebar-header").boundingBox();
+      const logo = await page.locator(".bywr-sidebar-header .navbar-brand").boundingBox();
+      assert.ok(logo.y >= header.y && logo.y + logo.height <= header.y + header.height, `${width}px, expanded=${expanded}: header contains its logo`);
+    }
+  }
+});
+
 test("accessibility text scales inherited text, headings, and Bootstrap utilities together", async (t) => {
   const page = await openApp();
   t.after(() => page.close());
