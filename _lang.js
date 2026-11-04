@@ -14,26 +14,24 @@
  * @returns {unknown}
  */
 (function (global) {
+  /* --- INITIALIZATION --- */
   if (global.bySPA?.setLanguage?.initialized) return;
-
   if (typeof jQuery === "undefined" && !global.jQuery) return console.error("Init _lang.js FAILED. No jQuery found.");
   const $ = global.jQuery;
-
   global.byCommon = global.byCommon || {};
   global.bySPA = global.bySPA || {};
   const byCommon = global.byCommon;
   const bySPA = global.bySPA;
 
-  const DEFAULT_APP_LANG = "es";
-  const APP_LANGS = ["es", "en", "ja"];
-
+  /* --- DEFAULTS --- */
   // Common selectors
   byCommon.LANG_PATH = byCommon.LANG_PATH || "/lang";
   byCommon.LANG_CACHE = byCommon.LANG_CACHE || {};
   byCommon.LANG_STRINGS = byCommon.LANG_STRINGS || {};
-  bySPA.APP_LANGS = Array.isArray(bySPA.APP_LANGS) && bySPA.APP_LANGS.length ? bySPA.APP_LANGS : APP_LANGS;
-  bySPA.DEFAULT_APP_LANG = bySPA.DEFAULT_APP_LANG || DEFAULT_APP_LANG;
+  bySPA.APP_LANGS = Array.isArray(bySPA.APP_LANGS) && bySPA.APP_LANGS.length ? bySPA.APP_LANGS : ["es", "en", "ja"];
+  bySPA.DEFAULT_APP_LANG = bySPA.DEFAULT_APP_LANG || "es";
 
+  /* --- HELPERS --- */
   /**
    * Apply a callback to the matching root element and its matching descendants.
    * @param {Document|HTMLElement} root Container whose descendants belong to this operation.
@@ -58,23 +56,6 @@
   }
 
   /**
-   * Set language.
-   * @param {string} lang Language identifier to normalize or load.
-   * @returns {unknown}
-   */
-  bySPA.setLanguage = function (lang) {
-    const normalized = normalizeLanguage(lang) || normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
-    bySPA.APP_LANG = normalized;
-    byStorage.setItem("APP_LANG", normalized);
-    set_cookie("lang", normalized);
-    document.documentElement.setAttribute("lang", normalized);
-    document.documentElement.setAttribute("dir", "ltr");
-    return normalized;
-  };
-
-  byCommon.setLanguage = bySPA.setLanguage;
-
-  /**
    * Read the effective language using the framework's documented precedence.
    * @param {Object} [routing={}] Resolved route state for this navigation.
    * @returns {string}
@@ -90,26 +71,6 @@
       bySPA.DEFAULT_APP_LANG
     );
   }
-
-  bySPA.prepareRouteGet = function (get = {}) {
-    if (get.lang) get.lang = bySPA.setLanguage(get.lang);
-    return get;
-  };
-
-  /**
-   * Return lang string.
-   * @param {string} key Stored property or lookup key.
-   * @param {string} [fallback=""] Value to use when the requested value is unavailable.
-   * @returns {unknown}
-   */
-  byCommon.getLangString = function (key, fallback = "") {
-    if (!key) return fallback;
-    if (Object.prototype.hasOwnProperty.call(byCommon.LANG_STRINGS, key)) return byCommon.LANG_STRINGS[key];
-    const value = String(key)
-      .split(".")
-      .reduce((item, part) => (item && typeof item === "object" ? item[part] : undefined), byCommon.LANG_STRINGS);
-    return value ?? fallback;
-  };
 
   /**
    * Load and cache the selected dictionary before it is applied to the page.
@@ -195,11 +156,50 @@
     }
   }
 
+  /* --- PUBLIC API --- */
+  /**
+   * Set language.
+   * @param {string} lang Language identifier to normalize or load.
+   * @returns {unknown}
+   */
+  bySPA.setLanguage = function (lang) {
+    const normalized = normalizeLanguage(lang) || normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
+    bySPA.APP_LANG = normalized;
+    byStorage.setItem("APP_LANG", normalized);
+    set_cookie("lang", normalized);
+    document.documentElement.setAttribute("lang", normalized);
+    document.documentElement.setAttribute("dir", "ltr");
+    return normalized;
+  };
+
+  // Both public entry points intentionally share the same language setter.
+  byCommon.setLanguage = bySPA.setLanguage;
+
+  bySPA.prepareRouteGet = function (get = {}) {
+    if (get.lang) get.lang = bySPA.setLanguage(get.lang);
+    return get;
+  };
+
+  /**
+   * Return lang string.
+   * @param {string} key Stored property or lookup key.
+   * @param {string} [fallback=""] Value to use when the requested value is unavailable.
+   * @returns {unknown}
+   */
+  byCommon.getLangString = function (key, fallback = "") {
+    if (!key) return fallback;
+    if (Object.prototype.hasOwnProperty.call(byCommon.LANG_STRINGS, key)) return byCommon.LANG_STRINGS[key];
+    const value = String(key)
+      .split(".")
+      .reduce((item, part) => (item && typeof item === "object" ? item[part] : undefined), byCommon.LANG_STRINGS);
+    return value ?? fallback;
+  };
+
+  /* --- STARTUP --- */
   bySPA.setLanguage(get_url_param("lang") || get_cookie("lang") || byStorage.getItem("APP_LANG") || global.navigator?.language);
   $(document).on("bySPA:load.byLanguage", function (event) {
     const e = event.originalEvent || event;
     initLanguage(e.detail);
   });
-
   bySPA.setLanguage.initialized = true;
 })(typeof window !== "undefined" ? window : this);
