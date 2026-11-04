@@ -51,6 +51,8 @@ Since v14, `_var.js` is `_init.js`; update old imports. No compatibility alias e
 
 ### Languages
 
+`byCommon.getLanguage()` reads the active language; `bySPA.setLanguage(lang)` and `byCommon.setLanguage(lang)` update it. The getter does not load dictionaries or write preferences.
+
 `_lang.js` chooses language from document `?lang=`, route queries, cookie, `localStorage.APP_LANG`, browser language, then `es`; it persists the choice and updates `<html lang>`. Dictionaries use dotted keys such as `nav.home`. Set `byCommon.LANG_PATH` to override their location; the demo uses application-relative `/lang`.
 
 ## Runtime contracts

@@ -266,3 +266,30 @@ test("duplicate environment setup preserves preconfigured namespaces and memory-
     assert.equal(window.bySPA.NAVIGATION_ID, 7);
   }
 });
+
+test("public language getter reads setter-owned state without route or persistence side effects", () => {
+  const disk = new Map([["APP_LANG", "es"]]);
+  const attributes = new Map();
+  const events = [];
+  const jquery = () => ({ on: (name, listener) => events.push([name, listener]) });
+  const context = {
+    window: { jQuery: jquery, byCommon: {}, bySPA: { _GET: { lang: "es" } } },
+    document: { documentElement: { setAttribute: (name, value) => attributes.set(name, value) } },
+    byStorage: { getItem: (key) => disk.get(key), setItem: (key, value) => disk.set(key, value) },
+    get_url_param: () => "",
+    get_cookie: () => "",
+    set_cookie: () => {}
+  };
+  const source = fs.readFileSync(path.join(__dirname, "..", "_lang.js"), "utf8");
+  vm.runInNewContext(source, context);
+  const common = context.window.byCommon;
+  assert.equal(common.setLanguage("ja"), "ja");
+  disk.set("APP_LANG", "en");
+  assert.equal(common.getLanguage(), "ja");
+  assert.equal(disk.get("APP_LANG"), "en");
+  assert.equal(attributes.get("lang"), "ja");
+  const getter = common.getLanguage;
+  vm.runInNewContext(source, context);
+  assert.equal(common.getLanguage, getter);
+  assert.equal(events.length, 1);
+});

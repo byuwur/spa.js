@@ -358,12 +358,13 @@ test("implementation-only common, router, and language functions stay private", 
   ["initSidebar", "initMisc", "initCaptcha", "initCookieConsent", "initParticles"].forEach((name) => {
     assert.doesNotMatch(common, new RegExp(`byCommon\\.${name}\\s*=`));
   });
-  ["normalizeLanguage", "getLanguage", "loadLanguage", "applyLanguage", "initLanguage"].forEach((name) => {
+  ["normalizeLanguage", "loadLanguage", "applyLanguage", "initLanguage"].forEach((name) => {
     assert.doesNotMatch(language, new RegExp(`(?:bySPA|byCommon)\\.${name}\\s*=`));
   });
   assert.doesNotMatch(router, /bySPA\.initRouter\s*=/);
   assert.match(common, /byCommon\.initBootstrap\s*=/);
   assert.match(language, /bySPA\.setLanguage\s*=/);
+  assert.doesNotMatch(language, /bySPA\.getLanguage\s*=/);
   assert.match(router, /function initRouter\(\)/);
 });
 

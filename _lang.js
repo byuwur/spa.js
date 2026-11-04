@@ -175,6 +175,11 @@
   // Both public entry points intentionally share the same language setter.
   byCommon.setLanguage = bySPA.setLanguage;
 
+  /** Read the active language without resolving a route, loading a dictionary, or changing preferences. */
+  byCommon.getLanguage = function () {
+    return normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
+  };
+
   bySPA.prepareRouteGet = function (get = {}) {
     if (get.lang) get.lang = bySPA.setLanguage(get.lang);
     return get;
