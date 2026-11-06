@@ -112,11 +112,9 @@
    * @returns {void}
    */
   function renderFileProtocolNotice() {
-    if (!$("#spa-content").length) $("body").append($(// HTML
-     `<main></main>`, { id: "spa-content" }));
+    if (!$("#spa-content").length) $("body").append($(/* HTML */ `<main></main>`, { id: "spa-content" }));
     $("#spa-content").html(
-      // HTML
-       `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:#0007;color:#fee;">
+      /* HTML */ `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:#0007;color:#fee;">
         <div style="max-width:42rem;">
           <h1>SPA.js needs HTTP</h1>
           <p>This shell opened from <code>file://</code>, so the browser blocked the HTML fragments and components that SPA.js loads with AJAX.</p>
@@ -617,8 +615,7 @@
       if (!bySPA.reloadComponent) return window.location.reload();
       console.warn("Main Component (main#spa-content) missing. Creating and appending to the body...");
       $("body").append(
-        $(// HTML
-         `<main></main>`, {
+        $(/* HTML */ `<main></main>`, {
           id: "spa-content"
         })
       );
@@ -653,8 +650,7 @@
         // === /spa.js/ only: XHR can fail before responseText exists in static mode ===
         document.dispatchEvent(new CustomEvent("bySPA:error", { detail: { navigationId, url, status: xhr?.status || 0, error } }));
         if (navigationId !== bySPA.NAVIGATION_ID) return null;
-        $("#spa-content").html(xhr?.responseText || // HTML
-         `<pre>Error (SPA): ${xhr?.status || 0} ${status || ""} ${error || ""}</pre>`);
+        $("#spa-content").html(xhr?.responseText || /* HTML */ `<pre>Error (SPA): ${xhr?.status || 0} ${status || ""} ${error || ""}</pre>`);
         return null;
       })
       .always(function () {

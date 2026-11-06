@@ -23,8 +23,7 @@ test.before(async () => {
     }
     res.setHeader("Content-Type", "text/html");
     res.end(
-      // HTML
-       `<!doctype html>
+      /* HTML */ `<!doctype html>
         <html>
           <head></head>
           <body>
@@ -124,8 +123,7 @@ async function openApp(route = "/known", options = {}) {
       requests.push(config.url);
       requestEvents.push(events.map((event) => event.type));
       const result = $.Deferred();
-      setTimeout(() => result.resolve(// HTML
-       `<p id="rendered">Loaded</p>`), 0);
+      setTimeout(() => result.resolve(/* HTML */ `<p id="rendered">Loaded</p>`), 0);
       return result.promise();
     };
     for (const type of ["bySPA:before-unload", "bySPA:load", "bySPA:error"]) document.addEventListener(type, (event) => events.push({ type, ...event.detail }));
@@ -312,8 +310,7 @@ test("stale failures cannot notify, replace content, or hide a newer loader", as
       const older = bySPA.load("/known");
       const newer = bySPA.load("/configured");
       if (completeNewerFirst) {
-        pending[1].resolve(// HTML
-         `<p id="current">Current route</p>`);
+        pending[1].resolve(/* HTML */ `<p id="current">Current route</p>`);
         await newer;
       }
       const before = { html: $("#spa-content").html(), loader: $("#spa-loader").css("display") };
@@ -321,8 +318,7 @@ test("stale failures cannot notify, replace content, or hide a newer loader", as
       await older;
       const after = { html: $("#spa-content").html(), loader: $("#spa-loader").css("display") };
       if (!completeNewerFirst) {
-        pending[1].resolve(// HTML
-         `<p id="current">Current route</p>`);
+        pending[1].resolve(/* HTML */ `<p id="current">Current route</p>`);
         await newer;
       }
       return { before, after, events, current: document.getElementById("current")?.textContent };
@@ -399,8 +395,7 @@ test("request helper rebind preserves consumer handlers and supports multiple ev
   const result = await page.evaluate(async () => {
     document.body.insertAdjacentHTML(
       "beforeend",
-      // HTML
-       `<form id="one"><button type="submit"></button></form>
+      /* HTML */ `<form id="one"><button type="submit"></button></form>
         <form id="two"><button type="submit"></button></form>`
     );
     let plain = 0,
@@ -439,8 +434,7 @@ test("error-page overrides precede bounded default fallbacks", async () => {
         requests.push(config.url);
         const request = $.Deferred();
         if (requests.length <= options.failures) request.reject({ status: 404 });
-        else request.resolve(// HTML
-         `<p id="error-rendered">Error page</p>`);
+        else request.resolve(/* HTML */ `<p id="error-rendered">Error page</p>`);
         return request.promise();
       };
       const html = await bySPA.errorPage(404, "Missing");
@@ -594,8 +588,7 @@ test("both click handlers preserve browser ownership and intercept owned ordinar
 test("root-hosted routes and sibling-document fragments keep their navigation owners", async () => {
   const page = await openApp("/known", { appPath: "/" });
   await page.evaluate(() => {
-    document.body.insertAdjacentHTML("beforeend", // HTML
-     `<a id="route-link" href="/configured">Route</a><a id="sibling-link" href="/sibling/#section">Sibling</a>`);
+    document.body.insertAdjacentHTML("beforeend", /* HTML */ `<a id="route-link" href="/configured">Route</a><a id="sibling-link" href="/sibling/#section">Sibling</a>`);
   });
   await page.click("#route-link");
   await page.waitForURL("**/#/configured");
@@ -613,8 +606,7 @@ test("root-hosted routes and sibling-document fragments keep their navigation ow
 test("existing targets scroll while missing targets retain native hash navigation", async () => {
   const page = await openApp();
   await page.evaluate(async () => {
-    document.body.insertAdjacentHTML("beforeend", // HTML
-     `<a id="existing-link" href="#section">Existing</a><a id="missing-link" href="#absent">Missing</a>`);
+    document.body.insertAdjacentHTML("beforeend", /* HTML */ `<a id="existing-link" href="#section">Existing</a><a id="missing-link" href="#absent">Missing</a>`);
     byCommon.init();
     await new Promise((resolve) => $(resolve));
   });
@@ -635,8 +627,7 @@ test("navigation journey preserves error recovery and FILE history", async () =>
     $.ajax = (config) => {
       if (!config.url.includes("slow.html")) return ajax(config);
       const request = $.Deferred();
-      finish = () => request.resolve(// HTML
-       `<p id="stale">Old route</p>`);
+      finish = () => request.resolve(/* HTML */ `<p id="stale">Old route</p>`);
       return request.promise();
     };
     const slow = bySPA.load("/slow");
@@ -726,8 +717,7 @@ test("component failures settle independently and navigation retains jQuery prom
     bySPA.reloadComponent = () => Promise.reject(new Error("Component fixture failure"));
     $.ajax = () => {
       const response = $.Deferred();
-      setTimeout(() => response.resolve(// HTML
-       `<p>Page survives</p>`), 25);
+      setTimeout(() => response.resolve(/* HTML */ `<p>Page survives</p>`), 25);
       return response.promise();
     };
     const request = bySPA.load("/known", { push: false });

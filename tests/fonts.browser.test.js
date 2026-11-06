@@ -41,8 +41,7 @@ async function fontPage(t, markup) {
 }
 
 test("common initialization preserves saved fonts, reuses widgets, and resets previews", async t => {
-  const { page, requests, errors } = await fontPage(t, // HTML
-   `
+  const { page, requests, errors } = await fontPage(t, /* HTML */ `
     <main id="spa-content"><form id="settings">
       <label>Font <input id="font" name="fontFamily" class="form-control" data-font-picker value="My Installed Font" maxlength="80"></label>
       <input id="weight" type="number" value="700">
@@ -84,8 +83,7 @@ test("common initialization preserves saved fonts, reuses widgets, and resets pr
 });
 
 test("modal initialization retains font templates and removes old-route controls", async t => {
-  const { page, errors } = await fontPage(t, // HTML
-   `
+  const { page, errors } = await fontPage(t, /* HTML */ `
     <main id="spa-content"><div id="font-modal" class="modal" tabindex="-1">
       <div class="modal-dialog"><div class="modal-content"><form>
         <label>Font <select id="font" name="font" data-font-picker><option selected value="Arial">Arial</option></select></label>
@@ -126,8 +124,7 @@ test("modal initialization retains font templates and removes old-route controls
 });
 
 test("dynamic font fields load visible samples only and dispose on SPA navigation", async t => {
-  const { page, requests, errors } = await fontPage(t, // HTML
-   `
+  const { page, requests, errors } = await fontPage(t, /* HTML */ `
     <main id="spa-content"><form><label>Font <input id="font" data-font-picker value="Arial"></label></form></main>`);
   await page.evaluate(() => byCommon.init({ showWarn: false }));
   await page.waitForFunction(() => $("#font").data("select2"));
@@ -148,8 +145,7 @@ test("dynamic font fields load visible samples only and dispose on SPA navigatio
 });
 
 test("font cleanup preserves unrelated widgets", async t => {
-  const { page, errors } = await fontPage(t, // HTML
-   `
+  const { page, errors } = await fontPage(t, /* HTML */ `
     <main id="spa-content"><form id="settings">
       <label>Font <input id="font" data-font-picker value="Arial"></label>
       <select id="ordinary"><option>Ordinary</option></select>
@@ -177,8 +173,7 @@ test("font cleanup preserves unrelated widgets", async t => {
 test("Bootstrap modal controls remain usable without optional font methods", async t => {
   for (const [name, namespace] of [["module absent", null], ["methods absent", {}], ["methods not callable", { init: true, destroy: true }]]) {
     await t.test(name, async t => {
-      const { page, errors } = await fontPage(t, // HTML
-       `
+      const { page, errors } = await fontPage(t, /* HTML */ `
         <main id="spa-content"><div id="font-modal" class="modal"><div class="modal-dialog"><div class="modal-content">
           <label>Font <select id="font" data-font-picker><option>Arial</option></select></label>
         </div></div></div></main>
@@ -202,8 +197,7 @@ test("Bootstrap modal controls remain usable without optional font methods", asy
 
 
 test("scoped tooltips preserve application handlers and translated native titles", async t => {
-  const { page, errors } = await fontPage(t, // HTML
-   `
+  const { page, errors } = await fontPage(t, /* HTML */ `
     <section id="scope"><button id="tip" data-bs-toggle="tooltip" title="Original">Tip</button></section>
     <button id="outside" data-bs-toggle="tooltip" title="Outside">Outside</button>`);
   const result = await page.evaluate(() => {
@@ -240,8 +234,7 @@ test("scoped tooltips preserve application handlers and translated native titles
 });
 
 test("video initialization enhances only the player's shortcut controls", async t => {
-  const { page, errors } = await fontPage(t, // HTML
-   `
+  const { page, errors } = await fontPage(t, /* HTML */ `
     <button id="outside" class="vjs-play-control" data-bs-toggle="tooltip" title="Outside">Outside</button>
     <video id="player" class="video-js"></video>`);
   await page.addScriptTag({ path: path.join(root, "js/video.min.js") });
@@ -259,8 +252,7 @@ test("video initialization enhances only the player's shortcut controls", async 
 });
 
 test("modal dismissal cleans fonts and preserves a replacement with the same ID", async t => {
-  const { page, errors } = await fontPage(t, // HTML
-   `
+  const { page, errors } = await fontPage(t, /* HTML */ `
     <div id="dismiss" class="modal"><input id="retired-font" data-font-picker value="Arial"></div>`);
   await page.addScriptTag({ path: path.join(root, "_functions.js") });
   await page.evaluate(() => {
@@ -272,8 +264,7 @@ test("modal dismissal cleans fonts and preserves a replacement with the same ID"
     const replacement = document.createElement("div");
     replacement.id = "dismiss";
     replacement.className = "modal";
-    replacement.innerHTML = // HTML
-     `<input id="replacement-font" data-font-picker value="Georgia">`;
+    replacement.innerHTML = /* HTML */ `<input id="replacement-font" data-font-picker value="Georgia">`;
     document.body.append(replacement);
     byFont.init(replacement);
     window.replacementWidget = $("#replacement-font").data("select2");
@@ -288,8 +279,7 @@ test("modal dismissal cleans fonts and preserves a replacement with the same ID"
 
 
 test("translation refreshes titles through their UI owner without rerunning modal setup", async t => {
-  const { page, errors } = await fontPage(t, // HTML
-   `
+  const { page, errors } = await fontPage(t, /* HTML */ `
     <button id="translated" data-i18n-title="play" data-bs-toggle="tooltip" title="Before">Play</button>
     <button id="untouched" data-bs-toggle="tooltip" title="Untouched">Other</button>`);
   await page.route("https://example.test/lang/**", route => route.fulfill({ json: { play: "Reproducir" } }));
