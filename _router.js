@@ -14,7 +14,7 @@
  * @returns {void}
  */
 (function (global) {
-  /* --- INITIALIZATION --- */
+  // --- INITIALIZATION ---
   global.bySPA = global.bySPA || {};
   const bySPA = global.bySPA;
   if (bySPA?.initialized) return;
@@ -25,7 +25,7 @@
    * Static /spa.js/ has to infer that same URI from ?uri=, #/hash routes,
    * normal path routing, or file:// fallback paths.
    */
-  /* --- URL HELPERS --- */
+  // --- URL HELPERS ---
   function safeDecode(value) {
     try {
       return decodeURIComponent(value);
@@ -67,7 +67,7 @@
     return queryToObject(new URLSearchParams(route.URI.slice(route.URI.indexOf("?") + 1)));
   }
 
-  /* --- ROUTES --- */
+  // --- ROUTES ---
   function getRoutes() {
     if (is_object(bySPA.ROUTES)) return bySPA.ROUTES;
     const storedRoutes = parse_json(byStorage.getItem("ROUTES"));
@@ -133,7 +133,7 @@
    * @param {Object} get GET parameters for the request.
    * @returns {Object}
    */
-  /* --- ROUTING --- */
+  // --- ROUTING ---
   function parseURI(uri, get) {
     uri = typeof uri === "string" ? uri : "/";
     const queryIndex = uri.indexOf("?");
@@ -166,7 +166,7 @@
     console.error(`Error ${status}: ${message}`);
     return null;
   }
-  /* === end /spa.js/ only === */
+  // === end /spa.js/ only ===
 
   /**
    * Resolve the initial route and publish the state consumed by SPA startup.
@@ -247,6 +247,6 @@
     return { uri, url, route, get, post: routePost };
   }
 
-  /* --- STARTUP --- */
+  // --- STARTUP ---
   initRouter();
 })(typeof window !== "undefined" ? window : this);

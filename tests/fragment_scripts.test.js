@@ -209,7 +209,8 @@ test("cold and cached external dependencies execute before dependent inline scri
     const harness = createHarness({ "viewer.js": { delay, label: "viewer" } });
     await harness.bySPA.__setHTMLForTest(
       harness.target,
-      /* HTML */ `<script src="viewer.js"></script>
+      // HTML
+       `<script src="viewer.js"></script>
         <script>
           record("inline");
         </script>`,
@@ -223,7 +224,8 @@ test("mixed ordered scripts preserve source order and defer remains ordered", as
   const harness = createHarness({ "b.js": { delay: 10, label: "B" }, "d.js": { label: "D" } });
   await harness.bySPA.__setHTMLForTest(
     harness.target,
-    /* HTML */ `<script>
+    // HTML
+     `<script>
         record("A");
       </script>
       <script src="b.js"></script>
@@ -243,7 +245,8 @@ test("full-document error pages reuse ordered script processing", async () => {
   const harness = createHarness({ "error-dependency.js": { delay: 10, label: "dependency" } });
   await harness.bySPA.__setHTMLForTest(
     harness.target,
-    /* HTML */ `<html>
+    // HTML
+     `<html>
       <body>
         <script src="error-dependency.js"></script>
         <script>
@@ -261,7 +264,8 @@ test("missing and broken application scripts are non-fatal", async () => {
   const harness = createHarness({ "missing.js": { fail: true } });
   const result = await harness.bySPA.__setHTMLForTest(
     harness.target,
-    /* HTML */ `<script src="missing.js"></script>
+    // HTML
+     `<script src="missing.js"></script>
       <script>
         throw new Error("application error");
       </script>
@@ -283,7 +287,8 @@ test("stale navigation stops remaining scripts and lifecycle work", async () => 
   const harness = createHarness({ "slow.js": { delay: 20, label: "slow" } });
   const insertion = harness.bySPA.__setHTMLForTest(
     harness.target,
-    /* HTML */ `<script src="slow.js"></script>
+    // HTML
+     `<script src="slow.js"></script>
       <script>
         record("stale");
       </script>`,
@@ -296,7 +301,8 @@ test("stale navigation stops remaining scripts and lifecycle work", async () => 
 
 test("components, modules, attributes, async scripts, and repeat insertion keep their semantics", async () => {
   const harness = createHarness({ "async.js": { delay: 20, label: "async" } });
-  const html = /* HTML */ `<script src="async.js" async integrity="sha256-test" data-owner="component"></script>
+  const html = // HTML
+   `<script src="async.js" async integrity="sha256-test" data-owner="component"></script>
     <script>
       record("component");
     </script>
@@ -312,7 +318,8 @@ test("components, modules, attributes, async scripts, and repeat insertion keep 
 
   await harness.bySPA.__setHTMLForTest(
     harness.target,
-    /* HTML */ `<script>
+    // HTML
+     `<script>
       record("repeat");
     </script>`,
     1
@@ -370,7 +377,8 @@ test("implementation-only common, router, and language functions stay private", 
 
 test("the final ordered script cannot report success after navigation ownership changes", async () => {
   const harness = createHarness({ "last.js": { delay: 25 } });
-  const pending = harness.bySPA.__setHTMLForTest(harness.target, /* HTML */ `<script src="last.js"></script>`, 1);
+  const pending = harness.bySPA.__setHTMLForTest(harness.target, // HTML
+   `<script src="last.js"></script>`, 1);
   harness.bySPA.NAVIGATION_ID = 2;
   assert.equal(await pending, null);
 });

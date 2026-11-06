@@ -14,17 +14,17 @@
  * @returns {unknown}
  */
 (function (global) {
-  /* --- INITIALIZATION --- */
+  // --- INITIALIZATION ---
   global.bySPA = global.bySPA || {};
   const bySPA = global.bySPA;
   if (bySPA?.initialized) return;
   if (typeof jQuery === "undefined" && !global.jQuery) return console.error("Init _spa.js FAILED. No jQuery found.");
   const $ = global.jQuery;
 
-  /* --- METADATA --- */
+  // --- METADATA ---
   bySPA.VERSION = "20.7"; // 2026-11-04
 
-  /* --- STATE --- */
+  // --- STATE ---
   // Initializes values retrieved from localStorage and sets up environment variables.
   bySPA.URI = byStorage.getItem("URI") ?? "/";
   bySPA.URL = byStorage.getItem("URL") ?? bySPA.URI;
@@ -53,7 +53,7 @@
    */
   bySPA.ROUTER_MODE = byStorage.getItem("ROUTER_MODE") ?? "hash";
 
-  /* --- HELPERS --- */
+  // --- HELPERS ---
   /**
    * Updates local route variables in memory.
    * @param {object} state The current route state.
@@ -112,9 +112,11 @@
    * @returns {void}
    */
   function renderFileProtocolNotice() {
-    if (!$("#spa-content").length) $("body").append($(/* HTML */ `<main></main>`, { id: "spa-content" }));
+    if (!$("#spa-content").length) $("body").append($(// HTML
+     `<main></main>`, { id: "spa-content" }));
     $("#spa-content").html(
-      /* HTML */ `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:#0007;color:#fee;">
+      // HTML
+       `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:#0007;color:#fee;">
         <div style="max-width:42rem;">
           <h1>SPA.js needs HTTP</h1>
           <p>This shell opened from <code>file://</code>, so the browser blocked the HTML fragments and components that SPA.js loads with AJAX.</p>
@@ -310,7 +312,7 @@
     document.dispatchEvent(new CustomEvent("bySPA:load", { detail: routing }));
   }
 
-  /* --- LIFECYCLE --- */
+  // --- LIFECYCLE ---
   /**
    * Initialize this component once using its current state and available dependencies.
    * @returns {void}
@@ -388,7 +390,7 @@
     });
   }
 
-  /* --- PUBLIC API --- */
+  // --- PUBLIC API ---
   /**
    * Builds a static fragment URL while preserving query parameters already present in the route URI.
    * @param {string} path Fragment path, optionally containing a query string.
@@ -615,7 +617,8 @@
       if (!bySPA.reloadComponent) return window.location.reload();
       console.warn("Main Component (main#spa-content) missing. Creating and appending to the body...");
       $("body").append(
-        $(/* HTML */ `<main></main>`, {
+        $(// HTML
+         `<main></main>`, {
           id: "spa-content"
         })
       );
@@ -650,7 +653,8 @@
         // === /spa.js/ only: XHR can fail before responseText exists in static mode ===
         document.dispatchEvent(new CustomEvent("bySPA:error", { detail: { navigationId, url, status: xhr?.status || 0, error } }));
         if (navigationId !== bySPA.NAVIGATION_ID) return null;
-        $("#spa-content").html(xhr?.responseText || /* HTML */ `<pre>Error (SPA): ${xhr?.status || 0} ${status || ""} ${error || ""}</pre>`);
+        $("#spa-content").html(xhr?.responseText || // HTML
+         `<pre>Error (SPA): ${xhr?.status || 0} ${status || ""} ${error || ""}</pre>`);
         return null;
       })
       .always(function () {
@@ -658,7 +662,7 @@
       });
   };
 
-  /* --- STARTUP --- */
+  // --- STARTUP ---
   // Mark installed before initial loading can execute fragment scripts that import the runtime again.
   bySPA.initialized = true;
   init();

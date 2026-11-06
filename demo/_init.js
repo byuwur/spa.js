@@ -14,10 +14,10 @@
  * @returns {void}
  */
 (function (global) {
-  /* --- INITIALIZATION --- */
+  // --- INITIALIZATION ---
   if (global.bySPA?.initialized) return;
 
-  /* --- APPLICATION PATH --- */
+  // --- APPLICATION PATH ---
   const currentScript = document.currentScript;
   const scriptSource = currentScript && typeof currentScript.getAttribute === "function" ? currentScript.getAttribute("src") : "";
   const scriptURL = new URL(scriptSource || "_init.js", global.location.href);
@@ -35,7 +35,7 @@
    * Legacy unprefixed keys are migrated on first read.
    * @namespace byStorage
    */
-  /* --- STORAGE API --- */
+  // --- STORAGE API ---
   global.byStorage = global.byStorage || {};
   const byStorage = global.byStorage;
 
@@ -108,7 +108,7 @@
 
   // ===========================
 
-  /* --- APPLICATION STATE --- */
+  // --- APPLICATION STATE ---
   // Bootstrap populates this namespace; only _spa.js marks the runtime initialized.
   global.bySPA = global.bySPA || {};
   const bySPA = global.bySPA;
@@ -172,7 +172,7 @@
   // Set the relative path to the home directory
   bySPA.TO_HOME = up + down || ".";
 
-  /* --- PERSISTENCE --- */
+  // --- PERSISTENCE ---
   // Store the calculated paths in the browser's localStorage
   byStorage.setItem("APP_ENV", bySPA.APP_ENV);
   byStorage.setItem("ROUTER_MODE", bySPA.ROUTER_MODE);
