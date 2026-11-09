@@ -47,6 +47,11 @@
       .each((_, element) => callback(element));
   }
 
+  /**
+   * Reduce locale spellings to supported two-letter language IDs.
+   * @param {string} lang Requested locale or language.
+   * @returns {string} Supported language ID, or an empty string.
+   */
   function normalizeLanguage(lang) {
     lang = String(lang || "")
       .trim()
@@ -158,9 +163,9 @@
 
   // --- PUBLIC API ---
   /**
-   * Set language.
-   * @param {string} lang Language identifier to normalize or load.
-   * @returns {unknown}
+   * Persist the supported language and update document attributes without loading a dictionary.
+   * @param {string} lang Requested language; invalid values retain the active language or default.
+   * @returns {string} Effective language ID.
    */
   bySPA.setLanguage = function (lang) {
     const normalized = normalizeLanguage(lang) || normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
@@ -180,16 +185,21 @@
     return normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
   };
 
+  /**
+   * Normalize an explicit route language before the router persists GET values.
+   * @param {Object} [get={}] Route parameters updated in place.
+   * @returns {Object} The same parameter map.
+   */
   bySPA.prepareRouteGet = function (get = {}) {
     if (get.lang) get.lang = bySPA.setLanguage(get.lang);
     return get;
   };
 
   /**
-   * Return lang string.
-   * @param {string} key Stored property or lookup key.
-   * @param {string} [fallback=""] Value to use when the requested value is unavailable.
-   * @returns {unknown}
+   * Read a literal dictionary key first, then a dotted path, without changing language state.
+   * @param {string} key Dictionary key; a direct dotted key takes precedence over nested lookup.
+   * @param {string} [fallback=""] Value used when the key is missing or null.
+   * @returns {*} Stored dictionary value or the fallback.
    */
   byCommon.getLangString = function (key, fallback = "") {
     if (!key) return fallback;

@@ -26,6 +26,11 @@
    * normal path routing, or file:// fallback paths.
    */
   // --- URL HELPERS ---
+  /**
+   * Decode a path segment while preserving malformed percent escapes.
+   * @param {string} value Encoded segment.
+   * @returns {string} Decoded text, or the original on decoding failure.
+   */
   function safeDecode(value) {
     try {
       return decodeURIComponent(value);
@@ -34,6 +39,11 @@
     }
   }
 
+  /**
+   * Normalize route slashes while preserving the root path.
+   * @param {string} uri Requested route; non-string values use the root.
+   * @returns {string} Route with a leading slash and no trailing slash except root.
+   */
   function normalizeURI(uri) {
     uri = typeof uri === "string" ? uri : "/";
     if (!uri.startsWith("/")) uri = `/${uri.replace(/^\/+/, "")}`;
@@ -41,6 +51,11 @@
     return uri;
   }
 
+  /**
+   * Copy query parameters into the route map; the last duplicate value wins.
+   * @param {URLSearchParams} searchParams Parsed browser query.
+   * @returns {Object<string, string>} Route query values.
+   */
   function queryToObject(searchParams) {
     const params = {};
     searchParams.forEach(function (value, key) {
@@ -49,12 +64,23 @@
     return params;
   }
 
+  /**
+   * Recognize the static SPA hash prefix without claiming ordinary document fragments.
+   * @param {string} hash Browser fragment.
+   * @returns {string|null} Route URI without #, or null for a native fragment.
+   */
   function hashToURI(hash) {
     hash = String(hash || "");
     if (!hash.startsWith("#/")) return null;
     return hash.slice(1) || "/";
   }
 
+  /**
+   * Merge query values in place before higher-priority path and route values are applied.
+   * @param {string} queryString Encoded query without its separator.
+   * @param {Object} get Parameter map to update.
+   * @returns {Object} The same updated map.
+   */
   function mergeQueryString(queryString, get) {
     new URLSearchParams(queryString || "").forEach(function (value, key) {
       get[key] = value;
@@ -62,12 +88,21 @@
     return get;
   }
 
+  /**
+   * Read query values from an application-configured fragment URI.
+   * @param {Object} route Route definition with an optional URI.
+   * @returns {Object<string, string>} Query values, or an empty map.
+   */
   function routeQueryToObject(route) {
     if (typeof route?.URI !== "string" || !route.URI.includes("?")) return {};
     return queryToObject(new URLSearchParams(route.URI.slice(route.URI.indexOf("?") + 1)));
   }
 
   // --- ROUTES ---
+  /**
+   * Prefer the application route table; use saved JSON only when bootstrap supplied none.
+   * @returns {Object} Route table awaiting validation.
+   */
   function getRoutes() {
     if (is_object(bySPA.ROUTES)) return bySPA.ROUTES;
     const storedRoutes = parse_json(byStorage.getItem("ROUTES"));
@@ -94,10 +129,19 @@
     return routes;
   }
 
+  /**
+   * Resolve the application mount from live configuration before saved bootstrap state.
+   * @returns {string} Mount URL without its final slash.
+   */
   function getHomePath() {
     return String(bySPA.HOME_PATH || byStorage.getItem("HOME_PATH") || global.location.origin).replace(/\/$/, "");
   }
 
+  /**
+   * Keep absolute file targets intact and resolve other targets under the application mount.
+   * @param {string} path Configured file route.
+   * @returns {string} Browser destination URL.
+   */
   function homePathURL(path) {
     if (/^[a-z][a-z0-9+.-]*:\/\//i.test(path)) return path;
     path = String(path || "");
