@@ -119,13 +119,13 @@ For upgrades, review changes, reconcile application-owned `_init.js`/`_routes.js
 ### Checks
 
 ```bash
-node --test tests/runtime.test.js tests/common.test.js tests/fragment_scripts.test.js tests/parity.test.js tests/fonts.test.js
-node --test tests/browser.test.js tests/fonts.browser.test.js
+node --test __tests__/runtime.test.js __tests__/common.test.js __tests__/fragment_scripts.test.js __tests__/parity.test.js __tests__/fonts.test.js
+node --test __tests__/browser.test.js __tests__/fonts.browser.test.js
 ```
 
 Browser tests require Playwright and Chromium; see [CI](.github/workflows/ci.yml). Use `PLAYWRIGHT_CHANNEL=chrome` for runtime tests and `BROWSER_CHANNEL=chrome` for font tests.
 
-`SPA_PHP_TREE` selects a Git object store for pinned `_functions.js`/`_common.js` comparisons; other runtime files stay local. [parity-source.js](tests/parity-source.js) defines the reviewed revision, ignoring that checkout's working tree and HEAD. Selected parity checks do not establish complete runtime equivalence.
+`SPA_PHP_TREE` selects a Git object store for pinned `_functions.js`/`_common.js` comparisons; other runtime files stay local. [parity-source.js](__tests__/parity-source.js) defines the reviewed revision, ignoring that checkout's working tree and HEAD. Selected parity checks do not establish complete runtime equivalence.
 
 ## Related tools
 

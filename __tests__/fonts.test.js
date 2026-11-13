@@ -6,23 +6,46 @@ const vm = require("node:vm");
 const source = fs.readFileSync(path.join(__dirname, "..", "_fonts.js"), "utf8");
 
 function loadFonts(namespace = {}) {
-  const links = [], timers = new Map(), fontCalls = [];
+  const links = [],
+    timers = new Map(),
+    fontCalls = [];
   const document = {
     createElement: () => ({ dataset: {} }),
-    head: { append: link => links.push(link) },
-    fonts: { load: async (...args) => { fontCalls.push(args); return [{}]; } }
+    head: { append: (link) => links.push(link) },
+    fonts: {
+      load: async (...args) => {
+        fontCalls.push(args);
+        return [{}];
+      }
+    }
   };
   const context = vm.createContext({
-    window: { byFont: namespace }, document, Promise,
+    window: { byFont: namespace },
+    document,
+    Promise,
     CSS: { supports: (_, value) => !value.includes(";") },
-    setTimeout(callback, delay) { const timer = {}; timers.set(timer, { callback, delay }); return timer; },
-    clearTimeout: timer => timers.delete(timer)
+    setTimeout(callback, delay) {
+      const timer = {};
+      timers.set(timer, { callback, delay });
+      return timer;
+    },
+    clearTimeout: (timer) => timers.delete(timer)
   });
   const reload = () => vm.runInContext(source, context);
   reload();
   return {
-    fonts: context.window.byFont, document, links, fontCalls, reload,
-    expire(delay) { for (const [timer, task] of timers) if (task.delay === delay) { timers.delete(timer); task.callback(); } }
+    fonts: context.window.byFont,
+    document,
+    links,
+    fontCalls,
+    reload,
+    expire(delay) {
+      for (const [timer, task] of timers)
+        if (task.delay === delay) {
+          timers.delete(timer);
+          task.callback();
+        }
+    }
   };
 }
 
@@ -66,7 +89,7 @@ test("font readiness waits for its stylesheet and the requested rendering weight
   assert.equal(fontCalls.length, 0);
   links[0].onload();
   assert.equal(await ready, true);
-  assert.deepEqual(fontCalls, [["700 16px \"Inter\"", "Overlay text"]]);
+  assert.deepEqual(fontCalls, [['700 16px "Inter"', "Overlay text"]]);
 });
 
 test("offline failures retain fallbacks and do not retry while browsing", async () => {
@@ -97,14 +120,16 @@ test("failed font-face loads are handled without throwing", async () => {
   assert.equal(await ready, false);
 });
 
-
 test("glyph readiness shares the deadline and ignores completion after timeout", async () => {
   const harness = loadFonts();
   let finishGlyphs;
-  harness.document.fonts.load = () => new Promise(resolve => { finishGlyphs = resolve; });
+  harness.document.fonts.load = () =>
+    new Promise((resolve) => {
+      finishGlyphs = resolve;
+    });
   const ready = harness.fonts.ready("Inter");
   harness.links[0].onload();
-  await new Promise(resolve => setImmediate(resolve));
+  await new Promise((resolve) => setImmediate(resolve));
   assert.equal(typeof finishGlyphs, "function");
   harness.expire(3000);
   assert.equal(await ready, false);

@@ -9,14 +9,17 @@ let browser;
 before(async () => {
   browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
 });
-after(async () => { await browser?.close(); });
+after(async () => {
+  await browser?.close();
+});
 
 async function fontPage(t, markup) {
   const page = await browser.newPage();
   t.after(() => page.close());
-  const requests = [], errors = [];
-  page.on("pageerror", error => errors.push(error.message));
-  await page.route("https://example.test/**", route => {
+  const requests = [],
+    errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.route("https://example.test/**", (route) => {
     const url = new URL(route.request().url());
     if (/\.(woff2?|ttf)$/.test(url.pathname)) {
       const font = path.join(root, "css", "webfonts", path.basename(url.pathname));
@@ -25,28 +28,33 @@ async function fontPage(t, markup) {
     return route.fulfill({ contentType: "text/html", body: markup });
   });
   // Isolate browser interaction from Google's availability; loader failures have separate tests.
-  await page.route("https://fonts.googleapis.com/**", route => {
+  await page.route("https://fonts.googleapis.com/**", (route) => {
     requests.push(route.request().url());
     return route.fulfill({ contentType: "text/css", body: "/* Font request fixture */" });
   });
   await page.goto("https://example.test/app/");
-  for (const file of ["css/bootstrap.min.css", "css/select2.min.css", "_common.css"])
-    await page.addStyleTag({ path: path.join(root, file) });
+  for (const file of ["css/bootstrap.min.css", "css/select2.min.css", "_common.css"]) await page.addStyleTag({ path: path.join(root, file) });
   await page.addScriptTag({ path: path.join(root, "_fonts.js") });
   assert.equal(await page.evaluate(() => typeof window.jQuery), "undefined");
-  await page.evaluate(() => { byFont.init(); byFont.destroy(); });
-  for (const file of ["js/jquery.min.js", "js/select2.full.min.js", "js/popper.min.js", "js/bootstrap.min.js", "_common.js"])
-    await page.addScriptTag({ path: path.join(root, file) });
+  await page.evaluate(() => {
+    byFont.init();
+    byFont.destroy();
+  });
+  for (const file of ["js/jquery.min.js", "js/select2.full.min.js", "js/popper.min.js", "js/bootstrap.min.js", "_common.js"]) await page.addScriptTag({ path: path.join(root, file) });
   return { page, requests, errors };
 }
 
-test("common initialization preserves saved fonts, reuses widgets, and resets previews", async t => {
-  const { page, requests, errors } = await fontPage(t, /* HTML */ `
-    <main id="spa-content"><form id="settings">
-      <label>Font <input id="font" name="fontFamily" class="form-control" data-font-picker value="My Installed Font" maxlength="80"></label>
-      <input id="weight" type="number" value="700">
-      <button type="reset">Reset</button>
-    </form></main>`);
+test("common initialization preserves saved fonts, reuses widgets, and resets previews", async (t) => {
+  const { page, requests, errors } = await fontPage(
+    t,
+    /* HTML */ ` <main id="spa-content">
+      <form id="settings">
+        <label>Font <input id="font" name="fontFamily" class="form-control" data-font-picker value="My Installed Font" maxlength="80" /></label>
+        <input id="weight" type="number" value="700" />
+        <button type="reset">Reset</button>
+      </form>
+    </main>`
+  );
   await page.evaluate(() => {
     byFont.picker(document.getElementById("font"), { weight: document.getElementById("weight") });
     window.initialWidget = $("#font").data("select2");
@@ -58,21 +66,21 @@ test("common initialization preserves saved fonts, reuses widgets, and resets pr
   assert.equal(await page.locator("#font").getAttribute("name"), "fontFamily");
   assert.equal(await page.locator(".select2-container").count(), 1);
   assert.equal(await page.evaluate(() => $("#font").data("select2") === initialWidget), true);
-  assert.ok(await page.locator("#font optgroup[label='Google Fonts'] option").count() >= 300);
+  assert.ok((await page.locator("#font optgroup[label='Google Fonts'] option").count()) >= 300);
   assert.equal(requests.length, 0);
 
   await page.locator("#font + .select2-container").click();
   await page.locator(".select2-search__field").fill("Inter");
   await page.locator(".select2-search__field").press("Enter");
   assert.equal(await page.locator("#font").inputValue(), "Inter");
-  assert.match(await page.locator(".font-preview").evaluate(node => node.style.fontFamily), /Inter/);
-  assert.equal(requests.filter(url => url.includes("family=Inter:")).length, 1);
+  assert.match(await page.locator(".font-preview").evaluate((node) => node.style.fontFamily), /Inter/);
+  assert.equal(requests.filter((url) => url.includes("family=Inter:")).length, 1);
   await page.locator("#weight").fill("500");
-  assert.equal(await page.locator(".font-preview").evaluate(node => node.style.fontWeight), "500");
+  assert.equal(await page.locator(".font-preview").evaluate((node) => node.style.fontWeight), "500");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
   await page.waitForFunction(() => document.querySelector(".font-preview").style.fontWeight === "700");
   assert.equal(await page.locator("#font").inputValue(), "My Installed Font");
-  assert.match(await page.locator(".font-preview").evaluate(node => node.style.fontFamily), /My Installed Font/);
+  assert.match(await page.locator(".font-preview").evaluate((node) => node.style.fontFamily), /My Installed Font/);
 
   await page.evaluate(() => byFont.destroy(document.getElementById("font")));
   assert.equal(await page.locator(".select2-container, .font-preview").count(), 0);
@@ -82,19 +90,36 @@ test("common initialization preserves saved fonts, reuses widgets, and resets pr
   assert.deepEqual(errors, []);
 });
 
-test("modal initialization retains font templates and removes old-route controls", async t => {
-  const { page, errors } = await fontPage(t, /* HTML */ `
-    <main id="spa-content"><div id="font-modal" class="modal" tabindex="-1">
-      <div class="modal-dialog"><div class="modal-content"><form>
-        <label>Font <select id="font" name="font" data-font-picker><option selected value="Arial">Arial</option></select></label>
-        <label>Other font <input id="font-input" data-font-picker value="Georgia"></label>
-        <select id="ordinary"><option>Ordinary</option></select>
-        <select id="custom"><option>Custom</option></select>
-      </form></div></div>
-    </div></main>`);
+test("modal initialization retains font templates and removes old-route controls", async (t) => {
+  const { page, errors } = await fontPage(
+    t,
+    /* HTML */ ` <main id="spa-content">
+      <div id="font-modal" class="modal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form>
+              <label
+                >Font
+                <select id="font" name="font" data-font-picker>
+                  <option selected value="Arial">Arial</option>
+                </select></label
+              >
+              <label>Other font <input id="font-input" data-font-picker value="Georgia" /></label>
+              <select id="ordinary">
+                <option>Ordinary</option>
+              </select>
+              <select id="custom">
+                <option>Custom</option>
+              </select>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>`
+  );
   await page.evaluate(() => {
     window.bySPA = { URL: "/first" };
-    $("#custom").select2({ dropdownParent: $("#font-modal"), templateSelection: option => `Existing: ${option.text}` });
+    $("#custom").select2({ dropdownParent: $("#font-modal"), templateSelection: (option) => `Existing: ${option.text}` });
     window.customWidget = $("#custom").data("select2");
     byCommon.init({ showWarn: false });
   });
@@ -108,12 +133,12 @@ test("modal initialization retains font templates and removes old-route controls
   assert.equal(await page.evaluate(() => $("#font").data("select2") === initialWidget), true);
   assert.equal(await page.evaluate(() => $("#custom").data("select2") === customWidget && !!$("#ordinary").data("select2")), true);
   assert.equal(await page.locator("#custom + .select2-container").innerText(), "Existing: Custom");
-  assert.equal(await page.locator("#font-input").evaluate(node => node.tagName), "SELECT");
+  assert.equal(await page.locator("#font-input").evaluate((node) => node.tagName), "SELECT");
   assert.equal(await page.locator(".font-preview").count(), 2);
   await page.locator("#font + .select2-container").click();
   assert.equal(await page.locator("#font-modal .select2-dropdown").count(), 1);
   await page.locator(".select2-search__field").fill("Inter");
-  assert.ok(await page.locator(".select2-results .font-option").count() > 0);
+  assert.ok((await page.locator(".select2-results .font-option").count()) > 0);
   await page.evaluate(() => {
     bySPA.URL = "/second";
     byCommon.init({ showWarn: false });
@@ -123,9 +148,15 @@ test("modal initialization retains font templates and removes old-route controls
   assert.deepEqual(errors, []);
 });
 
-test("dynamic font fields load visible samples only and dispose on SPA navigation", async t => {
-  const { page, requests, errors } = await fontPage(t, /* HTML */ `
-    <main id="spa-content"><form><label>Font <input id="font" data-font-picker value="Arial"></label></form></main>`);
+test("dynamic font fields load visible samples only and dispose on SPA navigation", async (t) => {
+  const { page, requests, errors } = await fontPage(
+    t,
+    /* HTML */ ` <main id="spa-content">
+      <form>
+        <label>Font <input id="font" data-font-picker value="Arial" /></label>
+      </form>
+    </main>`
+  );
   await page.evaluate(() => byCommon.init({ showWarn: false }));
   await page.waitForFunction(() => $("#font").data("select2"));
   assert.equal(requests.length, 0);
@@ -133,7 +164,7 @@ test("dynamic font fields load visible samples only and dispose on SPA navigatio
   await page.locator(".select2-search__field").fill("Roboto");
   await page.waitForFunction(() => document.querySelector('link[data-font-family="Roboto"]'));
   assert.ok(requests.length < 15);
-  assert.match(await page.locator(".font-option[data-font='Roboto']").evaluate(node => node.style.fontFamily), /Roboto/);
+  assert.match(await page.locator(".font-option[data-font='Roboto']").evaluate((node) => node.style.fontFamily), /Roboto/);
   await page.locator(".select2-search__field").fill("<img src=x onerror=alert(1)>");
   assert.equal(await page.locator(".select2-results img").count(), 0);
   await page.evaluate(() => document.dispatchEvent(new CustomEvent("bySPA:before-unload")));
@@ -144,12 +175,18 @@ test("dynamic font fields load visible samples only and dispose on SPA navigatio
   assert.deepEqual(errors, []);
 });
 
-test("font cleanup preserves unrelated widgets", async t => {
-  const { page, errors } = await fontPage(t, /* HTML */ `
-    <main id="spa-content"><form id="settings">
-      <label>Font <input id="font" data-font-picker value="Arial"></label>
-      <select id="ordinary"><option>Ordinary</option></select>
-    </form></main>`);
+test("font cleanup preserves unrelated widgets", async (t) => {
+  const { page, errors } = await fontPage(
+    t,
+    /* HTML */ ` <main id="spa-content">
+      <form id="settings">
+        <label>Font <input id="font" data-font-picker value="Arial" /></label>
+        <select id="ordinary">
+          <option>Ordinary</option>
+        </select>
+      </form>
+    </main>`
+  );
   await page.evaluate(() => {
     $("#ordinary").select2();
     window.ordinaryWidget = $("#ordinary").data("select2");
@@ -170,15 +207,32 @@ test("font cleanup preserves unrelated widgets", async t => {
   assert.deepEqual(errors, []);
 });
 
-test("Bootstrap modal controls remain usable without optional font methods", async t => {
-  for (const [name, namespace] of [["module absent", null], ["methods absent", {}], ["methods not callable", { init: true, destroy: true }]]) {
-    await t.test(name, async t => {
-      const { page, errors } = await fontPage(t, /* HTML */ `
-        <main id="spa-content"><div id="font-modal" class="modal"><div class="modal-dialog"><div class="modal-content">
-          <label>Font <select id="font" data-font-picker><option>Arial</option></select></label>
-        </div></div></div></main>
-        <div id="stale-modal" class="modal" data-byspa-modal="true" data-byspa-route="previous"></div>`);
-      await page.evaluate(namespace => {
+test("Bootstrap modal controls remain usable without optional font methods", async (t) => {
+  for (const [name, namespace] of [
+    ["module absent", null],
+    ["methods absent", {}],
+    ["methods not callable", { init: true, destroy: true }]
+  ]) {
+    await t.test(name, async (t) => {
+      const { page, errors } = await fontPage(
+        t,
+        /* HTML */ ` <main id="spa-content">
+            <div id="font-modal" class="modal">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <label
+                    >Font
+                    <select id="font" data-font-picker>
+                      <option>Arial</option>
+                    </select></label
+                  >
+                </div>
+              </div>
+            </div>
+          </main>
+          <div id="stale-modal" class="modal" data-byspa-modal="true" data-byspa-route="previous"></div>`
+      );
+      await page.evaluate((namespace) => {
         if (namespace) window.byFont = namespace;
         else delete window.byFont;
         byCommon.init({ showWarn: false });
@@ -195,21 +249,25 @@ test("Bootstrap modal controls remain usable without optional font methods", asy
   }
 });
 
-
-test("scoped tooltips preserve application handlers and translated native titles", async t => {
-  const { page, errors } = await fontPage(t, /* HTML */ `
-    <section id="scope"><button id="tip" data-bs-toggle="tooltip" title="Original">Tip</button></section>
-    <button id="outside" data-bs-toggle="tooltip" title="Outside">Outside</button>`);
+test("scoped tooltips preserve application handlers and translated native titles", async (t) => {
+  const { page, errors } = await fontPage(
+    t,
+    /* HTML */ ` <section id="scope"><button id="tip" data-bs-toggle="tooltip" title="Original">Tip</button></section>
+      <button id="outside" data-bs-toggle="tooltip" title="Outside">Outside</button>`
+  );
   const result = await page.evaluate(() => {
     byCommon.initBootstrap({ tooltipsOnly: true });
-    const tip = document.getElementById("tip"), outside = document.getElementById("outside");
-    const original = bootstrap.Tooltip.getInstance(tip), untouched = bootstrap.Tooltip.getInstance(outside);
+    const tip = document.getElementById("tip"),
+      outside = document.getElementById("outside");
+    const original = bootstrap.Tooltip.getInstance(tip),
+      untouched = bootstrap.Tooltip.getInstance(outside);
     const modal = document.createElement("div");
     modal.className = "modal";
     modal.setAttribute("data-byspa-modal", "true");
     modal.setAttribute("data-byspa-route", "previous");
     document.body.append(modal);
-    let applicationCalls = 0, dismissals = 0;
+    let applicationCalls = 0,
+      dismissals = 0;
     $(tip).on("pointerdown.application pointerleave.application", () => applicationCalls++);
     original.hide = () => dismissals++;
     byCommon.initBootstrap({ tooltipsOnly: true, root: document.getElementById("scope") });
@@ -221,7 +279,8 @@ test("scoped tooltips preserve application handlers and translated native titles
     const refreshed = bootstrap.Tooltip.getInstance(tip);
     refreshed.show();
     return {
-      applicationCalls, dismissals,
+      applicationCalls,
+      dismissals,
       modalPreserved: modal.isConnected,
       outsidePreserved: bootstrap.Tooltip.getInstance(outside) === untouched,
       recreated: refreshed !== original,
@@ -233,10 +292,12 @@ test("scoped tooltips preserve application handlers and translated native titles
   assert.deepEqual(errors, []);
 });
 
-test("video initialization enhances only the player's shortcut controls", async t => {
-  const { page, errors } = await fontPage(t, /* HTML */ `
-    <button id="outside" class="vjs-play-control" data-bs-toggle="tooltip" title="Outside">Outside</button>
-    <video id="player" class="video-js"></video>`);
+test("video initialization enhances only the player's shortcut controls", async (t) => {
+  const { page, errors } = await fontPage(
+    t,
+    /* HTML */ ` <button id="outside" class="vjs-play-control" data-bs-toggle="tooltip" title="Outside">Outside</button>
+      <video id="player" class="video-js"></video>`
+  );
   await page.addScriptTag({ path: path.join(root, "js/video.min.js") });
   await page.evaluate(() => {
     byCommon.initBootstrap({ tooltipsOnly: true, root: document.getElementById("outside") });
@@ -251,9 +312,8 @@ test("video initialization enhances only the player's shortcut controls", async 
   assert.deepEqual(errors, []);
 });
 
-test("modal dismissal cleans fonts and preserves a replacement with the same ID", async t => {
-  const { page, errors } = await fontPage(t, /* HTML */ `
-    <div id="dismiss" class="modal"><input id="retired-font" data-font-picker value="Arial"></div>`);
+test("modal dismissal cleans fonts and preserves a replacement with the same ID", async (t) => {
+  const { page, errors } = await fontPage(t, /* HTML */ ` <div id="dismiss" class="modal"><input id="retired-font" data-font-picker value="Arial" /></div>`);
   await page.addScriptTag({ path: path.join(root, "_functions.js") });
   await page.evaluate(() => {
     byFont.init();
@@ -264,7 +324,7 @@ test("modal dismissal cleans fonts and preserves a replacement with the same ID"
     const replacement = document.createElement("div");
     replacement.id = "dismiss";
     replacement.className = "modal";
-    replacement.innerHTML = /* HTML */ `<input id="replacement-font" data-font-picker value="Georgia">`;
+    replacement.innerHTML = /* HTML */ `<input id="replacement-font" data-font-picker value="Georgia" />`;
     document.body.append(replacement);
     byFont.init(replacement);
     window.replacementWidget = $("#replacement-font").data("select2");
@@ -277,22 +337,23 @@ test("modal dismissal cleans fonts and preserves a replacement with the same ID"
   assert.deepEqual(errors, []);
 });
 
-
-test("translation refreshes titles through their UI owner without rerunning modal setup", async t => {
-  const { page, errors } = await fontPage(t, /* HTML */ `
-    <button id="translated" data-i18n-title="play" data-bs-toggle="tooltip" title="Before">Play</button>
-    <button id="untouched" data-bs-toggle="tooltip" title="Untouched">Other</button>`);
-  await page.route("https://example.test/lang/**", route => route.fulfill({ json: { play: "Reproducir" } }));
+test("translation refreshes titles through their UI owner without rerunning modal setup", async (t) => {
+  const { page, errors } = await fontPage(
+    t,
+    /* HTML */ ` <button id="translated" data-i18n-title="play" data-bs-toggle="tooltip" title="Before">Play</button>
+      <button id="untouched" data-bs-toggle="tooltip" title="Untouched">Other</button>`
+  );
+  await page.route("https://example.test/lang/**", (route) => route.fulfill({ json: { play: "Reproducir" } }));
   await page.addScriptTag({ path: path.join(root, "_functions.js") });
   await page.evaluate(() => {
     const values = new Map([["APP_LANG", "es"]]);
-    window.byStorage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+    window.byStorage = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
     window.bySPA = { APP_LANG: "es", NAVIGATION_ID: 1 };
     byCommon.initBootstrap({ tooltipsOnly: true });
     window.untouchedTooltip = bootstrap.Tooltip.getInstance(document.getElementById("untouched"));
     window.bootstrapRuns = 0;
     const initBootstrap = byCommon.initBootstrap;
-    byCommon.initBootstrap = options => {
+    byCommon.initBootstrap = (options) => {
       if (!options?.tooltipsOnly) bootstrapRuns++;
       return initBootstrap(options);
     };
