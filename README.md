@@ -40,6 +40,7 @@ The initializer's script URL determines application paths and storage; loading t
 | `_spa.js`                   | AJAX navigation, history, components, and lifecycle.            |
 | `_functions.js`             | Data, URL, cookie, request, WebSocket, modal, and form helpers. |
 | `_common.js`, `_common.css` | Shared UI initialization and styles.                            |
+| `_load.js`                  | Native ordered CSS/JavaScript dependency loading.               |
 | `_fonts.js`                 | Optional Google Fonts loading and pickers.                      |
 | `_lang.js`                  | Optional language selection and `data-i18n` translations.       |
 | `_error.html`               | Standalone error page.                                          |
@@ -89,6 +90,24 @@ const restored = JSON.parse(await decompress_url_data(token));
 
 Requires native `CompressionStream`/`DecompressionStream` support for `deflate-raw`. Decompression rejects malformed data/UTF-8 and output exceeding the positive safe-integer UTF-8 byte limit. Callers own JSON, validation, URL parameters, and format markers.
 
+### Ordered assets
+
+`_load.js` exposes native `byLoad(files, { host, before })` without jQuery. CSS and classic JavaScript paths load into the head in array order after parsing; the promise resolves after loading. Await it before application initialization. Dynamically inserted scripts do not delay `DOMContentLoaded`.
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/byuwur/spa.js@v20.8/_load.min.js" defer></script>
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const SPA_VERSION = "v20.8";
+    const HOST = `https://cdn.jsdelivr.net/gh/byuwur/spa.js@${SPA_VERSION}`;
+    await byLoad(["/css/bootstrap.min.css", "/js/jquery.min.js", "/_functions.min.js"], { host: HOST });
+    // Initialize the application here.
+  });
+</script>
+```
+
+Leading `/` paths use `host`; `./` and `../` paths remain document-relative, including `file://`. Absolute and embedded CSS/JS data URLs also work. Pass `before` to preserve stylesheet cascade order relative to an existing head element. Entries can be `{ path, attributes }`; `{ path, optional: true }` warns and returns `null` on failure, for optional assets such as icon fonts. Required failures reject and stop the batch. Duplicate URLs share a request; failures can be retried, and repeated loader imports retain that registry. Existing page event handlers are preserved.
+
 ### Optional Google Fonts
 
 `_fonts.js` loads fonts natively with caching and offline fallbacks. Optional pickers need jQuery, Select2, `_common.css`, and `data-font-picker` controls:
@@ -112,7 +131,7 @@ Error pages replace the full document; Back reloads a clean runtime, including w
 
 ## Maintaining a submodule integration
 
-Keep `_fonts.js`, `_functions.js`, `_common.js`, and `_common.css` identical across both SPAs; SPA.php owns the shared source. `_spa.js`, routing, transport, history, and application bootstrap retain host-specific behavior.
+Keep `_load.js`, `_fonts.js`, `_functions.js`, `_common.js`, and `_common.css` identical across both SPAs; SPA.php owns the shared source. `_spa.js`, routing, transport, history, and application bootstrap retain host-specific behavior.
 
 For upgrades, review changes, reconcile application-owned `_init.js`/`_routes.js` without losing settings, run checks, and test the consumer. Submodule updates do not update copied initializers. Neither repository synchronizes the other automatically.
 
@@ -120,7 +139,7 @@ For upgrades, review changes, reconcile application-owned `_init.js`/`_routes.js
 
 ```bash
 node --test __tests__/runtime.test.js __tests__/common.test.js __tests__/fragment_scripts.test.js __tests__/parity.test.js __tests__/fonts.test.js
-node --test __tests__/browser.test.js __tests__/fonts.browser.test.js
+node --test __tests__/browser.test.js __tests__/fonts.browser.test.js __tests__/load.browser.test.js
 ```
 
 Browser tests require Playwright and Chromium; see [CI](.github/workflows/ci.yml). Use `PLAYWRIGHT_CHANNEL=chrome` for runtime tests and `BROWSER_CHANNEL=chrome` for font tests.
