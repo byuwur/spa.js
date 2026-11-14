@@ -41,6 +41,7 @@ The initializer's script URL determines application paths and storage; loading t
 | `_functions.js`             | Data, URL, cookie, request, WebSocket, modal, and form helpers. |
 | `_common.js`, `_common.css` | Shared UI initialization and styles.                            |
 | `_load.js`                  | Native ordered CSS/JavaScript dependency loading.               |
+| `_fonts.css`                | Bundled fonts; imported by `_common.css`.                       |
 | `_fonts.js`                 | Optional Google Fonts loading and pickers.                      |
 | `_lang.js`                  | Optional language selection and `data-i18n` translations.       |
 | `_error.html`               | Standalone error page.                                          |
@@ -144,7 +145,7 @@ Error pages replace the full document; Back reloads a clean runtime, including w
 
 ## Maintaining a submodule integration
 
-Keep `_load.js`, `_fonts.js`, `_functions.js`, `_common.js`, and `_common.css` identical across both SPAs; SPA.php owns the shared source. `_spa.js`, routing, transport, history, and application bootstrap retain host-specific behavior.
+Keep `_load.js`, `_fonts.css`, `_fonts.js`, `_functions.js`, `_common.js`, and `_common.css` identical across both SPAs; SPA.php owns the shared source. `_spa.js`, routing, transport, history, and application bootstrap retain host-specific behavior.
 
 For upgrades, review changes, reconcile application-owned `_init.js`/`_routes.js` without losing settings, run checks, and test the consumer. Submodule updates do not update copied initializers. Neither repository synchronizes the other automatically.
 
