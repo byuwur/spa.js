@@ -97,7 +97,7 @@ Requires native `CompressionStream`/`DecompressionStream` support for `deflate-r
 
 ```html
 <style>
-  html.spa-styles-loading body {
+  .spa-styles-loading {
     visibility: hidden;
   }
 </style>
