@@ -34,18 +34,19 @@ application-root/
 
 The initializer's script URL determines application paths and storage; loading the framework copy directly uses the wrong context. Hash routing needs no rewrites; path routing must serve `index.html` for non-file routes. The demo uses its parent as the framework root.
 
-| Files                       | Purpose                                                         |
-| --------------------------- | --------------------------------------------------------------- |
-| `_init.js`, `_router.js`    | Application bootstrap and initial route resolution.             |
-| `_spa.js`                   | AJAX navigation, history, components, and lifecycle.            |
-| `_functions.js`             | Data, URL, cookie, request, WebSocket, modal, and form helpers. |
-| `_common.js`, `_common.css` | Shared UI initialization and styles.                            |
-| `_load.js`                  | Native ordered CSS/JavaScript dependency loading.               |
-| `_fonts.css`                | Bundled fonts; imported by `_common.css`.                       |
-| `_fonts.js`                 | Optional Google Fonts loading and pickers.                      |
-| `_lang.js`                  | Optional language selection and `data-i18n` translations.       |
-| `_error.html`               | Standalone error page.                                          |
-| `css/`, `js/`, `img/`       | Bundled libraries and assets.                                   |
+| Files                                 | Purpose                                                         |
+| ------------------------------------- | --------------------------------------------------------------- |
+| `_init.js`, `_router.js`              | Application bootstrap and initial route resolution.             |
+| `_spa.js`                             | AJAX navigation, history, components, and lifecycle.            |
+| `_functions.js`                       | Data, URL, cookie, request, WebSocket, modal, and form helpers. |
+| `_common.js`, `_common.css`           | Shared UI initialization and styles.                            |
+| `_load.js`                            | Native ordered CSS/JavaScript dependency loading.               |
+| `_transitions.css`, `_transitions.js` | Shared page motion and opt-in content updates.                  |
+| `_fonts.css`                          | Bundled fonts; imported by `_common.css`.                       |
+| `_fonts.js`                           | Optional Google Fonts loading and pickers.                      |
+| `_lang.js`                            | Optional language selection and `data-i18n` translations.       |
+| `_error.html`                         | Standalone error page.                                          |
+| `css/`, `js/`, `img/`                 | Bundled libraries and assets.                                   |
 
 Load only the libraries you use; remote integrations still require their services. Shared CSS images stay in the framework's `img/`. `.nojekyll` supports GitHub Pages publishing.
 
@@ -96,31 +97,56 @@ Requires native `CompressionStream`/`DecompressionStream` support for `deflate-r
 `_load.js` exposes native `byLoad(files, { host, before, defer })` without jQuery. The default `defer: true` waits for DOM parsing. Set `defer: false` to start a batch immediately, including while the head is being parsed. CSS and classic JavaScript paths keep their array order; the promise resolves after loading. Await it before application initialization. Dynamically inserted scripts do not delay `DOMContentLoaded`.
 
 ```html
-<style>
-  .spa-styles-loading {
-    visibility: hidden;
-  }
-</style>
 <script src="https://cdn.jsdelivr.net/gh/byuwur/spa.js@v20.9/_load.min.js"></script>
 <script>
   const SPA_VERSION = "v20.9";
   const HOST = `https://cdn.jsdelivr.net/gh/byuwur/spa.js@${SPA_VERSION}`;
-  document.documentElement.classList.add("spa-styles-loading");
   (async () => {
-    try {
-      await byLoad(["/css/bootstrap.min.css"], { host: HOST, defer: false });
-    } finally {
-      document.documentElement.classList.remove("spa-styles-loading");
-    }
-    await byLoad(["/js/jquery.min.js", "/_functions.min.js"], { host: HOST });
+    await byLoad(
+      [
+        { path: "/css/bootstrap.min.css", optional: false },
+        { path: "/_transitions.min.css", optional: false }
+      ],
+      { host: HOST, defer: false }
+    );
+    await byLoad(
+      [
+        { path: "/js/jquery.min.js", optional: false },
+        { path: "/_functions.min.js", optional: false },
+        { path: "/_transitions.min.js", optional: false }
+      ],
+      { host: HOST }
+    );
     // Initialize the application here.
   })().catch(console.error);
 </script>
 ```
 
-For CSS-first startup, load the bootstrap script without `defer`, start the stylesheet batch immediately, and use a deferred JavaScript batch afterward. The example reveals page content when CSS settles, before JavaScript finishes; `finally` also releases the visibility guard if loading fails.
+For CSS-first startup, load the bootstrap script without `defer` and start the stylesheets with `defer: false`. The JavaScript batch waits for those stylesheets and DOM parsing.
 
 Leading `/` paths use `host`; `./` and `../` paths remain document-relative, including `file://`. Absolute and embedded CSS/JS data URLs also work. Pass `before` to preserve stylesheet cascade order relative to an existing head element. Entries can be `{ path, attributes }`; `{ path, optional: true }` warns and returns `null` on failure, for optional assets such as icon fonts. Required failures reject and stop the batch. Duplicate URLs share a request; failures can be retried, and repeated loader imports retain that registry. Existing page event handlers are preserved.
+
+### Page transitions
+
+`_common.css` imports `_transitions.css` alongside `_fonts.css`. The transition stylesheet can also load on its own, without the common theme or element resets. Set `--transition-duration` on the root or a container to change its default `0.3s`. Shared rules are generic defaults; each resource owns its component overrides. The reduced-motion media block is provided commented out; each resource can enable it or override the duration. The `no-motion` class still disables shared motion.
+
+Load `_transitions.js` to update selected containers with native height/opacity animations. It has no jQuery dependency and adds no Promise wrappers:
+
+```js
+byTransition(
+  "#results",
+  (element) => {
+    element.replaceChildren(...results);
+  },
+  { duration: 200, children: false }
+);
+
+const watcher = byTransition.watch("#notifications", { children: true, exclude: ".preview" });
+// Existing code can now update the container normally.
+watcher.disconnect(); // Before removing or replacing the watched container.
+```
+
+Selectors match the current containers; an element is also accepted. Update callbacks run synchronously for each match, even when motion is disabled. `byTransition()` returns the native animations it started. `watch()` observes child/text changes, coalesces each mutation batch, and owns the animation when the same container is updated through the helper. With `children: false` (the default), only the selected container is animated and direct content changes are watched. `children: true` also animates its direct children and watches descendant changes. The update callback still runs once per selected container. `exclude` is an optional CSS selector owned by the resource; matching elements and their descendants are not animated or watched. It does not observe attributes, discover later containers, or replace nodes itself. Disconnect a watcher before attaching another to the same container. `duration` is non-negative milliseconds; omitted timing comes from `--transition-duration`, and easing defaults to `ease`.
 
 ### Optional Google Fonts
 
@@ -145,7 +171,7 @@ Error pages replace the full document; Back reloads a clean runtime, including w
 
 ## Maintaining a submodule integration
 
-Keep `_load.js`, `_fonts.css`, `_fonts.js`, `_functions.js`, `_common.js`, and `_common.css` identical across both SPAs; SPA.php owns the shared source. `_spa.js`, routing, transport, history, and application bootstrap retain host-specific behavior.
+Keep `_load.js`, `_transitions.css`, `_transitions.js`, `_fonts.css`, `_fonts.js`, `_functions.js`, `_common.js`, and `_common.css` identical across both SPAs; SPA.php owns the shared source. `_spa.js`, routing, transport, history, and application bootstrap retain host-specific behavior.
 
 For upgrades, review changes, reconcile application-owned `_init.js`/`_routes.js` without losing settings, run checks, and test the consumer. Submodule updates do not update copied initializers. Neither repository synchronizes the other automatically.
 
@@ -153,7 +179,7 @@ For upgrades, review changes, reconcile application-owned `_init.js`/`_routes.js
 
 ```bash
 node --test __tests__/runtime.test.js __tests__/common.test.js __tests__/fragment_scripts.test.js __tests__/parity.test.js __tests__/fonts.test.js
-node --test __tests__/browser.test.js __tests__/fonts.browser.test.js __tests__/load.browser.test.js
+node --test __tests__/browser.test.js __tests__/fonts.browser.test.js __tests__/load.browser.test.js __tests__/transitions.browser.test.js
 ```
 
 Browser tests require Playwright and Chromium; see [CI](.github/workflows/ci.yml). Use `PLAYWRIGHT_CHANNEL=chrome` for runtime tests and `BROWSER_CHANNEL=chrome` for font tests.
