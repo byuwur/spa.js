@@ -61,9 +61,10 @@
   }
 
   /**
-   * Read the effective language using the framework's documented precedence.
-   * @param {Object} [routing={}] Resolved route state for this navigation.
-   * @returns {string}
+   * Choose the language from route GET, current GET, app state, storage, cookie, browser, then default.
+   * Unsupported locales are skipped after normalization to two letters.
+   * @param {Object} [routing={}] Route data with optional get.lang.
+   * @returns {string} Supported language ID, or DEFAULT_APP_LANG.
    */
   function getLanguage(routing = {}) {
     return (
@@ -78,9 +79,10 @@
   }
 
   /**
-   * Load and cache the selected dictionary before it is applied to the page.
-   * @param {string} lang Language identifier to normalize or load.
-   * @returns {Promise<unknown>} The resulting asynchronous value.
+   * Save the chosen language, then return its cached dictionary or request its JSON file.
+   * Failed requests reject and are not cached; the saved language is not rolled back.
+   * @param {string} lang Requested language or locale.
+   * @returns {Promise<Object<string, *>>} Cached or downloaded translation dictionary.
    */
   async function loadLanguage(lang) {
     lang = byCommon.setLanguage(lang);
@@ -100,7 +102,7 @@
 
   /**
    * Apply dictionary values to translation targets inside the supplied container.
-   * @param {Document} [root=document] Container whose descendants belong to this operation.
+   * @param {Document|Element} [root=document] Container to translate, including its own marked attributes.
    * @param {Object} [strings=byCommon.LANG_STRINGS] Translation dictionary.
    * @returns {void}
    */
@@ -112,6 +114,7 @@
     });
     eachMatching(root, "[data-i18n-html]", function (element) {
       const key = element.getAttribute("data-i18n-html");
+      // HTML translations must come from trusted application dictionaries.
       element.innerHTML = byCommon.getLangString(key, element.innerHTML);
     });
     eachMatching(root, "[data-i18n-title]", function (element) {
@@ -180,7 +183,10 @@
   // Both public entry points intentionally share the same language setter.
   byCommon.setLanguage = bySPA.setLanguage;
 
-  // Read the active language without resolving a route, loading a dictionary, or changing preferences.
+  /**
+   * Read the current language without loading a dictionary or changing preferences.
+   * @returns {string} Supported APP_LANG, or DEFAULT_APP_LANG.
+   */
   byCommon.getLanguage = function () {
     return normalizeLanguage(bySPA.APP_LANG) || bySPA.DEFAULT_APP_LANG;
   };
