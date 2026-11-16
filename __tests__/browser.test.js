@@ -877,8 +877,9 @@ test("Select2 arrow navigation commits single values, honors cancellation, and p
             })
         }
       });
-    $("#remote").select2("open");
   });
+  // Give dynamic controls keyboard focus through a real click, including in headless Chromium.
+  await page.locator("#remote + .select2 .select2-selection").click();
   await page.getByRole("option", { name: "Remote Alpha", exact: true }).waitFor();
   await page.keyboard.press("ArrowDown");
   assert.equal(await page.locator("#remote").inputValue(), "remote-b", "Late AJAX results become canonical native options");
@@ -890,9 +891,9 @@ test("Select2 arrow navigation commits single values, honors cancellation, and p
       .select2()
       .on("change", function () {
         $(this).select2("destroy").remove();
-      })
-      .select2("open");
+      });
   });
+  await page.locator("#removed + .select2 .select2-selection").click();
   await page.keyboard.press("ArrowDown");
   assert.equal(await page.locator("#removed").count(), 0, "Change handlers may remove the owning control");
   assert.deepEqual(errors, []);
