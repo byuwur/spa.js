@@ -8,17 +8,17 @@ A static single-page application framework with jQuery page/component loading, h
 
 ## Installation
 
-Requires jQuery, an HTTP(S) server, and a current browser. Optional features need their bundled libraries; no frontend install or build is required.
+Requires jQuery, HTTP(S), and a current browser. Optional features need their bundled libraries; no frontend install or build is needed.
 
 ```bash
 git clone https://github.com/byuwur/spa.js.git
 ```
 
-Serve the checkout and open `demo/`; the root redirects there. `file://` cannot reliably load AJAX fragments and displays a fallback notice.
+Serve the checkout and open `demo/`; the root redirects there. AJAX fragments cannot reliably load over `file://`, which shows a fallback notice.
 
 ## How is it done?
 
-The application owns its shell, initializer, routes, pages, components, dictionaries, and assets. The framework normally lives in a submodule:
+Keep the application shell, initializer, routes, pages, components, dictionaries, and assets outside the framework submodule:
 
 ```text
 application-root/
@@ -32,7 +32,7 @@ application-root/
 2. Define routes/components in `_routes.js` and add their HTML files.
 3. Load jQuery, helpers, application initialization, optional language support, routes, `_router.js`, then `_spa.js`, as the demo does.
 
-The initializer's script URL determines application paths and storage; loading the framework copy directly uses the wrong context. Hash routing needs no rewrites; path routing must serve `index.html` for non-file routes. The demo uses its parent as the framework root.
+Use the application's initializer: its script URL sets paths and storage, so loading the framework template uses the wrong context. Hash routing needs no rewrites; path routing must serve `index.html` for non-file routes. The demo uses its parent as the framework root.
 
 | Files                                 | Purpose                                                         |
 | ------------------------------------- | --------------------------------------------------------------- |
@@ -48,15 +48,15 @@ The initializer's script URL determines application paths and storage; loading t
 | `_error.html`                         | Standalone error page.                                          |
 | `css/`, `js/`, `img/`                 | Bundled libraries and assets.                                   |
 
-Load only the libraries you use; remote integrations still require their services. Shared CSS images stay in the framework's `img/`. `.nojekyll` supports GitHub Pages publishing.
+Load only needed libraries. Remote integrations need their services; shared CSS images live in the framework's `img/`. `.nojekyll` supports GitHub Pages.
 
 Since v14, `_var.js` is `_init.js`; update old imports. No compatibility alias exists.
 
 ### Languages
 
-`byCommon.getLanguage()` reads the active language; `bySPA.setLanguage(lang)` and `byCommon.setLanguage(lang)` update it. The getter does not load dictionaries or write preferences.
+`byCommon.getLanguage()` reads the language without loading dictionaries or writing preferences. `bySPA.setLanguage(lang)` and `byCommon.setLanguage(lang)` change it.
 
-`_lang.js` chooses language from document `?lang=`, route queries, cookie, `localStorage.APP_LANG`, browser language, then `es`; it persists the choice and updates `<html lang>`. Dictionaries use dotted keys such as `nav.home`. Set `byCommon.LANG_PATH` to override their location; the demo uses application-relative `/lang`.
+`_lang.js` chooses document `?lang=`, route queries, cookie, `localStorage.APP_LANG`, browser language, then `es`. It persists the choice and updates `<html lang>`. Dictionaries use dotted keys such as `nav.home`; `byCommon.LANG_PATH` overrides their location. The demo uses application-relative `/lang`.
 
 ## Runtime contracts
 
@@ -71,32 +71,32 @@ Since v14, `_var.js` is `_init.js`; update old imports. No compatibility alias e
 
 ### Storage and shared UI
 
-Each installed API owns one boolean `initialized` flag. Bootstrap scripts can populate the shared namespace before `_spa.js` sets `bySPA.initialized = true`. Repeated imports preserve storage fallback values and active navigation; ordinary `byCommon.init()` calls still initialize new page content.
+Each API has one `initialized` flag. Bootstrap may populate its namespace before `_spa.js` sets `bySPA.initialized = true`. Reimports preserve active navigation and storage fallbacks; `byCommon.init()` still initializes new content.
 
-`byStorage` namespaces keys by application root and removes legacy keys after migration. Failed writes/removals give only that key a local value/null marker until a successful explicit change; other keys keep reading persistent storage. Memory fallback lasts for this runtime, without automatic replay or cross-tab synchronization. Consent reads namespaced `APP_THEME`/`APP_LANG`, defaulting to `dark`/`es`.
+`byStorage` namespaces keys by application root and removes legacy keys after migration. Failed writes/removals give that key a local value/null marker until an explicit change succeeds; other keys still read persistent storage. Fallback lasts only for this runtime, without automatic replay or cross-tab synchronization. Consent reads namespaced `APP_THEME`/`APP_LANG`, defaulting to `dark`/`es`.
 
-`_spa.js` calls `byCommon.init()` after content changes. Optional warnings are off; enable `byCommon.INIT_WARNINGS` or `{ showWarn: true }`. `byCommon.initBootstrap({ tooltipsOnly: true, root, refreshTooltips: true })` refreshes scoped tooltips without rerunning other components. Standalone pages must call `byCommon.init()` explicitly; public `byCommon.initSelect2Keyboard()` enables keyboard behavior without the other shared UI.
+`_spa.js` calls `byCommon.init()` after content changes; standalone pages must call it explicitly. Warnings default off: enable `byCommon.INIT_WARNINGS` or pass `{ showWarn: true }`. Public `byCommon.initSelect2Keyboard()` enables only Select2 keyboard behavior. `byCommon.initBootstrap({ tooltipsOnly: true, root, refreshTooltips: true })` refreshes scoped tooltips without other components.
 
-Modal cleanup destroys optional font controls and removes the captured element, preserving replacements with the same ID. `byCommon.accessibilityText(mode)` adjusts root size by `0.25rem` for `"plus"`/`"minus"`, within `0.5rem`-`3rem`; no argument resets `1rem`.
+Modal cleanup disposes optional font controls and removes the captured element, preserving replacements with the same ID. `byCommon.accessibilityText(mode)` uses `"plus"`/`"minus"` to change root size in `0.25rem` steps within `0.5rem`-`3rem`; no argument resets `1rem`.
 
-After `byCommon.init()`, Up/Down navigation in an open single-select Select2 commits the highlighted value immediately, emits the usual input/change and selection events, and keeps the dropdown open. Mouse hover only highlights; multi-selects still require confirmation. This also applies to dynamically created controls and remote results. `select2:selecting` can cancel a change.
+After `byCommon.init()`, Up/Down in an open single-select Select2 commits the highlighted value, emits input/change and selection events, and keeps the dropdown open. Hover only highlights; multi-selects require confirmation. Dynamic controls and remote results work likewise; `select2:selecting` can cancel a change.
 
-Data, HTML-text escaping, and CSRF utilities are native. UI and HTTP/form helpers use jQuery; modals also need Bootstrap. WebSocket transport is native, with jQuery DOM logging.
+Data, HTML-text escaping, CSRF utilities, and WebSocket transport are native. UI, HTTP/form helpers, and WebSocket DOM logging use jQuery; modals also need Bootstrap.
 
 ### Compressed URL data
 
-`compress_url_data(text)` and `decompress_url_data(token, maxBytes = 1048576)` use native raw DEFLATE, unpadded Base64url, and Promises without jQuery or SPA initialization.
+`compress_url_data(text)` and `decompress_url_data(token, maxBytes = 1048576)` return native Promises and use raw DEFLATE with unpadded Base64url, without jQuery or SPA initialization.
 
 ```js
 const token = await compress_url_data(JSON.stringify(settings));
 const restored = JSON.parse(await decompress_url_data(token));
 ```
 
-Requires native `CompressionStream`/`DecompressionStream` support for `deflate-raw`. Decompression rejects malformed data/UTF-8 and output exceeding the positive safe-integer UTF-8 byte limit. Callers own JSON, validation, URL parameters, and format markers.
+Requires native `CompressionStream`/`DecompressionStream` support for `deflate-raw`. Decompression rejects malformed data/UTF-8 and output above the positive safe-integer UTF-8 byte limit. Callers own JSON, validation, URL parameters, and format markers.
 
 ### Ordered assets
 
-`_load.js` exposes native `byLoad(files, { host, before, defer })` without jQuery. The default `defer: true` waits for DOM parsing. Set `defer: false` to start a batch immediately, including while the head is being parsed. CSS and classic JavaScript paths keep their array order; the promise resolves after loading. Await it before application initialization. Dynamically inserted scripts do not delay `DOMContentLoaded`.
+`_load.js` provides native `byLoad(files, { host, before, defer })` without jQuery. CSS and classic JavaScript load in array order; await completion before app initialization. Default `defer: true` waits for DOM parsing; `defer: false` starts immediately, even in the head. Dynamic scripts do not delay `DOMContentLoaded`.
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/byuwur/spa.js@v20.12/_load.min.js"></script>
@@ -124,15 +124,15 @@ Requires native `CompressionStream`/`DecompressionStream` support for `deflate-r
 </script>
 ```
 
-For CSS-first startup, load the bootstrap script without `defer` and start the stylesheets with `defer: false`. The JavaScript batch waits for those stylesheets and DOM parsing.
+For early CSS, load the bootstrap script without `defer` and start stylesheets with `defer: false`. The JavaScript batch waits for CSS and DOM parsing.
 
-Leading `/` paths use `host`; `./` and `../` paths remain document-relative, including `file://`. Absolute and embedded CSS/JS data URLs also work. Pass `before` to preserve stylesheet cascade order relative to an existing head element. Entries can be `{ path, attributes }`; `{ path, optional: true }` warns and returns `null` on failure, for optional assets such as icon fonts. Required failures reject and stop the batch. Duplicate URLs share a request; failures can be retried, and repeated loader imports retain that registry. Existing page event handlers are preserved.
+Leading `/` paths use `host`; `./` and `../` stay document-relative, including `file://`. Absolute URLs and embedded CSS/JS data URLs work too. `before` places stylesheets relative to an existing head element. Entries accept `{ path, attributes }`; `{ path, optional: true }` warns and returns `null` on failure (for example, optional icon fonts). Required failures reject and stop the batch. Duplicate URLs share a request; failed URLs can be retried. Reimports retain the registry, and existing page event handlers are preserved.
 
 ### Page transitions
 
-`_common.css` imports `_transitions.css` alongside `_fonts.css`. The transition stylesheet can also load on its own, without the common theme or element resets. Set `--transition-duration` on the root or a container to change its default `0.3s`. Shared rules are generic defaults; each resource owns its component overrides. Tooltips and popovers, including their contents, have no animations or transitions by default. The reduced-motion media block is provided commented out; each resource can enable it or override the duration. The `no-motion` class still disables shared motion.
+`_common.css` imports `_transitions.css` and `_fonts.css`; transitions can also load without the common theme or resets. Set `--transition-duration` on the root/container to override `0.3s`. Shared rules are defaults; resources own their overrides. Tooltips, popovers, and their contents have no animations/transitions by default. The reduced-motion block is commented out for each resource to enable or override its duration; `no-motion` still disables shared motion.
 
-Load `_transitions.js` to update selected containers with native height/opacity animations. It has no jQuery dependency and adds no Promise wrappers:
+Load `_transitions.js` for native container height/opacity animations, without jQuery or Promise wrappers:
 
 ```js
 byTransition(
@@ -148,34 +148,34 @@ const watcher = byTransition.watch("#notifications", { children: true, exclude: 
 watcher.disconnect(); // Before removing or replacing the watched container.
 ```
 
-Selectors match the current containers; an element is also accepted. Update callbacks run synchronously for each match, even when motion is disabled. `byTransition()` returns the native animations it started. `watch()` observes child/text changes, coalesces each mutation batch, and owns the animation when the same container is updated through the helper. With `children: false` (the default), only the selected container is animated and direct content changes are watched. `children: true` also animates its direct children and watches descendant changes. The update callback still runs once per selected container. `exclude` is an optional CSS selector owned by the resource; matching elements and their descendants are not animated or watched. It does not observe attributes, discover later containers, or replace nodes itself. Disconnect a watcher before attaching another to the same container. `duration` is non-negative milliseconds; omitted timing comes from `--transition-duration`, and easing defaults to `ease`.
+`byTransition()` accepts a selector for current containers or an element, runs updates synchronously once per match (even with motion off), and returns its native animations. `watch()` coalesces child/text mutations and owns animations when the helper updates the same container. Default `children: false` animates only the selected container and watches direct content; `children: true` also animates direct children and watches descendants. The update callback still runs once per container. Resource-owned `exclude` selectors omit matching elements and descendants from animation and observation. Watchers do not observe attributes, discover later containers, or replace nodes. Disconnect before attaching another watcher to the same container. `duration` is non-negative milliseconds; omitted timing uses `--transition-duration`, with `ease` easing.
 
 ### Optional Google Fonts
 
-`_fonts.js` loads fonts natively with caching and offline fallbacks. Optional pickers need jQuery, Select2, `_common.css`, and `data-font-picker` controls:
+`_fonts.js` loads fonts natively with caching and offline fallbacks. Pickers also need jQuery, Select2, `_common.css`, and `data-font-picker` controls:
 
 ```html
 <script src="./spa.js/_fonts.js" defer></script>
 <input name="fontFamily" data-font-picker value="Inter" />
 ```
 
-Shared interface text uses the bundled Archivo font; explicit selections and accessibility fonts remain available. Reusable utility/API JSDoc records accepted parameters, defaults, return values, and lifecycle constraints; obvious callbacks do not need it.
+UI text uses bundled Archivo; explicit selections and accessibility fonts remain available. API/helper JSDoc records parameters, defaults, returns, and lifecycle constraints; obvious callbacks need no repetition.
 
-`byFont.family(value, fallback)` returns a CSS stack; `await byFont.ready(value, weight, text)` returns readiness before measurement. Use `byFont.init(container)` / `byFont.destroy(container)` for dynamic fields, or `byFont.picker(field, { weight, previewText, fallback })` for one control; `weight` can be a control.
+`byFont.family(value, fallback)` returns a CSS stack; `await byFont.ready(value, weight, text)` waits before measurement. Use `byFont.init(container)` / `byFont.destroy(container)` for dynamic fields, or `byFont.picker(field, { weight, previewText, fallback })` for one control. `weight` can be a control.
 
-`byCommon.init()` enhances marked fields; navigation/modal cleanup disposes them. Repeated initialization preserves widgets; absent optional libraries leave ordinary controls usable. Applications own font values and persistence.
+`byCommon.init()` enhances marked fields; navigation/modal cleanup disposes them. Reinitialization preserves widgets; missing optional libraries leave ordinary controls usable. Applications own font values and persistence.
 
 ### Fragment scripts and error pages
 
-Fragments and translations are trusted application content; sanitize untrusted input. Ordered external/inline scripts, `defer`, and modules preserve source order and attributes; explicit external `async` scripts run independently. Failures log and continue; stale fragments stop. `bySPA:load` waits for ordered page/component scripts. Sequencing uses `async`/`await`; public requests retain jQuery promises.
+Fragments and translations are trusted application content; sanitize untrusted input. Ordered external/inline scripts, `defer`, and modules retain source order and attributes; explicit external `async` scripts run independently. Failures log and continue; stale fragments stop. `bySPA:load` waits for ordered page/component scripts. Sequencing uses `async`/`await`; public requests retain jQuery promises.
 
-Error pages replace the full document; Back reloads a clean runtime, including while their scripts load. Set `bySPA.ERROR_PATH` before `_spa.js` to override the first candidate. Defaults try `HOME_PATH/_error.html`, `HOME_PATH/spa.js/_error.html`, then `HOME_PATH/../_error.html`; exhaustion stops without recursion.
+Error pages replace the document; Back reloads a clean runtime, even while their scripts load. Set `bySPA.ERROR_PATH` before `_spa.js` to override the first candidate. Defaults try `HOME_PATH/_error.html`, `HOME_PATH/spa.js/_error.html`, then `HOME_PATH/../_error.html`; exhaustion stops without recursion.
 
 ## Maintaining a submodule integration
 
 Keep `_load.js`, `_transitions.css`, `_transitions.js`, `_fonts.css`, `_fonts.js`, `_functions.js`, `_common.js`, and `_common.css` identical across both SPAs; SPA.php owns the shared source. `_spa.js`, routing, transport, history, and application bootstrap retain host-specific behavior.
 
-For upgrades, review changes, reconcile application-owned `_init.js`/`_routes.js` without losing settings, run checks, and test the consumer. Submodule updates do not update copied initializers. Neither repository synchronizes the other automatically.
+For upgrades, review changes, reconcile application-owned `_init.js`/`_routes.js` without losing settings, and run framework/consumer checks. Submodule updates do not update copied initializers; neither repository synchronizes the other automatically.
 
 ### Checks
 
