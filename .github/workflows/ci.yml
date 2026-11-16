@@ -1,17 +1,79 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      extended:
+        description: Run the reviewed cross-project parity checks
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    name: Core contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: node --check _load.js && node --check _transitions.js && node --check _functions.js && node --check _common.js && node --check _init.js && node --check _router.js && node --check _spa.js && node --check _lang.js && node --check _fonts.js
-      - run: node --test __tests__/runtime.test.js __tests__/common.test.js __tests__/fragment_scripts.test.js __tests__/parity.test.js __tests__/fonts.test.js
-      - run: npm install --no-save --package-lock=false playwright@1.62.1
-      - run: npx playwright install --with-deps chromium
-      - run: node --test __tests__/browser.test.js __tests__/fonts.browser.test.js __tests__/load.browser.test.js __tests__/transitions.browser.test.js
+      - name: Check authored JavaScript
+        run: |
+          node --check _load.js
+          node --check _transitions.js
+          node --check _functions.js
+          node --check _common.js
+          node --check _init.js
+          node --check _router.js
+          node --check _spa.js
+          node --check _lang.js
+          node --check _fonts.js
+      - name: Test core runtime contracts
+        run: node --test __tests__/runtime.test.js __tests__/common.test.js __tests__/fragment_scripts.test.js __tests__/fonts.test.js
+
+  browser_chromium:
+    name: browser (chromium)
+    needs: checks
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/browser-check.yml
+    with:
+      browser: chromium
+
+  browser_firefox:
+    name: browser (firefox)
+    needs: browser_chromium
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/browser-check.yml
+    with:
+      browser: firefox
+
+  browser_webkit:
+    name: browser (webkit)
+    needs: browser_firefox
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/browser-check.yml
+    with:
+      browser: webkit
+
+  parity:
+    needs: browser_webkit
+    if: github.event_name == 'workflow_dispatch' && inputs.extended && !cancelled()
+    name: Reviewed SPA parity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test __tests__/parity.test.js
