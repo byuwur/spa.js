@@ -1,5 +1,5 @@
 {
-  "name": "spa.js-release",
+  "name": "spa.js",
   "private": true,
   "engines": {
     "node": ">=22"
