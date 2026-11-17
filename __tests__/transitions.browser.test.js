@@ -44,6 +44,34 @@ async function pageFor(t, common = false) {
   return page;
 }
 
+test("text sizing and transforms stay immediate while surface feedback keeps its timing", { timeout: 30000 }, async (t) => {
+  const page = await pageFor(t, true);
+  // Competing component transitions must not animate geometry during text resizing.
+  await page.addStyleTag({ content: "#plain { font-size: 10px; width: 10em; height: 2em; margin: 1em; padding: 1em; transform: translateX(0); transition: all 10s linear; }" });
+  const result = await page.evaluate(async () => {
+    const element = document.getElementById("plain");
+    getComputedStyle(element).width;
+    element.style.fontSize = "20px";
+    element.style.transform = "translateX(40px)";
+    element.style.backgroundColor = "#123456";
+    await new Promise(requestAnimationFrame);
+    const style = getComputedStyle(element);
+    const geometry = [style.width, style.height, style.marginLeft, style.paddingLeft, style.transform];
+    const transitions = element.getAnimations().filter((animation) => animation instanceof CSSTransition);
+    document.querySelector(".byCODEdocument").style.setProperty("--by-view-motion-duration", "0.2s");
+    return {
+      geometry,
+      transitions: transitions.map((animation) => animation.transitionProperty),
+      surfaceDuration: transitions.find((animation) => animation.transitionProperty === "background-color")?.effect.getTiming().duration,
+      embeddedDurations: getComputedStyle(document.getElementById("embedded")).transitionDuration.split(",").map((duration) => duration.trim())
+    };
+  });
+  assert.deepEqual(result.geometry, ["200px", "40px", "20px", "20px", "matrix(1, 0, 0, 1, 40, 0)"]);
+  assert.deepEqual(result.transitions, ["background-color"]);
+  assert.equal(result.surfaceDuration, 300);
+  assert.ok(result.embeddedDurations.every((duration) => duration === "0.2s"));
+});
+
 test("explicit content changes preserve nodes, use host timing, and restore overflow", { timeout: 30000 }, async (t) => {
   const page = await pageFor(t);
   const result = await page.evaluate(async () => {

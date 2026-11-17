@@ -11,52 +11,27 @@
   /*min-height: 0;*/
   /* scroll */
   scrollbar-color: #111 #fff;
-  /* anim */
+  /* Keep geometry immediate when text size changes; embedded tools own their timing. */
   -webkit-transition:
-    opacity var(--transition-duration) ease,
-    height var(--transition-duration) ease,
-    width var(--transition-duration) ease,
-    transform var(--transition-duration) ease,
-    margin var(--transition-duration) ease,
-    padding var(--transition-duration) ease,
-    background-color var(--transition-duration) ease,
-    filter var(--transition-duration) ease !important;
+    opacity var(--by-view-motion-duration, var(--transition-duration)) ease,
+    background-color var(--by-view-motion-duration, var(--transition-duration)) ease,
+    filter var(--by-view-motion-duration, var(--transition-duration)) ease !important;
   -o-transition:
-    opacity var(--transition-duration) ease,
-    height var(--transition-duration) ease,
-    width var(--transition-duration) ease,
-    transform var(--transition-duration) ease,
-    margin var(--transition-duration) ease,
-    padding var(--transition-duration) ease,
-    background-color var(--transition-duration) ease,
-    filter var(--transition-duration) ease !important;
+    opacity var(--by-view-motion-duration, var(--transition-duration)) ease,
+    background-color var(--by-view-motion-duration, var(--transition-duration)) ease,
+    filter var(--by-view-motion-duration, var(--transition-duration)) ease !important;
   -ms-transition:
-    opacity var(--transition-duration) ease,
-    height var(--transition-duration) ease,
-    width var(--transition-duration) ease,
-    transform var(--transition-duration) ease,
-    margin var(--transition-duration) ease,
-    padding var(--transition-duration) ease,
-    background-color var(--transition-duration) ease,
-    filter var(--transition-duration) ease !important;
+    opacity var(--by-view-motion-duration, var(--transition-duration)) ease,
+    background-color var(--by-view-motion-duration, var(--transition-duration)) ease,
+    filter var(--by-view-motion-duration, var(--transition-duration)) ease !important;
   -moz-transition:
-    opacity var(--transition-duration) ease,
-    height var(--transition-duration) ease,
-    width var(--transition-duration) ease,
-    transform var(--transition-duration) ease,
-    margin var(--transition-duration) ease,
-    padding var(--transition-duration) ease,
-    background-color var(--transition-duration) ease,
-    filter var(--transition-duration) ease !important;
+    opacity var(--by-view-motion-duration, var(--transition-duration)) ease,
+    background-color var(--by-view-motion-duration, var(--transition-duration)) ease,
+    filter var(--by-view-motion-duration, var(--transition-duration)) ease !important;
   transition:
-    opacity var(--transition-duration) ease,
-    height var(--transition-duration) ease,
-    width var(--transition-duration) ease,
-    transform var(--transition-duration) ease,
-    margin var(--transition-duration) ease,
-    padding var(--transition-duration) ease,
-    background-color var(--transition-duration) ease,
-    filter var(--transition-duration) ease !important;
+    opacity var(--by-view-motion-duration, var(--transition-duration)) ease,
+    background-color var(--by-view-motion-duration, var(--transition-duration)) ease,
+    filter var(--by-view-motion-duration, var(--transition-duration)) ease !important;
 }
 
 .no-motion * {
