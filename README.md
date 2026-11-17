@@ -130,7 +130,7 @@ Leading `/` paths use `host`; `./` and `../` stay document-relative, including `
 
 ### Page transitions
 
-`_common.css` imports `_transitions.css` and `_fonts.css`; transitions can also load without the common theme or resets. Set `--transition-duration` on the root/container to override `0.3s`; embedded viewers/editors use their own `--by-view-motion-duration` (`0.2s` by default). Shared CSS transitions cover opacity, background color, and filters; width, height, margins, padding, and transforms change immediately. Tooltips, popovers, and their contents have no animations/transitions by default. The reduced-motion block is commented out for each resource to enable or override its duration; `no-motion` still disables shared motion.
+`_common.css` imports `_transitions.css` and `_fonts.css`; transitions can also load without the common theme or resets. Set `--transition-duration` on the root/container to override `0.3s`. Shared rules are defaults; resources own their overrides. Tooltips, popovers, and their contents have no animations/transitions by default. The reduced-motion block is commented out for each resource to enable or override its duration; `no-motion` still disables shared motion.
 
 Load `_transitions.js` for native container height/opacity animations, without jQuery or Promise wrappers:
 
