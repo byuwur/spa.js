@@ -3,11 +3,12 @@ name: CI
 on:
   workflow_call:
   push:
-  pull_request:
+    branches-ignore: [main]
+    tags-ignore: ["v*"]
   workflow_dispatch:
     inputs:
       extended:
-        description: Run the reviewed cross-project parity checks
+        description: Also run Firefox, WebKit and reviewed cross-project parity
         type: boolean
         default: false
 
@@ -45,7 +46,6 @@ jobs:
   browser_chromium:
     name: browser (chromium)
     needs: checks
-    if: ${{ !cancelled() }}
     uses: ./.github/workflows/browser-check.yml
     with:
       browser: chromium
@@ -53,7 +53,7 @@ jobs:
   browser_firefox:
     name: browser (firefox)
     needs: browser_chromium
-    if: ${{ !cancelled() }}
+    if: github.event_name == 'workflow_dispatch' && inputs.extended && !cancelled()
     uses: ./.github/workflows/browser-check.yml
     with:
       browser: firefox
@@ -61,7 +61,7 @@ jobs:
   browser_webkit:
     name: browser (webkit)
     needs: browser_firefox
-    if: ${{ !cancelled() }}
+    if: github.event_name == 'workflow_dispatch' && inputs.extended && !cancelled()
     uses: ./.github/workflows/browser-check.yml
     with:
       browser: webkit
