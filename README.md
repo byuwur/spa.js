@@ -198,6 +198,8 @@ Reviewed cross-project parity is the only optional suite; run `node --test __tes
 
 ## Releases
 
+[Regular ZIP](https://github.com/byuwur/spa.js/releases/latest/download/spa.js.zip) · [Minified ZIP](https://github.com/byuwur/spa.js/releases/latest/download/spa.js.minified.zip) · [Bundled ZIP](https://github.com/byuwur/spa.js/releases/latest/download/spa.js.bundled.zip) · [Complete ZIP [EXPERIMENTAL]](https://github.com/byuwur/spa.js/releases/latest/download/spa.js.complete.zip). Filenames stay the same across releases; `manifest.json` records the version and source commit.
+
 [Release workflow](.github/workflows/release.yml) builds a reviewable preview on pushes to `main`, pull requests, and manual runs. Only a pushed version tag publishes a GitHub release. Source/browser checks and the complete distribution build must succeed on both main and tag runs before publication. Failed builds remove their own temporary stage and retain the last completed output. Two-part tags such as `v1.8` and three-part tags such as `v1.8.1` are supported. Keep release tags consistent with the project's source version.
 
 | Edition                     | Contents                                            |
