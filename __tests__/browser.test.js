@@ -184,6 +184,34 @@ test("known navigation ends in load and missing routes notify before error rende
   }
 });
 
+test("a component refresh or clear supersedes older requests on the same route", { timeout: 30000 }, async (t) => {
+  const page = await openApp();
+  t.after(() => page.close());
+  const result = await page.evaluate(async () => {
+    const slot = document.body.appendChild(document.createElement("aside"));
+    slot.id = "refresh-slot";
+    const pending = [];
+    $.ajax = () => {
+      const request = $.Deferred();
+      pending.push(request);
+      return request.promise();
+    };
+    const old = bySPA.reloadComponent("#refresh-slot", "old");
+    const fresh = bySPA.reloadComponent("#refresh-slot", "fresh");
+    pending[1].resolve("new");
+    await fresh;
+    pending[0].reject({ status: 503 });
+    await old;
+    const afterFailure = slot.textContent;
+    const late = bySPA.reloadComponent("#refresh-slot", "late");
+    bySPA.reloadComponent("#refresh-slot", "");
+    pending[2].resolve("old");
+    await late;
+    return [afterFailure, slot.textContent];
+  });
+  assert.deepEqual(result, ["new", ""]);
+});
+
 test("stale failures cannot notify, replace content, or hide a newer loader", { timeout: 30000 }, async () => {
   for (const completeNewerFirst of [true, false]) {
     const page = await openApp();
