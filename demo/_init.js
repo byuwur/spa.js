@@ -106,8 +106,6 @@
     byStorage.initialized = true;
   }
 
-  // ===========================
-
   // ===== APPLICATION STATE =====
   // Bootstrap populates this namespace; only _spa.js marks the runtime initialized.
   global.bySPA = global.bySPA || {};
