@@ -21,6 +21,9 @@
         console.warn("Something went wrong", error);
       }
     };
-    renderFetched(`https://raw.githubusercontent.com/byuwur/json.view/main/test.json`, { chunkSize: 1, chunkLatency: 10 });
+    renderFetched(`https://raw.githubusercontent.com/byuwur/json.view/main/test.json`, {
+      chunkSize: 1,
+      chunkLatency: 10
+    });
   });
 </script>

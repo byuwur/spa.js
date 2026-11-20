@@ -10,6 +10,9 @@
   global.bySPA = global.bySPA || {};
   const bySPA = global.bySPA;
 
+  // ===========
+  // ROUTE NAMES
+  // ===========
   // URIs
   const ROUTE_ROOT = "/";
 
@@ -55,6 +58,9 @@
 
   // Default components to include on each route
   const COMPONENTS_EMPTY = { COMPONENT: { "nav#spa-nav": "", "footer#spa-foot": "" } };
+  // ================
+  // ROUTE COMPONENTS
+  // ================
   const ROOT_COMPONENTS = { COMPONENT: { "nav#spa-nav": "/sidebar.html", "footer#spa-foot": "" } };
 
   // Route definitions

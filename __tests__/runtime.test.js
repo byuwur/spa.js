@@ -4,6 +4,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
+// =============
+// RUNTIME TESTS
+// =============
 test("storage migration removes legacy values and memory fallback remains usable", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "_init.js"), "utf8");
   const values = new Map([["CUSTOM", "legacy"]]);
@@ -173,7 +176,12 @@ test("duplicate environment setup preserves preconfigured namespaces and memory-
         }
       }
     };
-    const context = { window, URL, console: { log() {} }, document: { currentScript: { getAttribute: () => "/app/_init.js" } } };
+    const context = {
+      window,
+      URL,
+      console: { log() {} },
+      document: { currentScript: { getAttribute: () => "/app/_init.js" } }
+    };
     vm.runInNewContext(source, context);
     const storage = window.byStorage;
     assert.equal(storage.initialized, true);
