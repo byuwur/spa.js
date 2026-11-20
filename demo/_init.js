@@ -14,14 +14,10 @@
  * @returns {void}
  */
 (function (global) {
-  // ==============
-  // INITIALIZATION
-  // ==============
+  // ===== INITIALIZATION =====
   if (global.bySPA?.initialized) return;
 
-  // ================
-  // APPLICATION PATH
-  // ================
+  // ===== APPLICATION PATH =====
   const currentScript = document.currentScript;
   const scriptSource = currentScript && typeof currentScript.getAttribute === "function" ? currentScript.getAttribute("src") : "";
   const scriptURL = new URL(scriptSource || "_init.js", global.location.href);
@@ -39,9 +35,7 @@
    * Legacy unprefixed keys are migrated on first read.
    * @namespace byStorage
    */
-  // ===========
-  // STORAGE API
-  // ===========
+  // ===== STORAGE API =====
   global.byStorage = global.byStorage || {};
   const byStorage = global.byStorage;
 
@@ -114,16 +108,12 @@
 
   // ===========================
 
-  // =================
-  // APPLICATION STATE
-  // =================
+  // ===== APPLICATION STATE =====
   // Bootstrap populates this namespace; only _spa.js marks the runtime initialized.
   global.bySPA = global.bySPA || {};
   const bySPA = global.bySPA;
 
-  // ==========
-  // FUNCTIONS
-  // ==========
+  // ===== FUNCTIONS =====
 
   /**
    * Replaces "\\" directory separators to "/"
@@ -152,9 +142,7 @@
    * PHP server values. Static /spa.js/ uses the script URL and browser
    * location instead of __FILE__, SCRIPT_FILENAME and PHP_SELF.
    */
-  // ==========================================================
-  // /SPA.JS/ ONLY: STATIC ROUTING CAN RUN IN HASH OR PATH MODE
-  // ==========================================================
+  // ===== /SPA.JS/ ONLY: STATIC ROUTING CAN RUN IN HASH OR PATH MODE =====
   const ROUTER_MODE = (byStorage.getItem("ROUTER_MODE") || "hash").toLowerCase();
 
   bySPA.APP_ENV = byStorage.getItem("APP_ENV") || NOTENV_APP_ENV;
@@ -184,9 +172,7 @@
   // Set the relative path to the home directory
   bySPA.TO_HOME = up + down || ".";
 
-  // ===========
-  // PERSISTENCE
-  // ===========
+  // ===== PERSISTENCE =====
   // Store the calculated paths in the browser's localStorage
   byStorage.setItem("APP_ENV", bySPA.APP_ENV);
   byStorage.setItem("ROUTER_MODE", bySPA.ROUTER_MODE);

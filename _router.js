@@ -14,9 +14,7 @@
  * @returns {void}
  */
 (function (global) {
-  // ==============
-  // INITIALIZATION
-  // ==============
+  // ===== INITIALIZATION =====
   global.bySPA = global.bySPA || {};
   const bySPA = global.bySPA;
   if (bySPA?.initialized) return;
@@ -27,9 +25,7 @@
    * Static /spa.js/ has to infer that same URI from ?uri=, #/hash routes,
    * normal path routing, or file:// fallback paths.
    */
-  // ===========
-  // URL HELPERS
-  // ===========
+  // ===== URL HELPERS =====
   /**
    * Decode a path segment while preserving malformed percent escapes.
    * @param {string} value Encoded segment.
@@ -102,9 +98,7 @@
     return queryToObject(new URLSearchParams(route.URI.slice(route.URI.indexOf("?") + 1)));
   }
 
-  // ==========
-  // ROUTES
-  // ==========
+  // ===== ROUTES =====
   /**
    * Prefer the application route table; use saved JSON only when bootstrap supplied none.
    * @returns {Object} Route table awaiting validation.
@@ -183,9 +177,7 @@
    * @param {Object} get GET parameters for the request.
    * @returns {Object}
    */
-  // ==========
-  // ROUTING
-  // ==========
+  // ===== ROUTING =====
   function parseURI(uri, get) {
     uri = typeof uri === "string" ? uri : "/";
     const queryIndex = uri.indexOf("?");
@@ -218,9 +210,7 @@
     console.error(`Error ${status}: ${message}`);
     return null;
   }
-  // =================
-  // END /SPA.JS/ ONLY
-  // =================
+  // ===== END /SPA.JS/ ONLY =====
 
   /**
    * Resolve the initial route and publish the state consumed by SPA startup.
@@ -252,15 +242,11 @@
     // route-defined values > /$/ parameters > ordinary query values.
     get = { ...get, ...routeQueryToObject(route), ...(is_object(route.GET) ? route.GET : {}) };
     if (route.URI === "") {
-      // ==================================================================
-      // /SPA.JS/ ONLY: PRESERVE THE CURRENT PAGE FOR COMPONENT-ONLY ROUTES
-      // ==================================================================
+      // ===== /SPA.JS/ ONLY: PRESERVE THE CURRENT PAGE FOR COMPONENT-ONLY ROUTES =====
       const currentURI = storedGet.uri || byStorage.getItem("URI") || "/";
       get.uri = routes[currentURI]?.URI ? currentURI : "/";
     }
-    // =============================================================================
-    // /SPA.JS/ ONLY: LANGUAGE SUPPORT CAN ADJUST GET BEFORE LOCALSTORAGE IS WRITTEN
-    // =============================================================================
+    // ===== /SPA.JS/ ONLY: LANGUAGE SUPPORT CAN ADJUST GET BEFORE LOCALSTORAGE IS WRITTEN =====
     if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { uri, url, route });
     const routePost = {
       ...post,
@@ -301,9 +287,7 @@
     }
 
     if (route.FILE) {
-      // ===============================================================================
-      // /SPA.JS/ ONLY: STATIC JS CANNOT SEND HEADERS/READFILE, SO REDIRECT TO THE ASSET
-      // ===============================================================================
+      // ===== /SPA.JS/ ONLY: STATIC JS CANNOT SEND HEADERS/READFILE, SO REDIRECT TO THE ASSET =====
       global.location.replace(homePathURL(route.FILE));
       return { uri, url, file: route.FILE, get, post: routePost };
     }
@@ -311,8 +295,6 @@
     return { uri, url, route, get, post: routePost };
   }
 
-  // ==========
-  // STARTUP
-  // ==========
+  // ===== STARTUP =====
   initRouter();
 })(typeof window !== "undefined" ? window : this);

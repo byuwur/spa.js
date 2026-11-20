@@ -14,23 +14,17 @@
  * @returns {unknown}
  */
 (function (global) {
-  // ==============
-  // INITIALIZATION
-  // ==============
+  // ===== INITIALIZATION =====
   global.bySPA = global.bySPA || {};
   const bySPA = global.bySPA;
   if (bySPA?.initialized) return;
   if (typeof jQuery === "undefined" && !global.jQuery) return console.error("Init _spa.js FAILED. No jQuery found.");
   const $ = global.jQuery;
 
-  // ==========
-  // METADATA
-  // ==========
+  // ===== METADATA =====
   bySPA.VERSION = "20.15"; // 2026-11-19
 
-  // ==========
-  // STATE
-  // ==========
+  // ===== STATE =====
   // Initializes values retrieved from localStorage and sets up environment variables.
   bySPA.URI = byStorage.getItem("URI") ?? "/";
   bySPA.URL = byStorage.getItem("URL") ?? bySPA.URI;
@@ -60,9 +54,7 @@
    */
   bySPA.ROUTER_MODE = byStorage.getItem("ROUTER_MODE") ?? "hash";
 
-  // ==========
-  // HELPERS
-  // ==========
+  // ===== HELPERS =====
   /*
    * === /spa.js/ only: static browser support ===
    * These helpers handle fragment routes and file URLs in the static shell.
@@ -209,9 +201,7 @@
     bySPA.HISTORY_PATH = bySPA.HISTORY_PATH.slice(0, bySPA.HISTORY_INDEX + 1);
     bySPA.HISTORY_INDEX++;
     bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
-    // ============================================================
-    // /SPA.JS/ ONLY: HASH/FILE HISTORY INSTEAD OF THE PHP PATH URL
-    // ============================================================
+    // ===== /SPA.JS/ ONLY: HASH/FILE HISTORY INSTEAD OF THE PHP PATH URL =====
     if (window.location.protocol === "file:") return fileHistory(url);
     history.pushState({ index: bySPA.HISTORY_INDEX, url }, "", browserURL(url));
   }
@@ -224,9 +214,7 @@
   function historyReplace(url) {
     if (bySPA.HISTORY_INDEX < 0) bySPA.HISTORY_INDEX = 0;
     bySPA.HISTORY_PATH[bySPA.HISTORY_INDEX] = url;
-    // ============================================================
-    // /SPA.JS/ ONLY: HASH/FILE HISTORY INSTEAD OF THE PHP PATH URL
-    // ============================================================
+    // ===== /SPA.JS/ ONLY: HASH/FILE HISTORY INSTEAD OF THE PHP PATH URL =====
     if (window.location.protocol === "file:") return fileHistory(url, true);
     history.replaceState({ index: bySPA.HISTORY_INDEX, url }, "", browserURL(url));
   }
@@ -292,9 +280,7 @@
     // Check if the path exists in the defined routes
     if (!Object.keys(bySPA.ROUTES).includes(path)) return null;
     const route = bySPA.ROUTES[path] ?? {};
-    // ======================================================================
-    // /SPA.JS/ ONLY: PRESERVE ROUTE URI QUERY STRINGS AND LANGUAGE GET HOOKS
-    // ======================================================================
+    // ===== /SPA.JS/ ONLY: PRESERVE ROUTE URI QUERY STRINGS AND LANGUAGE GET HOOKS =====
     // Application configuration is authoritative: route > /$/ params > query.
     const get = { ...query, ...params, ...queryFromURL(route?.URI), ...(route?.GET ?? {}) };
     if (typeof bySPA.prepareRouteGet === "function") bySPA.prepareRouteGet(get, { path, route, params, query });
@@ -305,9 +291,7 @@
     uri = route?.URI;
     // Determine the correct URI if it's not explicitly set
     if (uri == "") {
-      // =================================================================
-      // /SPA.JS/ ONLY: KEEP EMPTY URI ROUTES FROM LOSING THE CURRENT PAGE
-      // =================================================================
+      // ===== /SPA.JS/ ONLY: KEEP EMPTY URI ROUTES FROM LOSING THE CURRENT PAGE =====
       const currentURI = bySPA._GET?.uri || bySPA.URI || "/";
       get.uri = bySPA.ROUTES[currentURI]?.URI ? currentURI : "/";
       uri = bySPA.ROUTES[get.uri]?.URI ? bySPA.ROUTES[get.uri]?.URI : bySPA.ROUTES["/"]?.URI;
@@ -326,9 +310,7 @@
     document.dispatchEvent(new CustomEvent("bySPA:load", { detail: routing }));
   }
 
-  // ==========
-  // LIFECYCLE
-  // ==========
+  // ===== LIFECYCLE =====
   /**
    * Initialize this component once using its current state and available dependencies.
    * @returns {void}
@@ -347,9 +329,7 @@
       console.log("_POST=", bySPA._POST);
       console.log("HISTORY_INDEX=", bySPA.HISTORY_INDEX);
       console.log("HISTORY_PATH=", bySPA.HISTORY_PATH);
-      // =============
-      // /SPA.JS/ ONLY
-      // =============
+      // ===== /SPA.JS/ ONLY =====
       console.log("ROUTER_MODE=", bySPA.ROUTER_MODE);
     }
     // Handles the popstate event for navigating through browser history.
@@ -398,9 +378,7 @@
     delete bySPA.ROUTER_ERROR;
     byStorage.removeItem("ROUTER_ERROR");
     bySPA.load(initialError ? initialError.url : `${bySPA.URL}`, { replace: true });
-    // ============================================================
-    // /SPA.JS/ ONLY: HASH ROUTES DO NOT EMIT POPSTATE CONSISTENTLY
-    // ============================================================
+    // ===== /SPA.JS/ ONLY: HASH ROUTES DO NOT EMIT POPSTATE CONSISTENTLY =====
     $(window).on("hashchange.bySPA", function () {
       if (errorNavigation) return;
       if (bySPA.ROUTER_MODE === "path") return;
@@ -410,9 +388,7 @@
     });
   }
 
-  // ==========
-  // PUBLIC API
-  // ==========
+  // ===== PUBLIC API =====
   /**
    * Builds a static fragment URL while preserving query parameters already present in the route URI.
    * @param {string} path Fragment path, optionally containing a query string.
@@ -442,17 +418,13 @@
     if (uri.includes("://")) {
       try {
         const parsed = new URL(uri);
-        // ======================================================
-        // /SPA.JS/ ONLY: ACCEPT HASH ROUTES IN FULL BROWSER URLS
-        // ======================================================
+        // ===== /SPA.JS/ ONLY: ACCEPT HASH ROUTES IN FULL BROWSER URLS =====
         uri = hashToURL(parsed.hash) ?? parsed.pathname + parsed.search;
       } catch (e) {
         uri = "/";
       }
     } else {
-      // ===================================================
-      // /SPA.JS/ ONLY: ACCEPT "#/ROUTE" LINKS AS ROUTE URLS
-      // ===================================================
+      // ===== /SPA.JS/ ONLY: ACCEPT "#/ROUTE" LINKS AS ROUTE URLS =====
       uri = hashToURL(uri) ?? (uri.split("#", 1)[0] || "/");
     }
     const queryIndex = uri.indexOf("?");
@@ -490,9 +462,7 @@
    * @return {jQuery.Promise<string|null>} Error-fragment request result.
    */
   bySPA.errorPage = function (status, custom_error_message = "", navigationId = bySPA.NAVIGATION_ID) {
-    // ==============================================================
-    // /SPA.JS/ ONLY: STATIC ERROR FRAGMENT INSTEAD OF PHP _ERROR.PHP
-    // ==============================================================
+    // ===== /SPA.JS/ ONLY: STATIC ERROR FRAGMENT INSTEAD OF PHP _ERROR.PHP =====
     const paths = [bySPA.ERROR_PATH, `${bySPA.HOME_PATH}/_error.html`, `${bySPA.HOME_PATH}/spa.js/_error.html`, `${bySPA.HOME_PATH}/../_error.html`].filter(Boolean);
     /**
      * Render the current accepted data into this component's owned DOM.
@@ -579,9 +549,7 @@
     if (!file || file == "null") return $(target).html("");
     return $.ajax({
       url: bySPA.buildRequestURL(file, { ...get, uri: false }),
-      // ===============================================
-      // /SPA.JS/ ONLY: GET BY DEFAULT FOR STATIC NATURE
-      // ===============================================
+      // ===== /SPA.JS/ ONLY: GET BY DEFAULT FOR STATIC NATURE =====
       type: "GET",
       data: { ...post },
       dataType: "text",
@@ -629,9 +597,7 @@
     }
     const { path, uri, file, get, post, component } = routing;
     // If a file is specified in the route, navigate to it directly
-    // =========================================
-    // /SPA.JS/ ONLY: STATIC-SAFE FILE ROUTE URL
-    // =========================================
+    // ===== /SPA.JS/ ONLY: STATIC-SAFE FILE ROUTE URL =====
     if (file) {
       fileNavigation = true;
       return (window.location = bySPA.buildRequestURL(file));
@@ -639,9 +605,7 @@
     if (historyMode.push) historyPush(`${url}`);
     if (historyMode.replace) historyReplace(`${url}`);
     $("#spa-content").html("");
-    // ================================================================
-    // /SPA.JS/ ONLY: BROWSERS BLOCK AJAX FRAGMENT LOADING FROM FILE://
-    // ================================================================
+    // ===== /SPA.JS/ ONLY: BROWSERS BLOCK AJAX FRAGMENT LOADING FROM FILE:// =====
     if (window.location.protocol === "file:") {
       renderFileProtocolNotice();
       return $.when(null);
@@ -665,13 +629,9 @@
     const componentsReady = Promise.allSettled(componentLoads);
     // Retrieve the page data
     return $.ajax({
-      // ============================================
-      // /SPA.JS/ ONLY: STATIC-SAFE PAGE FRAGMENT URL
-      // ============================================
+      // ===== /SPA.JS/ ONLY: STATIC-SAFE PAGE FRAGMENT URL =====
       url: bySPA.buildRequestURL(uri ?? "/null", get),
-      // ===============================================
-      // /SPA.JS/ ONLY: GET BY DEFAULT FOR STATIC NATURE
-      // ===============================================
+      // ===== /SPA.JS/ ONLY: GET BY DEFAULT FOR STATIC NATURE =====
       type: "GET",
       data: { ...post },
       dataType: "text",
@@ -689,9 +649,7 @@
       .catch(function (xhr, status, error) {
         if (navigationId !== bySPA.NAVIGATION_ID) return null;
         console.error(`Error (SPA): ${xhr?.status} ${status} ${error}`, bySPA.APP_ENV == "DEV" ? xhr : "");
-        // =====================================================================
-        // /SPA.JS/ ONLY: XHR CAN FAIL BEFORE RESPONSETEXT EXISTS IN STATIC MODE
-        // =====================================================================
+        // ===== /SPA.JS/ ONLY: XHR CAN FAIL BEFORE RESPONSETEXT EXISTS IN STATIC MODE =====
         document.dispatchEvent(
           new CustomEvent("bySPA:error", {
             detail: { navigationId, url, status: xhr?.status || 0, error }
@@ -706,9 +664,7 @@
       });
   };
 
-  // ==========
-  // STARTUP
-  // ==========
+  // ===== STARTUP =====
   // Mark installed before initial loading can execute fragment scripts that import the runtime again.
   bySPA.initialized = true;
   init();

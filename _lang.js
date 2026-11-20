@@ -14,9 +14,7 @@
  * @returns {unknown}
  */
 (function (global) {
-  // ==============
-  // INITIALIZATION
-  // ==============
+  // ===== INITIALIZATION =====
   if (global.bySPA?.setLanguage?.initialized) return;
   if (typeof jQuery === "undefined" && !global.jQuery) return console.error("Init _lang.js FAILED. No jQuery found.");
   const $ = global.jQuery;
@@ -25,9 +23,7 @@
   const byCommon = global.byCommon;
   const bySPA = global.bySPA;
 
-  // ==========
-  // DEFAULTS
-  // ==========
+  // ===== DEFAULTS =====
   // Common selectors
   byCommon.LANG_PATH = byCommon.LANG_PATH || "/lang";
   byCommon.LANG_CACHE = byCommon.LANG_CACHE || {};
@@ -35,9 +31,7 @@
   bySPA.APP_LANGS = Array.isArray(bySPA.APP_LANGS) && bySPA.APP_LANGS.length ? bySPA.APP_LANGS : ["es", "en", "ja"];
   bySPA.DEFAULT_APP_LANG = bySPA.DEFAULT_APP_LANG || "es";
 
-  // ==========
-  // HELPERS
-  // ==========
+  // ===== HELPERS =====
   /**
    * Apply a callback to the matching root element and its matching descendants.
    * @param {Document|HTMLElement} root Container whose descendants belong to this operation.
@@ -180,9 +174,7 @@
     }
   }
 
-  // ==========
-  // PUBLIC API
-  // ==========
+  // ===== PUBLIC API =====
   /**
    * Persist the supported language and update document attributes without loading a dictionary.
    * @param {string} lang Requested language; invalid values retain the active language or default.
@@ -234,9 +226,7 @@
     return value ?? fallback;
   };
 
-  // ==========
-  // STARTUP
-  // ==========
+  // ===== STARTUP =====
   bySPA.setLanguage(get_url_param("lang") || get_cookie("lang") || byStorage.getItem("APP_LANG") || global.navigator?.language);
   $(document).on("bySPA:load.byLanguage", function (event) {
     const e = event.originalEvent || event;

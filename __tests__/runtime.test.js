@@ -4,9 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
-// =============
-// RUNTIME TESTS
-// =============
+// ===== RUNTIME TESTS =====
 test("storage migration removes legacy values and memory fallback remains usable", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "_init.js"), "utf8");
   const values = new Map([["CUSTOM", "legacy"]]);
