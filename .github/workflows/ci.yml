@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       extended:
-        description: Also run Firefox, WebKit and reviewed cross-project parity
+        description: Also run reviewed cross-project parity
         type: boolean
         default: false
 
@@ -43,31 +43,19 @@ jobs:
       - name: Test core runtime contracts
         run: node --test __tests__/runtime.test.js __tests__/common.test.js __tests__/fragment_scripts.test.js __tests__/fonts.test.js
 
-  browser_chromium:
-    name: browser (chromium)
+  browser:
+    name: browser (${{ matrix.browser }})
     needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     uses: ./.github/workflows/browser-check.yml
     with:
-      browser: chromium
-
-  browser_firefox:
-    name: browser (firefox)
-    needs: browser_chromium
-    if: github.event_name == 'workflow_dispatch' && inputs.extended && !cancelled()
-    uses: ./.github/workflows/browser-check.yml
-    with:
-      browser: firefox
-
-  browser_webkit:
-    name: browser (webkit)
-    needs: browser_firefox
-    if: github.event_name == 'workflow_dispatch' && inputs.extended && !cancelled()
-    uses: ./.github/workflows/browser-check.yml
-    with:
-      browser: webkit
+      browser: ${{ matrix.browser }}
 
   parity:
-    needs: browser_webkit
+    needs: browser
     if: github.event_name == 'workflow_dispatch' && inputs.extended && !cancelled()
     name: Reviewed SPA parity
     runs-on: ubuntu-24.04
