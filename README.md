@@ -112,6 +112,16 @@ Fragments and translations are trusted application content; sanitize untrusted i
 
 Error pages replace the document; Back reloads a clean runtime, even while their scripts load. Set `bySPA.ERROR_PATH` before `_spa.js` to override the first candidate. Defaults try `HOME_PATH/_error.html`, `HOME_PATH/spa.js/_error.html`, then `HOME_PATH/../_error.html`; exhaustion stops without recursion.
 
+### Route metadata
+
+Add an optional `METADATA` map alongside `COMPONENT`. The `title`, `description`, and `image` strings supply the matching Open Graph and Twitter Card tags. `canonical` also sets `og:url`. Set `robots` or individual social fields such as `og:title`, `og:type`, and `twitter:card` directly. Explicit social fields take precedence. Use absolute public URLs for links and images.
+
+On navigation, the router updates the head before the fragment loads and reapplies declared values when the current route finishes. Leaving the route restores existing shell tags and removes tags it added. FILE routes keep the file's own response.
+
+```js
+"/kit": { URI: "/kit.html", ...ROOT_COMPONENTS, METADATA: { title: "UI Kit", canonical: "https://example.org/kit/" } }
+```
+
 ## Runtime helpers
 
 1. [Storage and shared UI](#storage-and-shared-ui)

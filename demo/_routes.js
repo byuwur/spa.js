@@ -75,7 +75,15 @@
     [`/${ROUTE_VIDEO}`]: { URI: `/video.example.html`, ...ROOT_COMPONENTS },
     [`/${ROUTE_JSON}`]: { URI: `/json.example.html`, ...ROOT_COMPONENTS },
     [`/${ROUTE_MD}`]: { URI: `/md.example.html`, ...ROOT_COMPONENTS },
-    [`/${ROUTE_KIT}`]: { URI: "/kit.example.html", ...ROOT_COMPONENTS },
+    [`/${ROUTE_KIT}`]: {
+      URI: "/kit.example.html",
+      ...ROOT_COMPONENTS,
+      METADATA: {
+        title: "UI Kit | SPA.js",
+        description: "Explore the controls, layouts and themes included with SPA.js.",
+        canonical: "https://byuwur.co/spa.js/demo/kit/"
+      }
+    },
     [`/${ROUTE_PDF}`]: { FILE: `/img/pdf/sample.pdf` }
   };
 

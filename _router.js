@@ -122,7 +122,7 @@
       ["URI", "FILE"].forEach(function (field) {
         if (field in route && typeof route[field] !== "string") throw new TypeError(`Route "${path}" field ${field} must be a string.`);
       });
-      ["GET", "POST", "DATA", "COMPONENT"].forEach(function (field) {
+      ["GET", "POST", "DATA", "COMPONENT", "METADATA"].forEach(function (field) {
         if (field in route && !is_object(route[field])) throw new TypeError(`Route "${path}" field ${field} must be an object.`);
       });
     });
