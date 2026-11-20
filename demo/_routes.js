@@ -52,7 +52,6 @@
   const ROUTE_LOGIN = "login";
   const ROUTE_LOGOUT = "logout";
   const ROUTE_DEMO = "demo";
-  const ROUTE_COOKIES = "cookies";
 
   // Default components to include on each route
   const COMPONENTS_EMPTY = { COMPONENT: { "nav#spa-nav": "", "footer#spa-foot": "" } };
