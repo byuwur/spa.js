@@ -7,7 +7,7 @@ const reference = process.env.SPA_PHP_TREE;
 
 function source(file) {
   if (reference && ["_functions.js", "_common.js"].includes(file)) {
-    const tree = path.resolve(reference).replace(/\\/g, "/");
+    const tree = path.resolve(reference).replaceAll("\\", "/");
     // The checkout supplies Git objects only; its HEAD and working files are not inputs.
     return execFileSync("git", ["-c", `safe.directory=${tree}`, "-C", tree, "show", `${SPA_PHP_REVISION}:${file}`], { encoding: "utf8" });
   }
