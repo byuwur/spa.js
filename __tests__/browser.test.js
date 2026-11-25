@@ -63,7 +63,7 @@ test("privacy links and buttons reopen one panel without changing consent or the
   await page.route(url, (route) =>
     route.fulfill({
       contentType: "text/html",
-      body: '<a href="#cookie-controls">Cookies</a><button data-target="#privacy-controls">Preferences</button>'
+      body: /* HTML */ `<a href="#cookie-controls">Cookies</a><button data-target="#privacy-controls">Preferences</button>`
     })
   );
   await page.goto(url + "#privacy-controls");
@@ -127,7 +127,11 @@ test("closing the themed banner persists across hosts without recording consent"
   await context.route("https://*.example.test/**", (route) =>
     route.fulfill({
       contentType: "text/html",
-      body: '<html lang="en" data-bs-theme="light"><body><a href="#privacy-controls">Manage privacy</a></body></html>'
+      body: /* HTML */ `<html lang="en" data-bs-theme="light">
+        <body>
+          <a href="#privacy-controls">Manage privacy</a>
+        </body>
+      </html>`
     })
   );
   const page = await context.newPage();
@@ -202,11 +206,17 @@ test("local HTML and CSRF utilities work without jQuery or SPA initialization", 
   const page = await browser.newPage();
   page.setDefaultTimeout(5000);
   t.after(() => page.close());
-  await page.route("https://utilities.test/**", (route) => route.fulfill({ contentType: "text/html", body: "<!doctype html><head></head><body></body>" }));
+  await page.route("https://utilities.test/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: /* HTML */ `<!doctype html><head></head>
+        <body></body>`
+    })
+  );
   await page.goto("https://utilities.test/");
   await page.addScriptTag({ path: path.join(__dirname, "../_functions.js") });
   const result = await page.evaluate(() => {
-    const escaped = [escape_html('<img src=x onerror="alert(1)">&'), escape_html(null), escape_html(undefined), escape_html(0), escape_html(false), escape_html("Caf\u00e9 \u{1f600}")];
+    const escaped = [escape_html(/* HTML */ `<img src="x" onerror="alert(1)" />&`), escape_html(null), escape_html(undefined), escape_html(0), escape_html(false), escape_html("Caf\u00e9 \u{1f600}")];
     sessionStorage.setItem("CSRF_TOKEN", "stored-token");
     const meta = document.createElement("meta");
     meta.name = "csrf-token";
@@ -236,7 +246,7 @@ test("local HTML and CSRF utilities work without jQuery or SPA initialization", 
     };
   });
   assert.deepEqual(result, {
-    escaped: ['&lt;img src=x onerror="alert(1)"&gt;&amp;', "", "", "0", "false", "Caf\u00e9 \u{1f600}"],
+    escaped: ['&lt;img src="x" onerror="alert(1)" /&gt;&amp;', "", "", "0", "false", "Caf\u00e9 \u{1f600}"],
     preferred: "meta-token",
     fallback: "stored-token",
     missing: "",
@@ -318,7 +328,7 @@ test("route metadata overrides shell defaults and releases them on the next navi
     bySPA.ROUTES["/late"] = { URI: "/late-fragment", METADATA: { title: "Late" } };
     const superseded = bySPA.load("/late");
     await bySPA.load("/known");
-    slow.resolve("<p>Late fragment</p>");
+    slow.resolve(/* HTML */ `<p>Late fragment</p>`);
     await superseded;
     $.ajax = () => $.Deferred().reject({ status: 500 }, "error", "test").promise();
     await bySPA.load("/kit");
