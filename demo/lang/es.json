@@ -2,7 +2,7 @@
   "route.home": "inicio",
   "route.page": "pagina",
   "route.video": "video",
-  "loader.loading": "<strong>Cargando...</strong><br><br>¿Sigue cargando? <a href='javascript:location.reload();'>Intenta recargar.</a>",
+  "loader.loading": "<strong>Cargando...</strong><br><br>¿Sigue cargando? <a href=\"javascript:location.reload();\">Intenta recargar.</a>",
   "nav.home": "Inicio",
   "nav.page": "Página",
   "nav.video": "Demo de video subtitulado",
