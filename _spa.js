@@ -108,7 +108,7 @@
         </div>
       </div>`
     );
-    $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
+    hideLoader();
   }
 
   /**
@@ -172,6 +172,11 @@
       if (waitForScript && !(hasSource && item.script.hasAttribute("async"))) await settled;
     }
     return isCurrent() ? html : null;
+  }
+
+  /** Fade the navigation overlay using the configured duration and motion preference. */
+  function hideLoader() {
+    $("#spa-loader").fadeOut($("html").hasClass("no-motion") ? 0 : byCommon.GLOBAL_TRANSITION_DURATION);
   }
 
   /**
@@ -588,7 +593,7 @@
     if (navigationId !== bySPA.NAVIGATION_ID) return $.when(null);
     // Log debug information if in development mode
     if (bySPA.APP_ENV === "DEV") console.log(`loadSPA("${url}", ${parse_json(mode)})`);
-    $("#spa-loader").fadeIn(1);
+    $("#spa-loader").stop(true, true).show();
     const routing = routeURL(`${url}`);
     apply_route_metadata();
     if (routing?.metadata && !routing.file) apply_route_metadata(routing.metadata);
@@ -598,7 +603,7 @@
       document.dispatchEvent(new CustomEvent("bySPA:error", { detail: { navigationId, url, status: 404, error } }));
       if (navigationId !== bySPA.NAVIGATION_ID) return $.when(null);
       return bySPA.errorPage(404, error, navigationId).always(function () {
-        if (navigationId === bySPA.NAVIGATION_ID) $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
+        if (navigationId === bySPA.NAVIGATION_ID) hideLoader();
       });
     }
     const { path, uri, file, get, post, component } = routing;
@@ -667,7 +672,7 @@
         return null;
       })
       .always(function () {
-        if (navigationId === bySPA.NAVIGATION_ID) $("#spa-loader").fadeOut(byCommon.GLOBAL_TRANSITION_DURATION);
+        if (navigationId === bySPA.NAVIGATION_ID) hideLoader();
       });
   };
 
